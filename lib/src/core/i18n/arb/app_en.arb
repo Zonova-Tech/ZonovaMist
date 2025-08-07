@@ -1,0 +1,17 @@
+{
+    "@@locale": "en",
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "fullName": "Full Name",
+    "emailHint": "Enter your email",
+    "passwordHint": "Enter your password",
+    "fullNameHint": "Enter your full name",
+    "loginSuccess": "Login Successful",
+    "registrationSuccess": "Registration Successful",
+    "logout": "Logout",
+    "welcome": "Welcome",
+    "fieldRequired": "This field is required.",
+    "invalidEmail": "Please enter a valid email address."
+}

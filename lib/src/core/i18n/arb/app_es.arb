@@ -1,0 +1,17 @@
+{
+    "@@locale": "es",
+    "login": "Iniciar Sesión",
+    "register": "Registrarse",
+    "email": "Correo Electrónico",
+    "password": "Contraseña",
+    "fullName": "Nombre Completo",
+    "emailHint": "Ingrese su correo electrónico",
+    "passwordHint": "Ingrese su contraseña",
+    "fullNameHint": "Ingrese su nombre completo",
+    "loginSuccess": "Inicio de sesión exitoso",
+    "registrationSuccess": "Registro exitoso",
+    "logout": "Cerrar Sesión",
+    "welcome": "Bienvenido",
+    "fieldRequired": "Este campo es obligatorio.",
+    "invalidEmail": "Por favor, ingrese una dirección de correo electrónico válida."
+}
