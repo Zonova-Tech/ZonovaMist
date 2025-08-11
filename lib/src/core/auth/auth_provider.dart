@@ -31,6 +31,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final response = await _ref.read(dioProvider).post(
         '/auth/login',
         data: {'email': email, 'password': password},
+        options: Options(headers: {'Content-Type': 'application/json'}),
       );
       print("after call");
       final token = response.data['token'];
