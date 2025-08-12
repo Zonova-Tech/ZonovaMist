@@ -1,31 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/auth/rooms_provider.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final roomsAsync = ref.watch(roomsProvider);
+
     return Scaffold(
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Text(
-            'Dashboard',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          // Example placeholder for room list
-          Card(
-            child: ListTile(
-              title: const Text('Room 101 - Deluxe Double'),
-              subtitle: const Text('Status: Available • LKR 7500/night'),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () {
-                // Navigate to room details later
-              },
-            ),
-          ),
-        ],
+      appBar: AppBar(title: const Text('Dashboard')),
+      body: roomsAsync.when(
+        data: (rooms) => ListView.builder(
+          itemCount: rooms.length,
+          itemBuilder: (context, index) {
+            final room = rooms[index];
+            return Card(
+              child: ListTile(
+                title: Text('Room ${room['roomNumber']} - ${room['type']}'),
+                subtitle: Text(
+                  'Status: ${room['status']} • LKR ${room['pricePerNight']}/night',
+                ),
+              ),
+            );
+          },
+        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error: $err')),
       ),
     );
   }

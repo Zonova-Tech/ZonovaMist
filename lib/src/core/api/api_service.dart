@@ -39,7 +39,7 @@ final dioProvider = Provider<Dio>((ref) {
         }
         handler.next(options);
       },
-      // You can add onResponse and onError here if needed
+
     ),
   );
 
