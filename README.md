@@ -57,10 +57,10 @@ Before running the project, ensure the following are installed:
 
 ### 🔹 Step 2: Flutter App Setup
 
-> ⚠️ **Note:** The Flutter project (`map_market`) is already created.
+> ⚠️ **Note:** The Flutter project (`zonova_mist`) is already created.
 
 1. Open **Android Studio**
-2. Select **Open an existing project** and choose the `map_market` folder
+2. Select **Open an existing project** and choose the `zonova_mist` folder
 3. Wait for Android Studio to load the project
 4. Click **"Get Dependencies"** or run:
    ```bash
@@ -98,7 +98,7 @@ Before running the project, ensure the following are installed:
 ## 📁 Project Structure
 
 ```
-map_market/
+zonova_mist/
 │
 ├── lib/
 │   ├── main.dart

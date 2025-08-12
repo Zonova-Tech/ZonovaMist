@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.map_market"
+    namespace = "com.example.zonova_mist"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 

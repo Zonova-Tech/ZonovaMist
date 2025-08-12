@@ -1,6 +1,6 @@
 {
-    "name": "map_market",
-    "short_name": "map_market",
+    "name": "zonova_mist",
+    "short_name": "zonova_mist",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

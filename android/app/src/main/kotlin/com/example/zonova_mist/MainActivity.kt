@@ -1,4 +1,4 @@
-package com.example.map_market
+package com.example.zonova_mist
 
 import io.flutter.embedding.android.FlutterActivity
 
