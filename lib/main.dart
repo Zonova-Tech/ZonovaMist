@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:map_market/src/core/auth/auth_provider.dart';
-import 'package:map_market/src/core/auth/auth_state.dart';
-import 'package:map_market/src/core/i18n/arb/app_localizations.dart';
-import 'package:map_market/src/core/routing/app_router.dart';
-import 'package:map_market/src/core/theme/app_theme.dart';
-import 'package:map_market/src/features/auth/login_screen.dart';
-import 'package:map_market/src/features/home/home_screen.dart';
-import 'package:map_market/src/shared/widgets/splash_screen.dart';
+import 'package:Zonova_Mist/src/core/auth/auth_provider.dart';
+import 'package:Zonova_Mist/src/core/auth/auth_state.dart';
+import 'package:Zonova_Mist/src/core/i18n/arb/app_localizations.dart';
+import 'package:Zonova_Mist/src/core/routing/app_router.dart';
+import 'package:Zonova_Mist/src/core/theme/app_theme.dart';
+import 'package:Zonova_Mist/src/features/auth/login_screen.dart';
+import 'package:Zonova_Mist/src/features/home/home_screen.dart';
+import 'package:Zonova_Mist/src/shared/widgets/splash_screen.dart';
 
 
 void main() {

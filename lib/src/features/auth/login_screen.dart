@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
-import 'package:map_market/src/core/auth/auth_provider.dart';
-import 'package:map_market/src/core/auth/auth_state.dart';
-import 'package:map_market/src/features/auth/register_screen.dart';
-import 'package:map_market/src/core/routing/app_router.dart';
+import 'package:Zonova_Mist/src/core/auth/auth_provider.dart';
+import 'package:Zonova_Mist/src/core/auth/auth_state.dart';
+import 'package:Zonova_Mist/src/features/auth/register_screen.dart';
+import 'package:Zonova_Mist/src/core/routing/app_router.dart';
 
 import '../../core/i18n/arb/app_localizations.dart';
 

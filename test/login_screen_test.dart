@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:map_market/src/core/i18n/arb/app_localizations.dart';
-import 'package:map_market/src/features/auth/login_screen.dart';
+import 'package:Zonova_Mist/src/core/i18n/arb/app_localizations.dart';
+import 'package:Zonova_Mist/src/features/auth/login_screen.dart';
 
 void main() {
   testWidgets('LoginScreen renders correctly and finds widgets', (WidgetTester tester) async {
