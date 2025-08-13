@@ -31,7 +31,7 @@ class _EditRoomScreenState extends ConsumerState<EditRoomScreen> {
     });
     ref.invalidate(roomsProvider);
     Navigator.pop(context);
-    Navigator.pop(context); // also pop details page
+    Navigator.pop(context); // pop details page
   }
 
   @override
