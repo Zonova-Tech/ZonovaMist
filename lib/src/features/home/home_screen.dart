@@ -32,7 +32,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.person),
-            tooltip: 'Profile',
+            tooltip: 'Settings',
             onPressed: () {
               setState(() {
                 _selectedIndex = 1; // Switch to Profile tab

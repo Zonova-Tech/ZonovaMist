@@ -6,11 +6,37 @@ import '../../core/api/api_service.dart';
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
-  Future<void> _updateRoomStatus(WidgetRef ref, String roomId, String newStatus) async {
+  Future<void> _updateRoomStatus(
+      BuildContext context, WidgetRef ref, String roomId, String newStatus) async {
     final dio = ref.read(dioProvider);
-    await dio.patch('/rooms/$roomId', data: {'status': newStatus});
-    // Refresh the rooms list after update
-    ref.invalidate(roomsProvider);
+
+    try {
+      await dio.patch('/rooms/$roomId', data: {'status': newStatus});
+      ref.invalidate(roomsProvider);
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            newStatus == 'occupied'
+                ? '✅ Room booked successfully'
+                : '↩️ Booking undone',
+          ),
+          backgroundColor:
+          newStatus == 'occupied' ? Colors.green : Colors.orange,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('❌ Failed to update room status'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   @override
@@ -42,14 +68,15 @@ class DashboardScreen extends ConsumerWidget {
               confirmDismiss: (direction) async {
                 if (direction == DismissDirection.startToEnd) {
                   // Swipe right → Book room
-                  await _updateRoomStatus(ref, room['_id'], 'occupied');
+                  await _updateRoomStatus(context, ref, room['_id'], 'occupied');
                 } else if (direction == DismissDirection.endToStart) {
                   // Swipe left → Undo booking
-                  await _updateRoomStatus(ref, room['_id'], 'available');
+                  await _updateRoomStatus(context, ref, room['_id'], 'available');
                 }
-                return false; // Keep the item in the list
+                return false; // Prevent item removal
               },
               child: Card(
+                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 child: ListTile(
                   title: Text('Room ${room['roomNumber']} - ${room['type']}'),
                   subtitle: Text(
