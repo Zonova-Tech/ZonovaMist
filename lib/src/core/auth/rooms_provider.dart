@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dio/dio.dart';
 import '../api/api_service.dart';
 
 final roomsProvider = FutureProvider<List<dynamic>>((ref) async {
