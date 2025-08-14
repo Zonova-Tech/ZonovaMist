@@ -23,6 +23,7 @@ class DashboardScreen extends ConsumerWidget {
                 subtitle: Text(
                   'Status: ${room['status']} • LKR ${room['pricePerNight']}/night',
                 ),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {
                   Navigator.push(
                     context,

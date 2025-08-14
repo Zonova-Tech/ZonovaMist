@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'edit_room_screen.dart';
 
 class RoomDetailsScreen extends StatelessWidget {
@@ -31,19 +30,9 @@ class RoomDetailsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                room['imageUrl'] ?? 'https://via.placeholder.com/300',
-                height: 200,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text('${room['roomNumber']} ${room['type']}',
+            Text('${room['roomNumber']} - ${room['type']}',
                 style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -51,6 +40,7 @@ class RoomDetailsScreen extends StatelessWidget {
                 Text('Max Occupancy: ${room['maxOccupancy']}'),
               ],
             ),
+            const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
