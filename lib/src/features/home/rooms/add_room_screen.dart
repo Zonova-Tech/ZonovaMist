@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/api/api_service.dart';
+import '../../../core/api/api_service.dart';
 
 class AddRoomScreen extends ConsumerStatefulWidget {
   const AddRoomScreen({super.key});

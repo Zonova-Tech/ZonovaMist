@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'edit_room_screen.dart';
+import '../edit_room_screen.dart';
 
 class RoomDetailsScreen extends StatelessWidget {
   final Map<String, dynamic> room;
