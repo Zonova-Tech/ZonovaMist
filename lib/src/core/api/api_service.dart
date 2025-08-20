@@ -1,4 +1,4 @@
-import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -6,20 +6,28 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 final dioProvider = Provider<Dio>((ref) {
   String baseUrl;
 
-  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-    // Desktop (Windows/Mac/Linux) - use localhost
-    baseUrl = 'http://localhost:5000/api';
-  } else if (Platform.isAndroid) {
-    // Android device or emulator
-    final isEmulator = !Platform.environment.containsKey('ANDROID_ROOT');
-    if (isEmulator) {
-      baseUrl = 'http://10.0.2.2:5000/api';
-    } else {
-      baseUrl = 'http://192.168.1.10:5000/api';
-    }
+  if (kIsWeb) {
+    // Web build → API must be accessible on localhost or deployed server
+    baseUrl = 'http://192.168.1.10:5000/api';
   } else {
-    // Fallback for other platforms (iOS, web, etc)
-    baseUrl = 'http://localhost:5000/api';
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+      // Emulator vs real device
+      // ⚠️ If using real device, replace with your PC’s LAN IP
+        baseUrl = 'http://10.0.2.2:5000/api'; // works on Android emulator
+        // baseUrl = 'http://192.168.x.x:5000/api'; // for real device
+        break;
+      case TargetPlatform.iOS:
+        baseUrl = 'http://localhost:5000/api';
+        break;
+      case TargetPlatform.windows:
+      case TargetPlatform.linux:
+      case TargetPlatform.macOS:
+        baseUrl = 'http://localhost:5000/api';
+        break;
+      default:
+        baseUrl = 'http://localhost:5000/api';
+    }
   }
 
   final dio = Dio(BaseOptions(
@@ -39,7 +47,6 @@ final dioProvider = Provider<Dio>((ref) {
         }
         handler.next(options);
       },
-
     ),
   );
 
