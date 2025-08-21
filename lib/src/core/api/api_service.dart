@@ -7,23 +7,21 @@ final dioProvider = Provider<Dio>((ref) {
   String baseUrl;
 
   if (kIsWeb) {
-    // Web build → API must be accessible on localhost or deployed server
+    // Web must use LAN IP
     baseUrl = 'http://192.168.1.10:5000/api';
   } else {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-      // Emulator vs real device
-      // ⚠️ If using real device, replace with your PC’s LAN IP
-        baseUrl = 'http://10.0.2.2:5000/api'; // works on Android emulator
-        // baseUrl = 'http://192.168.x.x:5000/api'; // for real device
+        baseUrl = 'http://10.0.2.2:5000/api'; // Android emulator
+        // Use 'http://192.168.1.10:5000/api' for real Android device
         break;
       case TargetPlatform.iOS:
-        baseUrl = 'http://localhost:5000/api';
+        baseUrl = 'http://localhost:5000/api'; // iOS simulator
         break;
       case TargetPlatform.windows:
       case TargetPlatform.linux:
       case TargetPlatform.macOS:
-        baseUrl = 'http://localhost:5000/api';
+        baseUrl = 'http://localhost:5000/api'; // Desktop
         break;
       default:
         baseUrl = 'http://localhost:5000/api';
@@ -41,11 +39,18 @@ final dioProvider = Provider<Dio>((ref) {
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) async {
+        // Read the token from secure storage
         final token = await storage.read(key: 'jwt_token');
+
+        // Print token to console
+        print("🔑 JWT for Android: $token");
+
+        // Add token to headers if it exists
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
-        handler.next(options);
+
+        handler.next(options); // continue request
       },
     ),
   );
