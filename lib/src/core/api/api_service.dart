@@ -8,23 +8,23 @@ final dioProvider = Provider<Dio>((ref) {
 
   if (kIsWeb) {
     // Web must use LAN IP
-    baseUrl = 'http://192.168.1.10:5000/api';
+    baseUrl = 'http://192.168.1.10:3000/api';
   } else {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        baseUrl = 'http://10.0.2.2:5000/api'; // Android emulator
-        // Use 'http://192.168.1.10:5000/api' for real Android device
+        baseUrl = 'http://10.0.2.2:3000/api'; // Android emulator
+        // Use 'http://192.168.1.10:3000/api' for real Android device
         break;
       case TargetPlatform.iOS:
-        baseUrl = 'http://localhost:5000/api'; // iOS simulator
+        baseUrl = 'http://localhost:3000/api'; // iOS simulator
         break;
       case TargetPlatform.windows:
       case TargetPlatform.linux:
       case TargetPlatform.macOS:
-        baseUrl = 'http://localhost:5000/api'; // Desktop
+        baseUrl = 'http://localhost:3000/api'; // Desktop
         break;
       default:
-        baseUrl = 'http://localhost:5000/api';
+        baseUrl = 'http://localhost:3000/api';
     }
   }
 

@@ -32,7 +32,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
   }
 
   Future<void> _uploadImagesToServer(List<XFile> images) async {
-    const String apiUrl = 'http://10.0.2.2:5000/api/images/upload';
+    const String apiUrl = 'http://10.0.2.2:3000/api/images/upload';
 
     var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
     request.fields['roomId'] = widget.room['_id']; // Room ID for Mongo
@@ -179,7 +179,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                     // Already uploaded images from DB
                     final photoUrl = photos[index];
                     return Image.network(
-                      "http://10.0.2.2:5000$photoUrl",
+                      "http://10.0.2.2:3000$photoUrl",
                       fit: BoxFit.cover,
                     );
                   } else {
