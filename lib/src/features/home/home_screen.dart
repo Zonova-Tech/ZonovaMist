@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'bookings/bookings_screen.dart';
 import 'rooms/rooms_screen.dart';
-import 'profile/profile_screen.dart';
+import 'profile/settings_screen.dart';
 import 'bookings/add_booking_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -17,7 +17,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final _pages = const [
     BookingsScreen(),
     RoomsScreen(),
-    ProfileScreen(),
+    SettingsScreen(),
   ];
 
   @override
@@ -34,7 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.book_online), label: "Bookings"),
           BottomNavigationBarItem(icon: Icon(Icons.meeting_room), label: "Rooms"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Settings"),
         ],
       ),
       floatingActionButton: _selectedIndex == 0
