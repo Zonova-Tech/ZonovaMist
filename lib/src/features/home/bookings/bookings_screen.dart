@@ -1,7 +1,10 @@
+// booking_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'add_booking_screen.dart';
 import 'bookings_provider.dart';
+import 'package:Zonova_Mist/src/core/api/api_service.dart';
 
 class BookingsScreen extends ConsumerWidget {
   const BookingsScreen({super.key});
@@ -22,9 +25,79 @@ class BookingsScreen extends ConsumerWidget {
             itemBuilder: (context, index) {
               final booking = bookings[index];
               return ListTile(
-                title: Text(booking['guest_name'] ?? ''),
-                subtitle: Text('Room(s): ${booking['booked_room_no']}'),
-                trailing: Text(booking['status'] ?? ''),
+                title: Text(booking['guest_name'] ?? 'Unknown Guest'),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Room(s): ${booking['booked_room_no'] ?? 'N/A'}'),
+                    Text(
+                      'Check-in: ${booking['checkin_date'] != null ? DateFormat('MMM dd, yyyy').format(DateTime.parse(booking['checkin_date'])) : 'N/A'}',
+                    ),
+                    Text('Phone: ${booking['phone_no'] ?? 'N/A'}'),
+                    Text('Status: ${booking['status'] ?? 'N/A'}'),
+                  ],
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.blue),
+                      onPressed: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => EditBookingScreen(booking: booking),
+                          ),
+                        );
+                        if (result == true) {
+                          ref.refresh(bookingsProvider); // Refresh after edit
+                        }
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Delete Booking'),
+                            content: Text(
+                              'Are you sure you want to delete ${booking['guest_name']}\'s booking?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text('Delete'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirm == true) {
+                          try {
+                            final dio = ref.read(dioProvider);
+                            await dio.delete('/bookings/${booking['_id']}');
+                            ref.refresh(bookingsProvider); // Refresh after delete
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Booking deleted')),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Failed to delete: $e')),
+                              );
+                            }
+                          }
+                        }
+                      },
+                    ),
+                  ],
+                ),
               );
             },
           );
@@ -40,9 +113,148 @@ class BookingsScreen extends ConsumerWidget {
             MaterialPageRoute(builder: (_) => const AddBookingScreen()),
           );
           if (result == true) {
-            ref.refresh(bookingsProvider); // refresh after adding booking
+            ref.refresh(bookingsProvider); // Refresh after adding
           }
         },
+      ),
+    );
+  }
+}
+
+// New EditBookingScreen
+class EditBookingScreen extends ConsumerStatefulWidget {
+  final Map<String, dynamic> booking;
+
+  const EditBookingScreen({super.key, required this.booking});
+
+  @override
+  ConsumerState<EditBookingScreen> createState() => _EditBookingScreenState();
+}
+
+class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _guestNameController;
+  late TextEditingController _phoneNoController;
+  late TextEditingController _roomNoController;
+  late TextEditingController _checkInDateController;
+  String _status = 'pending';
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _guestNameController = TextEditingController(text: widget.booking['guest_name'] ?? '');
+    _phoneNoController = TextEditingController(text: widget.booking['phone_no'] ?? '');
+    _roomNoController = TextEditingController(text: widget.booking['booked_room_no'] ?? '');
+    _checkInDateController = TextEditingController(
+      text: widget.booking['checkin_date'] != null
+          ? DateFormat('yyyy-MM-dd').format(DateTime.parse(widget.booking['checkin_date']))
+          : '',
+    );
+    _status = widget.booking['status'] ?? 'pending';
+  }
+
+  Future<void> _updateBooking() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _loading = true);
+    try {
+      final dio = ref.read(dioProvider);
+      await dio.patch('/bookings/${widget.booking['_id']}', data: {
+        'guest_name': _guestNameController.text,
+        'phone_no': _phoneNoController.text,
+        'booked_room_no': _roomNoController.text,
+        'checkin_date': _checkInDateController.text,
+        'status': _status,
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Booking updated successfully')),
+        );
+        Navigator.pop(context, true); // Return true to refresh list
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update: $e')),
+        );
+      }
+    } finally {
+      setState(() => _loading = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _guestNameController.dispose();
+    _phoneNoController.dispose();
+    _roomNoController.dispose();
+    _checkInDateController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Edit Booking')),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              TextFormField(
+                controller: _guestNameController,
+                decoration: const InputDecoration(labelText: 'Guest Name'),
+                validator: (val) => val!.isEmpty ? 'Required' : null,
+              ),
+              TextFormField(
+                controller: _phoneNoController,
+                decoration: const InputDecoration(labelText: 'Phone Number'),
+                keyboardType: TextInputType.phone,
+                validator: (val) => val!.isEmpty ? 'Required' : null,
+              ),
+              TextFormField(
+                controller: _roomNoController,
+                decoration: const InputDecoration(labelText: 'Room Number(s)'),
+                validator: (val) => val!.isEmpty ? 'Required' : null,
+              ),
+              TextFormField(
+                controller: _checkInDateController,
+                decoration: const InputDecoration(labelText: 'Check-in Date (YYYY-MM-DD)'),
+                validator: (val) {
+                  if (val!.isEmpty) return 'Required';
+                  try {
+                    DateTime.parse(val);
+                    return null;
+                  } catch (e) {
+                    return 'Invalid date format';
+                  }
+                },
+              ),
+              DropdownButtonFormField<String>(
+                value: _status,
+                decoration: const InputDecoration(labelText: 'Status'),
+                items: ['pending', 'paid', 'cancelled'].map((status) {
+                  return DropdownMenuItem(
+                    value: status,
+                    child: Text(status),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() => _status = value!);
+                },
+                validator: (val) => val == null ? 'Required' : null,
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _updateBooking,
+                child: const Text('Save'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
