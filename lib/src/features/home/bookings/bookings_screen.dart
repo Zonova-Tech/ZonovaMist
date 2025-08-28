@@ -50,7 +50,7 @@ class BookingsScreen extends ConsumerWidget {
                           ),
                         );
                         if (result == true) {
-                          ref.refresh(bookingsProvider); // Refresh after edit
+                          ref.refresh(bookingsProvider);
                         }
                       },
                     ),
@@ -80,7 +80,7 @@ class BookingsScreen extends ConsumerWidget {
                           try {
                             final dio = ref.read(dioProvider);
                             await dio.delete('/bookings/${booking['_id']}');
-                            ref.refresh(bookingsProvider); // Refresh after delete
+                            ref.refresh(bookingsProvider);
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text('Booking deleted')),
@@ -113,7 +113,7 @@ class BookingsScreen extends ConsumerWidget {
             MaterialPageRoute(builder: (_) => const AddBookingScreen()),
           );
           if (result == true) {
-            ref.refresh(bookingsProvider); // Refresh after adding
+            ref.refresh(bookingsProvider);
           }
         },
       ),
@@ -121,7 +121,6 @@ class BookingsScreen extends ConsumerWidget {
   }
 }
 
-// New EditBookingScreen
 class EditBookingScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> booking;
 
@@ -137,8 +136,11 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
   late TextEditingController _phoneNoController;
   late TextEditingController _roomNoController;
   late TextEditingController _checkInDateController;
-  String _status = 'pending';
+  String? _status; // Allow null initially
   bool _loading = false;
+
+  // Valid statuses for the dropdown
+  static const List<String> _validStatuses = ['pending', 'paid', 'cancelled'];
 
   @override
   void initState() {
@@ -151,7 +153,17 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
           ? DateFormat('yyyy-MM-dd').format(DateTime.parse(widget.booking['checkin_date']))
           : '',
     );
-    _status = widget.booking['status'] ?? 'pending';
+    // Normalize status to lowercase and validate
+    final rawStatus = widget.booking['status']?.toString().toLowerCase();
+    _status = _validStatuses.contains(rawStatus) ? rawStatus : 'pending';
+    if (rawStatus != null && !_validStatuses.contains(rawStatus)) {
+      debugPrint('Invalid status detected: $rawStatus, defaulting to pending');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Invalid status "${widget.booking['status']}", defaulted to pending')),
+        );
+      });
+    }
   }
 
   Future<void> _updateBooking() async {
@@ -170,7 +182,7 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Booking updated successfully')),
         );
-        Navigator.pop(context, true); // Return true to refresh list
+        Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
@@ -236,14 +248,14 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
               DropdownButtonFormField<String>(
                 value: _status,
                 decoration: const InputDecoration(labelText: 'Status'),
-                items: ['pending', 'paid', 'cancelled'].map((status) {
+                items: _validStatuses.map((status) {
                   return DropdownMenuItem(
                     value: status,
                     child: Text(status),
                   );
                 }).toList(),
                 onChanged: (value) {
-                  setState(() => _status = value!);
+                  setState(() => _status = value);
                 },
                 validator: (val) => val == null ? 'Required' : null,
               ),
