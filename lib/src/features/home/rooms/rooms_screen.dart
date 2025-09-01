@@ -295,7 +295,7 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
                               return Padding(
                                 padding: const EdgeInsets.only(right: 8),
                                 child: Image.network(
-                                  "http://10.0.2.2:3000$photoUrl",
+                                  "http://localhost:3000/api/rooms/image/$photoUrl",
                                   width: 100,
                                   height: 100,
                                   fit: BoxFit.cover,

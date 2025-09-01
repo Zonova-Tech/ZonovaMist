@@ -247,7 +247,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                 if (index < photos.length) {
                   final photoUrl = photos[index];
                   return Image.network(
-                    "http://10.0.2.2:3000$photoUrl",
+                    "http://localhost:3000/api/rooms/image/$photoUrl",
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => const Icon(Icons.error, color: Colors.red),
                   );
