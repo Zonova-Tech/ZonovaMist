@@ -1,4 +1,4 @@
-// booking_screen.dart
+// bookings_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -21,82 +21,142 @@ class BookingsScreen extends ConsumerWidget {
             return const Center(child: Text('No bookings found.'));
           }
           return ListView.builder(
+            padding: const EdgeInsets.all(12),
             itemCount: bookings.length,
             itemBuilder: (context, index) {
               final booking = bookings[index];
-              return ListTile(
-                title: Text(booking['guest_name'] ?? 'Unknown Guest'),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Room(s): ${booking['booked_room_no'] ?? 'N/A'}'),
-                    Text(
-                      'Check-in: ${booking['checkin_date'] != null ? DateFormat('MMM dd, yyyy').format(DateTime.parse(booking['checkin_date'])) : 'N/A'}',
-                    ),
-                    Text('Phone: ${booking['phone_no'] ?? 'N/A'}'),
-                    Text('Status: ${booking['status'] ?? 'N/A'}'),
-                  ],
+              return Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit, color: Colors.blue),
-                      onPressed: () async {
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => EditBookingScreen(booking: booking),
-                          ),
-                        );
-                        if (result == true) {
-                          ref.refresh(bookingsProvider);
-                        }
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () async {
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Delete Booking'),
-                            content: Text(
-                              'Are you sure you want to delete ${booking['guest_name']}\'s booking?',
+                elevation: 4,
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.person, color: Colors.blue.shade700),
+                          const SizedBox(width: 8),
+                          Text(
+                            booking['guest_name'] ?? 'Unknown Guest',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                             ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, false),
-                                child: const Text('Cancel'),
+                          ),
+                          const Spacer(),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit, color: Colors.blue),
+                                onPressed: () async {
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => EditBookingScreen(booking: booking),
+                                    ),
+                                  );
+                                  if (result == true) {
+                                    ref.refresh(bookingsProvider);
+                                  }
+                                },
                               ),
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, true),
-                                child: const Text('Delete'),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () async {
+                                  final confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('Delete Booking'),
+                                      content: Text(
+                                        'Are you sure you want to delete ${booking['guest_name']}\'s booking?',
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context, false),
+                                          child: const Text('Cancel'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context, true),
+                                          child: const Text('Delete'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirm == true) {
+                                    try {
+                                      final dio = ref.read(dioProvider);
+                                      await dio.delete('/bookings/${booking['_id']}');
+                                      ref.refresh(bookingsProvider);
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Booking deleted')),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('Failed to delete: $e')),
+                                        );
+                                      }
+                                    }
+                                  }
+                                },
                               ),
                             ],
                           ),
-                        );
-                        if (confirm == true) {
-                          try {
-                            final dio = ref.read(dioProvider);
-                            await dio.delete('/bookings/${booking['_id']}');
-                            ref.refresh(bookingsProvider);
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Booking deleted')),
-                              );
-                            }
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Failed to delete: $e')),
-                              );
-                            }
-                          }
-                        }
-                      },
-                    ),
-                  ],
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.meeting_room, size: 18, color: Colors.grey),
+                          const SizedBox(width: 6),
+                          Text("Room(s): ${booking['booked_room_no'] ?? 'N/A'}"),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Check-in: ${booking['checkin_date'] != null ? DateFormat('MMM dd, yyyy').format(DateTime.parse(booking['checkin_date'])) : 'N/A'}',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(Icons.phone, size: 18, color: Colors.grey),
+                          const SizedBox(width: 6),
+                          Text('Phone: ${booking['phone_no'] ?? 'N/A'}'),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(Icons.check_circle, size: 18, color: Colors.grey),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Status: ${booking['status'] ?? 'N/A'}',
+                            style: TextStyle(
+                              color: (booking['status'] == 'paid')
+                                  ? Colors.green
+                                  : (booking['status'] == 'pending')
+                                  ? Colors.orange
+                                  : Colors.red,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
@@ -121,151 +181,116 @@ class BookingsScreen extends ConsumerWidget {
   }
 }
 
-class EditBookingScreen extends ConsumerStatefulWidget {
+class EditBookingScreen extends StatefulWidget {
   final Map<String, dynamic> booking;
 
   const EditBookingScreen({super.key, required this.booking});
 
   @override
-  ConsumerState<EditBookingScreen> createState() => _EditBookingScreenState();
+  State<EditBookingScreen> createState() => _EditBookingScreenState();
 }
 
-class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
-  final _formKey = GlobalKey<FormState>();
-  late TextEditingController _guestNameController;
-  late TextEditingController _phoneNoController;
-  late TextEditingController _roomNoController;
-  late TextEditingController _checkInDateController;
-  String? _status; // Allow null initially
-  bool _loading = false;
-
-  // Valid statuses for the dropdown
-  static const List<String> _validStatuses = ['pending', 'paid', 'cancelled'];
+class _EditBookingScreenState extends State<EditBookingScreen> {
+  late TextEditingController clientNameController;
+  late TextEditingController roomNoController;
+  late TextEditingController dateController;
+  late TextEditingController notesController;
 
   @override
   void initState() {
     super.initState();
-    _guestNameController = TextEditingController(text: widget.booking['guest_name'] ?? '');
-    _phoneNoController = TextEditingController(text: widget.booking['phone_no'] ?? '');
-    _roomNoController = TextEditingController(text: widget.booking['booked_room_no'] ?? '');
-    _checkInDateController = TextEditingController(
-      text: widget.booking['checkin_date'] != null
-          ? DateFormat('yyyy-MM-dd').format(DateTime.parse(widget.booking['checkin_date']))
-          : '',
-    );
-    // Normalize status to lowercase and validate
-    final rawStatus = widget.booking['status']?.toString().toLowerCase();
-    _status = _validStatuses.contains(rawStatus) ? rawStatus : 'pending';
-    if (rawStatus != null && !_validStatuses.contains(rawStatus)) {
-      debugPrint('Invalid status detected: $rawStatus, defaulting to pending');
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Invalid status "${widget.booking['status']}", defaulted to pending')),
-        );
-      });
-    }
-  }
-
-  Future<void> _updateBooking() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() => _loading = true);
-    try {
-      final dio = ref.read(dioProvider);
-      await dio.patch('/bookings/${widget.booking['_id']}', data: {
-        'guest_name': _guestNameController.text,
-        'phone_no': _phoneNoController.text,
-        'booked_room_no': _roomNoController.text,
-        'checkin_date': _checkInDateController.text,
-        'status': _status,
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Booking updated successfully')),
-        );
-        Navigator.pop(context, true);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update: $e')),
-        );
-      }
-    } finally {
-      setState(() => _loading = false);
-    }
+    clientNameController =
+        TextEditingController(text: widget.booking['clientName']);
+    roomNoController =
+        TextEditingController(text: widget.booking['roomNo'].toString());
+    dateController = TextEditingController(text: widget.booking['date']);
+    notesController =
+        TextEditingController(text: widget.booking['notes'] ?? '');
   }
 
   @override
   void dispose() {
-    _guestNameController.dispose();
-    _phoneNoController.dispose();
-    _roomNoController.dispose();
-    _checkInDateController.dispose();
+    clientNameController.dispose();
+    roomNoController.dispose();
+    dateController.dispose();
+    notesController.dispose();
     super.dispose();
+  }
+
+  void saveBooking() {
+    final updatedBooking = {
+      'clientName': clientNameController.text,
+      'roomNo': roomNoController.text,
+      'date': dateController.text,
+      'notes': notesController.text,
+    };
+
+    Navigator.pop(context, updatedBooking);
+  }
+
+  Widget _buildTextField(
+      String label,
+      TextEditingController controller, {
+        TextInputType inputType = TextInputType.text,
+        int maxLines = 1,
+      }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextField(
+        controller: controller,
+        keyboardType: inputType,
+        maxLines: maxLines,
+        decoration: InputDecoration(
+          labelText: label,
+          filled: true,
+          fillColor: Colors.grey[100],
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Booking')),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _guestNameController,
-                decoration: const InputDecoration(labelText: 'Guest Name'),
-                validator: (val) => val!.isEmpty ? 'Required' : null,
+      appBar: AppBar(
+        title: const Text("Edit Booking"),
+        backgroundColor: Colors.blueAccent,
+        elevation: 2,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ListView(
+          children: [
+            _buildTextField("Client Name", clientNameController),
+            _buildTextField("Room No", roomNoController,
+                inputType: TextInputType.number),
+            _buildTextField("Booking Date", dateController,
+                inputType: TextInputType.datetime),
+            _buildTextField("Notes", notesController, maxLines: 3),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: saveBooking,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                padding:
+                const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              TextFormField(
-                controller: _phoneNoController,
-                decoration: const InputDecoration(labelText: 'Phone Number'),
-                keyboardType: TextInputType.phone,
-                validator: (val) => val!.isEmpty ? 'Required' : null,
+              child: const Text(
+                "Save Booking",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-              TextFormField(
-                controller: _roomNoController,
-                decoration: const InputDecoration(labelText: 'Room Number(s)'),
-                validator: (val) => val!.isEmpty ? 'Required' : null,
-              ),
-              TextFormField(
-                controller: _checkInDateController,
-                decoration: const InputDecoration(labelText: 'Check-in Date (YYYY-MM-DD)'),
-                validator: (val) {
-                  if (val!.isEmpty) return 'Required';
-                  try {
-                    DateTime.parse(val);
-                    return null;
-                  } catch (e) {
-                    return 'Invalid date format';
-                  }
-                },
-              ),
-              DropdownButtonFormField<String>(
-                value: _status,
-                decoration: const InputDecoration(labelText: 'Status'),
-                items: _validStatuses.map((status) {
-                  return DropdownMenuItem(
-                    value: status,
-                    child: Text(status),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() => _status = value);
-                },
-                validator: (val) => val == null ? 'Required' : null,
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _updateBooking,
-                child: const Text('Save'),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

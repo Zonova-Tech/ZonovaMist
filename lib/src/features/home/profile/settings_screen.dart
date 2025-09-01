@@ -141,26 +141,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 decoration: const InputDecoration(labelText: 'Guest House Name'),
                 validator: (val) => val!.isEmpty ? 'Required' : null,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _guestHouseAddressController,
                 decoration: const InputDecoration(labelText: 'Guest House Address'),
                 validator: (val) => val!.isEmpty ? 'Required' : null,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _hostNameController,
                 decoration: const InputDecoration(labelText: 'Host Name'),
                 validator: (val) => val!.isEmpty ? 'Required' : null,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _telephoneController,
                 decoration: const InputDecoration(labelText: 'Telephone'),
                 keyboardType: TextInputType.phone,
                 validator: (val) => val!.isEmpty ? 'Required' : null,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _newBookingSmsController,
                 decoration: const InputDecoration(
@@ -170,12 +170,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 maxLines: 3,
                 validator: _validateSmsTemplate,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
                 'Valid placeholders: ${_validPlaceholders.join(', ')}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _todayBookingSmsController,
                 decoration: const InputDecoration(
@@ -185,12 +185,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 maxLines: 3,
                 validator: _validateSmsTemplate,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
                 'Valid placeholders: ${_validPlaceholders.join(', ')}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _saveSettings,
                 child: const Text('Save'),

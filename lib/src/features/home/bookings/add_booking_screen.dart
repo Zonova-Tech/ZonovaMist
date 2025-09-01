@@ -76,6 +76,26 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
     }
   }
 
+  Widget _buildCard({required String title, required List<Widget> children}) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('yyyy-MM-dd');
@@ -83,92 +103,114 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Add Booking')),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(12.0),
         child: Form(
           key: _formKey,
           child: ListView(
             children: [
-              TextFormField(
-                controller: _guestNicController,
-                decoration: const InputDecoration(labelText: 'Guest NIC'),
-                validator: (v) => v!.isEmpty ? 'Enter guest NIC' : null,
-              ),
-              TextFormField(
-                controller: _guestNameController,
-                decoration: const InputDecoration(labelText: 'Guest Name'),
-                validator: (v) => v!.isEmpty ? 'Enter guest name' : null,
-              ),
-              TextFormField(
-                controller: _bookedRoomNoController,
-                decoration: const InputDecoration(labelText: 'Booked Room No(s)'),
-              ),
-              Row(
+              _buildCard(
+                title: "Guest Info",
                 children: [
-                  Expanded(
-                    child: ListTile(
-                      title: Text(_checkinDate == null
-                          ? 'Select Check-in Date'
-                          : dateFormat.format(_checkinDate!)),
-                      trailing: const Icon(Icons.calendar_today),
-                      onTap: () => _pickDate(context, true),
-                    ),
+                  TextFormField(
+                    controller: _guestNicController,
+                    decoration: const InputDecoration(labelText: 'Guest NIC'),
+                    validator: (v) => v!.isEmpty ? 'Enter guest NIC' : null,
                   ),
-                  Expanded(
-                    child: ListTile(
-                      title: Text(_checkoutDate == null
-                          ? 'Select Check-out Date'
-                          : dateFormat.format(_checkoutDate!)),
-                      trailing: const Icon(Icons.calendar_today),
-                      onTap: () => _pickDate(context, false),
-                    ),
+                  TextFormField(
+                    controller: _guestNameController,
+                    decoration: const InputDecoration(labelText: 'Guest Name'),
+                    validator: (v) => v!.isEmpty ? 'Enter guest name' : null,
+                  ),
+                  TextFormField(
+                    controller: _guestAddressController,
+                    decoration: const InputDecoration(labelText: 'Guest Address'),
+                  ),
+                  TextFormField(
+                    controller: _phoneNoController,
+                    decoration: const InputDecoration(labelText: 'Phone No'),
                   ),
                 ],
               ),
-              TextFormField(
-                controller: _phoneNoController,
-                decoration: const InputDecoration(labelText: 'Phone No'),
-              ),
-              TextFormField(
-                controller: _adultCountController,
-                decoration: const InputDecoration(labelText: 'Adult Count'),
-                keyboardType: TextInputType.number,
-              ),
-              TextFormField(
-                controller: _childCountController,
-                decoration: const InputDecoration(labelText: 'Child Count'),
-                keyboardType: TextInputType.number,
-              ),
-              TextFormField(
-                controller: _guestAddressController,
-                decoration: const InputDecoration(labelText: 'Guest Address'),
-              ),
-              TextFormField(
-                controller: _totalPriceController,
-                decoration: const InputDecoration(labelText: 'Total Price'),
-                keyboardType: TextInputType.number,
-              ),
-              TextFormField(
-                controller: _specialNotesController,
-                decoration: const InputDecoration(labelText: 'Special Notes'),
-              ),
-              TextFormField(
-                controller: _advanceAmountController,
-                decoration: const InputDecoration(labelText: 'Advance Amount'),
-                keyboardType: TextInputType.number,
-              ),
-              DropdownButtonFormField(
-                value: _status,
-                decoration: const InputDecoration(labelText: 'Status'),
-                items: const [
-                  DropdownMenuItem(value: 'paid', child: Text('Paid')),
-                  DropdownMenuItem(value: 'pending', child: Text('Pending')),
-                  DropdownMenuItem(value: 'cancelled', child: Text('Cancelled')),
+              _buildCard(
+                title: "Booking Details",
+                children: [
+                  TextFormField(
+                    controller: _bookedRoomNoController,
+                    decoration: const InputDecoration(labelText: 'Booked Room No(s)'),
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(_checkinDate == null
+                              ? 'Select Check-in Date'
+                              : dateFormat.format(_checkinDate!)),
+                          trailing: const Icon(Icons.calendar_today),
+                          onTap: () => _pickDate(context, true),
+                        ),
+                      ),
+                      Expanded(
+                        child: ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(_checkoutDate == null
+                              ? 'Select Check-out Date'
+                              : dateFormat.format(_checkoutDate!)),
+                          trailing: const Icon(Icons.calendar_today),
+                          onTap: () => _pickDate(context, false),
+                        ),
+                      ),
+                    ],
+                  ),
+                  TextFormField(
+                    controller: _adultCountController,
+                    decoration: const InputDecoration(labelText: 'Adult Count'),
+                    keyboardType: TextInputType.number,
+                  ),
+                  TextFormField(
+                    controller: _childCountController,
+                    decoration: const InputDecoration(labelText: 'Child Count'),
+                    keyboardType: TextInputType.number,
+                  ),
                 ],
-                onChanged: (value) {
-                  setState(() {
-                    _status = value.toString();
-                  });
-                },
+              ),
+              _buildCard(
+                title: "Payment Info",
+                children: [
+                  TextFormField(
+                    controller: _totalPriceController,
+                    decoration: const InputDecoration(labelText: 'Total Price'),
+                    keyboardType: TextInputType.number,
+                  ),
+                  TextFormField(
+                    controller: _advanceAmountController,
+                    decoration: const InputDecoration(labelText: 'Advance Amount'),
+                    keyboardType: TextInputType.number,
+                  ),
+                  DropdownButtonFormField(
+                    value: _status,
+                    decoration: const InputDecoration(labelText: 'Status'),
+                    items: const [
+                      DropdownMenuItem(value: 'paid', child: Text('Paid')),
+                      DropdownMenuItem(value: 'pending', child: Text('Pending')),
+                      DropdownMenuItem(value: 'cancelled', child: Text('Cancelled')),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _status = value.toString();
+                      });
+                    },
+                  ),
+                ],
+              ),
+              _buildCard(
+                title: "Other",
+                children: [
+                  TextFormField(
+                    controller: _specialNotesController,
+                    decoration: const InputDecoration(labelText: 'Special Notes'),
+                  ),
+                ],
               ),
               const SizedBox(height: 20),
               ElevatedButton(
