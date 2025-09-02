@@ -47,46 +47,86 @@ class _AddRoomScreenState extends ConsumerState<AddRoomScreen> {
           key: _formKey,
           child: ListView(
             children: [
+              // Room Number
               TextFormField(
                 controller: _roomNumberController,
-                decoration: const InputDecoration(labelText: 'Room Number'),
+                decoration: const InputDecoration(
+                  labelText: 'Room Number',
+                  border: OutlineInputBorder(),
+                ),
                 validator: (value) =>
                 value!.isEmpty ? 'Enter room number' : null,
               ),
+              const SizedBox(height: 20),
+
+              // Room Type
               TextFormField(
                 controller: _typeController,
-                decoration: const InputDecoration(labelText: 'Room Type'),
+                decoration: const InputDecoration(
+                  labelText: 'Room Type',
+                  border: OutlineInputBorder(),
+                ),
                 validator: (value) =>
                 value!.isEmpty ? 'Enter room type' : null,
               ),
+              const SizedBox(height: 20),
+
+              // Floor
               TextFormField(
                 controller: _floorController,
-                decoration: const InputDecoration(labelText: 'Floor'),
+                decoration: const InputDecoration(
+                  labelText: 'Floor',
+                  border: OutlineInputBorder(),
+                ),
                 keyboardType: TextInputType.number,
               ),
+              const SizedBox(height: 20),
+
+              // Bed Count
               TextFormField(
                 controller: _bedCountController,
-                decoration: const InputDecoration(labelText: 'Bed Count'),
+                decoration: const InputDecoration(
+                  labelText: 'Bed Count',
+                  border: OutlineInputBorder(),
+                ),
                 keyboardType: TextInputType.number,
               ),
+              const SizedBox(height: 20),
+
+              // Max Occupancy
               TextFormField(
                 controller: _maxOccupancyController,
-                decoration:
-                const InputDecoration(labelText: 'Max Occupancy'),
+                decoration: const InputDecoration(
+                  labelText: 'Max Occupancy',
+                  border: OutlineInputBorder(),
+                ),
                 keyboardType: TextInputType.number,
               ),
+              const SizedBox(height: 20),
+
+              // Price Per Night
               TextFormField(
                 controller: _priceController,
-                decoration:
-                const InputDecoration(labelText: 'Price Per Night'),
+                decoration: const InputDecoration(
+                  labelText: 'Price Per Night',
+                  border: OutlineInputBorder(),
+                ),
                 keyboardType: TextInputType.number,
               ),
+              const SizedBox(height: 20),
+
+              // Status Dropdown
               DropdownButtonFormField(
                 value: _status,
-                decoration: const InputDecoration(labelText: 'Status'),
+                decoration: const InputDecoration(
+                  labelText: 'Status',
+                  border: OutlineInputBorder(),
+                ),
                 items: const [
-                  DropdownMenuItem(value: 'available', child: Text('Available')),
-                  DropdownMenuItem(value: 'occupied', child: Text('Occupied')),
+                  DropdownMenuItem(
+                      value: 'available', child: Text('Available')),
+                  DropdownMenuItem(
+                      value: 'occupied', child: Text('Occupied')),
                   DropdownMenuItem(
                       value: 'maintenance', child: Text('Maintenance')),
                 ],
@@ -96,10 +136,21 @@ class _AddRoomScreenState extends ConsumerState<AddRoomScreen> {
                   });
                 },
               ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _addRoom,
-                child: const Text('Add Room'),
+              const SizedBox(height: 30),
+
+              // Add Room Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _addRoom,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: const Text(
+                    'Add Room',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
               ),
             ],
           ),

@@ -19,7 +19,9 @@ class _EditRoomScreenState extends ConsumerState<EditRoomScreen> {
   @override
   void initState() {
     super.initState();
-    priceController = TextEditingController(text: widget.room['pricePerNight'].toString());
+    priceController = TextEditingController(
+      text: widget.room['pricePerNight'].toString(),
+    );
     status = widget.room['status'];
   }
 
@@ -40,26 +42,47 @@ class _EditRoomScreenState extends ConsumerState<EditRoomScreen> {
       appBar: AppBar(title: const Text('Edit Room')),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
+        child: ListView(
           children: [
+            // Price Field
             TextField(
               controller: priceController,
-              decoration: const InputDecoration(labelText: 'Price Per Night'),
+              decoration: const InputDecoration(
+                labelText: 'Price Per Night',
+                border: OutlineInputBorder(),
+              ),
               keyboardType: TextInputType.number,
             ),
+            const SizedBox(height: 20),
+
+            // Status Dropdown
             DropdownButtonFormField<String>(
               value: status,
-              decoration: const InputDecoration(labelText: 'Status'),
+              decoration: const InputDecoration(
+                labelText: 'Status',
+                border: OutlineInputBorder(),
+              ),
               items: ['available', 'occupied', 'maintenance']
                   .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                   .toList(),
               onChanged: (val) => setState(() => status = val!),
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _saveChanges,
-              child: const Text('Save Changes'),
-            )
+            const SizedBox(height: 30),
+
+            // Save Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _saveChanges,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: const Text(
+                  'Save Changes',
+                  style: TextStyle(fontSize: 16),
+                ),
+              ),
+            ),
           ],
         ),
       ),

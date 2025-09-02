@@ -7,9 +7,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../../core/auth/rooms_provider.dart';
 import '../../../core/api/api_service.dart';
-import 'room_details_screen.dart';
 import 'add_room_screen.dart';
 import '../edit_room_screen.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 class RoomsScreen extends ConsumerStatefulWidget {
   const RoomsScreen({super.key});
@@ -19,9 +19,9 @@ class RoomsScreen extends ConsumerStatefulWidget {
 }
 
 class _RoomsScreenState extends ConsumerState<RoomsScreen> {
-  // Map to track selected files for each room by room ID
+  // Track selected files for each room by room ID
   Map<String, List<XFile>> _selectedFilesMap = {};
-  // Map to track upload futures for each room by room ID
+  // Track upload futures for each room
   Map<String, Future<void>?> _uploadFuturesMap = {};
 
   Future<void> _pickAndSaveImages(String roomId) async {
@@ -44,20 +44,13 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
     request.fields['roomId'] = roomId;
 
     for (var image in images) {
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          'photos',
-          image.path,
-        ),
-      );
+      request.files.add(await http.MultipartFile.fromPath('photos', image.path));
     }
 
     try {
       var response = await request.send();
-
       if (response.statusCode == 200) {
         final respStr = await response.stream.bytesToString();
-        debugPrint('✅ Image uploaded successfully: $respStr');
         final decoded = jsonDecode(respStr);
 
         if (decoded['photoUrls'] != null) {
@@ -69,7 +62,7 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
                 ...?rooms[roomIndex]['photos'],
                 ...decoded['photoUrls']
               ];
-              _selectedFilesMap[roomId] = []; // Clear local files after upload
+              _selectedFilesMap[roomId] = [];
             });
           }
           if (context.mounted) {
@@ -80,16 +73,15 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
         }
       } else {
         final respStr = await response.stream.bytesToString();
-        debugPrint('❌ Failed to upload image. Status: ${response.statusCode}');
-        debugPrint('Response body: $respStr');
+        debugPrint('❌ Failed upload: ${response.statusCode} - $respStr');
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to upload photos: ${response.statusCode}')),
+            SnackBar(content: Text('Failed to upload: ${response.statusCode}')),
           );
         }
       }
     } catch (e) {
-      debugPrint('⚠️ Error uploading image: $e');
+      debugPrint('⚠️ Upload error: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error uploading photos: $e')),
@@ -107,7 +99,6 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
       appBar: AppBar(
         title: const Text('Rooms'),
         backgroundColor: Colors.blueAccent,
-        elevation: 2,
       ),
       body: roomsAsync.when(
         data: (rooms) {
@@ -123,205 +114,241 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
               final photos = room['photos'] ?? [];
               final selectedFiles = _selectedFilesMap[roomId] ?? [];
 
-              return Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 4,
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.meeting_room, color: Colors.blue.shade700),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Room ${room['roomNumber'] ?? 'N/A'} - ${room['type'] ?? 'Unknown Type'}',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+              return Slidable(
+                key: ValueKey(roomId),
+                endActionPane: ActionPane(
+                  motion: const DrawerMotion(),
+                  children: [
+                    SlidableAction(
+                      onPressed: (context) async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => EditRoomScreen(room: room),
                           ),
-                          const Spacer(),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit, color: Colors.blue),
-                                onPressed: () async {
-                                  final result = await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => EditRoomScreen(room: room),
-                                    ),
-                                  );
-                                  if (result == true) {
-                                    ref.invalidate(roomsProvider);
-                                  }
-                                },
+                        );
+                        if (result == true) {
+                          ref.invalidate(roomsProvider);
+                        }
+                      },
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      icon: Icons.edit,
+                      label: 'Edit',
+                    ),
+                    SlidableAction(
+                      onPressed: (context) async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Delete Room'),
+                            content: Text(
+                              'Are you sure you want to delete Room ${room['roomNumber']}?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancel'),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () async {
-                                  final confirm = await showDialog<bool>(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      title: const Text('Delete Room'),
-                                      content: Text(
-                                        'Are you sure you want to delete Room ${room['roomNumber']}?',
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () => Navigator.pop(context, false),
-                                          child: const Text('Cancel'),
-                                        ),
-                                        TextButton(
-                                          onPressed: () => Navigator.pop(context, true),
-                                          child: const Text('Delete'),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                  if (confirm == true) {
-                                    try {
-                                      await dio.delete('/rooms/$roomId');
-                                      ref.invalidate(roomsProvider);
-                                      if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text('Room deleted')),
-                                        );
-                                      }
-                                    } catch (e) {
-                                      if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(content: Text('Failed to delete: $e')),
-                                        );
-                                      }
-                                    }
-                                  }
-                                },
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text('Delete'),
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          const Icon(Icons.stairs, size: 18, color: Colors.grey),
-                          const SizedBox(width: 6),
-                          Text('Floor: ${room['floor'] ?? 'N/A'}'),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          const Icon(Icons.people, size: 18, color: Colors.grey),
-                          const SizedBox(width: 6),
-                          Text('Max Occupancy: ${room['maxOccupancy'] ?? 'N/A'}'),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          const Icon(Icons.attach_money, size: 18, color: Colors.grey),
-                          const SizedBox(width: 6),
-                          Text('Price: LKR ${room['pricePerNight'] ?? 'N/A'}'),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          const Icon(Icons.check_circle, size: 18, color: Colors.grey),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Status: ${room['status'] ?? 'N/A'}',
-                            style: TextStyle(
-                              color: (room['status'] == 'available')
-                                  ? Colors.green
-                                  : Colors.red,
-                              fontWeight: FontWeight.w600,
+                        );
+                        if (confirm == true) {
+                          try {
+                            await dio.delete('/rooms/$roomId');
+                            ref.invalidate(roomsProvider);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Room deleted')),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Failed to delete: $e')),
+                              );
+                            }
+                          }
+                        }
+                      },
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      icon: Icons.delete,
+                      label: 'Delete',
+                    ),
+                  ],
+                ),
+                child: Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 4,
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.meeting_room,
+                                color: Colors.blue.shade700),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Room ${room['roomNumber'] ?? 'N/A'} - ${room['type'] ?? 'Unknown Type'}',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(Icons.stairs,
+                                size: 18, color: Colors.grey),
+                            const SizedBox(width: 6),
+                            Text('Floor: ${room['floor'] ?? 'N/A'}'),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(Icons.people,
+                                size: 18, color: Colors.grey),
+                            const SizedBox(width: 6),
+                            Text('Max Occupancy: ${room['maxOccupancy'] ?? 'N/A'}'),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(Icons.attach_money,
+                                size: 18, color: Colors.grey),
+                            const SizedBox(width: 6),
+                            Text('Price: LKR ${room['pricePerNight'] ?? 'N/A'}'),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(Icons.check_circle,
+                                size: 18, color: Colors.grey),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Status: ${room['status'] ?? 'N/A'}',
+                              style: TextStyle(
+                                color: (room['status'] == 'available')
+                                    ? Colors.green
+                                    : Colors.red,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Photos',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: () => _pickAndSaveImages(roomId),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blueAccent,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 30, vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Photos',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: () => _pickAndSaveImages(roomId),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blueAccent,
-                          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                          child: const Text(
+                            'Add Photos',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
-                        child: const Text(
-                          'Add Photos',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                        const SizedBox(height: 8),
+                        if (_uploadFuturesMap[roomId] != null)
+                          FutureBuilder<void>(
+                            future: _uploadFuturesMap[roomId],
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const LinearProgressIndicator();
+                              } else if (snapshot.hasError) {
+                                return Text(
+                                  'Error: ${snapshot.error}',
+                                  style: const TextStyle(color: Colors.red),
+                                );
+                              } else {
+                                return const Text(
+                                  'Upload complete!',
+                                  style: TextStyle(color: Colors.green),
+                                );
+                              }
+                            },
+                          ),
+                        const SizedBox(height: 8),
+                        photos.isEmpty && selectedFiles.isEmpty
+                            ? const Text('No photos available.')
+                            : SizedBox(
+                          height: 100,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount:
+                            photos.length + selectedFiles.length,
+                            itemBuilder: (context, photoIndex) {
+                              if (photoIndex < photos.length) {
+                                final photoUrl = photos[photoIndex];
+                                return Padding(
+                                  padding:
+                                  const EdgeInsets.only(right: 8),
+                                  child: Image.network(
+                                    "${dio.options.baseUrl}/rooms/image/$photoUrl",
+                                    width: 100,
+                                    height: 100,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                    const Icon(Icons.error,
+                                        color: Colors.red),
+                                  ),
+                                );
+                              } else {
+                                final localIndex =
+                                (photoIndex - photos.length).toInt();
+                                return Padding(
+                                  padding:
+                                  const EdgeInsets.only(right: 8),
+                                  child: Image.file(
+                                    File(selectedFiles[localIndex].path),
+                                    width: 100,
+                                    height: 100,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                    const Icon(Icons.error,
+                                        color: Colors.red),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      if (_uploadFuturesMap[roomId] != null)
-                        FutureBuilder<void>(
-                          future: _uploadFuturesMap[roomId],
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              return const LinearProgressIndicator();
-                            } else if (snapshot.hasError) {
-                              return Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.red));
-                            } else {
-                              return const Text('Upload complete!', style: TextStyle(color: Colors.green));
-                            }
-                          },
-                        ),
-                      const SizedBox(height: 8),
-                      photos.isEmpty && selectedFiles.isEmpty
-                          ? const Text('No photos available.')
-                          : SizedBox(
-                        height: 100,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: photos.length + selectedFiles.length,
-                          itemBuilder: (context, photoIndex) {
-                            if (photoIndex < photos.length) {
-                              final photoUrl = photos[photoIndex];
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: Image.network(
-                                  "${dio.options.baseUrl}/rooms/image/$photoUrl",
-                                  width: 100,
-                                  height: 100,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                  const Icon(Icons.error, color: Colors.red),
-                                ),
-                              );
-                            } else {
-                              final localIndex = (photoIndex - photos.length).toInt();
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: Image.file(
-                                  File(selectedFiles[localIndex].path),
-                                  width: 100,
-                                  height: 100,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                  const Icon(Icons.error, color: Colors.red),
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               );
