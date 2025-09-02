@@ -37,7 +37,8 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
   }
 
   Future<void> _uploadImagesToServer(String roomId, List<XFile> images) async {
-    const String apiUrl = 'http://10.0.2.2:3000/api/images/upload';
+    final dio = ref.read(dioProvider);
+    final String apiUrl = '${dio.options.baseUrl}/images/upload';
 
     var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
     request.fields['roomId'] = roomId;
@@ -100,6 +101,7 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
   @override
   Widget build(BuildContext context) {
     final roomsAsync = ref.watch(roomsProvider);
+    final dio = ref.read(dioProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -185,7 +187,6 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
                                   );
                                   if (confirm == true) {
                                     try {
-                                      final dio = ref.read(dioProvider);
                                       await dio.delete('/rooms/$roomId');
                                       ref.invalidate(roomsProvider);
                                       if (context.mounted) {
@@ -295,11 +296,12 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
                               return Padding(
                                 padding: const EdgeInsets.only(right: 8),
                                 child: Image.network(
-                                  "http://localhost:3000/api/rooms/image/$photoUrl",
+                                  "${dio.options.baseUrl}/rooms/image/$photoUrl",
                                   width: 100,
                                   height: 100,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.error, color: Colors.red),
+                                  errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(Icons.error, color: Colors.red),
                                 ),
                               );
                             } else {
@@ -311,7 +313,8 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
                                   width: 100,
                                   height: 100,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.error, color: Colors.red),
+                                  errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(Icons.error, color: Colors.red),
                                 ),
                               );
                             }

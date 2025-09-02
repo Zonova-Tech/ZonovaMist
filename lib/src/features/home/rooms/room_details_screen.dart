@@ -4,18 +4,21 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/api/api_service.dart';
 import '../edit_room_screen.dart';
+import '../../../core/api/api_service.dart';
 
-class RoomDetailsScreen extends StatefulWidget {
+class RoomDetailsScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> room;
 
   const RoomDetailsScreen({super.key, required this.room});
 
   @override
-  State<RoomDetailsScreen> createState() => _RoomDetailsScreenState();
+  ConsumerState<RoomDetailsScreen> createState() => _RoomDetailsScreenState();
 }
 
-class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
+class _RoomDetailsScreenState extends ConsumerState<RoomDetailsScreen> {
   List<XFile> _selectedFiles = [];
   Future<void>? _uploadFuture;
 
@@ -32,7 +35,8 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
   }
 
   Future<void> _uploadImagesToServer(List<XFile> images) async {
-    const String apiUrl = 'http://10.0.2.2:3000/api/images/upload';
+    final dio = ref.read(dioProvider);
+    final String apiUrl = '${dio.options.baseUrl}/images/upload';
 
     var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
     request.fields['roomId'] = widget.room['_id'];
@@ -86,6 +90,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final dio = ref.read(dioProvider);
     final photos = widget.room['photos'] ?? [];
 
     return Scaffold(
@@ -114,6 +119,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
+            // Room Info Card
             Card(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -247,16 +253,18 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                 if (index < photos.length) {
                   final photoUrl = photos[index];
                   return Image.network(
-                    "http://localhost:3000/api/rooms/image/$photoUrl",
+                    "${dio.options.baseUrl}/rooms/image/$photoUrl",
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => const Icon(Icons.error, color: Colors.red),
+                    errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.error, color: Colors.red),
                   );
                 } else {
                   final localIndex = (index - photos.length).toInt();
                   return Image.file(
                     File(_selectedFiles[localIndex].path),
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => const Icon(Icons.error, color: Colors.red),
+                    errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.error, color: Colors.red),
                   );
                 }
               },

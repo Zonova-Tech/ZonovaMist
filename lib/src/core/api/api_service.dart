@@ -12,7 +12,7 @@ final dioProvider = Provider<Dio>((ref) {
   } else {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        baseUrl = 'http://192.168.1.10:3000/api'; // Android emulator
+        baseUrl = 'http://192.168.1.10:3000/api'; // Android device
         // Use 'http://192.168.1.10:3000/api' for real Android device
         break;
       case TargetPlatform.iOS:
