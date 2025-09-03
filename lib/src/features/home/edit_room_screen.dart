@@ -20,20 +20,51 @@ class _EditRoomScreenState extends ConsumerState<EditRoomScreen> {
   void initState() {
     super.initState();
     priceController = TextEditingController(
-      text: widget.room['pricePerNight'].toString(),
+      text: widget.room['pricePerNight']?.toString() ?? '',
     );
-    status = widget.room['status'];
+    status = (widget.room['status'] as String?) ?? 'available';
   }
 
   Future<void> _saveChanges() async {
-    final dio = ref.read(dioProvider);
-    await dio.patch('/rooms/${widget.room['_id']}', data: {
-      'pricePerNight': int.parse(priceController.text),
-      'status': status,
-    });
-    ref.invalidate(roomsProvider);
-    Navigator.pop(context);
-    Navigator.pop(context); // also pop details page
+    final text = priceController.text.trim();
+    if (text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Price cannot be empty')),
+      );
+      return;
+    }
+
+    final price = int.tryParse(text);
+    if (price == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a valid number for price')),
+      );
+      return;
+    }
+
+    try {
+      final dio = ref.read(dioProvider);
+      final resp = await dio.patch('/rooms/${widget.room['_id']}', data: {
+        'pricePerNight': price,
+        'status': status,
+      });
+
+      if ((resp.statusCode ?? 500) >= 200 && (resp.statusCode ?? 500) < 300) {
+        ref.refresh(roomsProvider);
+        if (!mounted) return;
+        Navigator.of(context).pop(true); // ✅ return success
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save: ${resp.statusCode}')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving changes: $e')),
+      );
+    }
   }
 
   @override
@@ -44,43 +75,35 @@ class _EditRoomScreenState extends ConsumerState<EditRoomScreen> {
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
-            // Price Field
             TextField(
               controller: priceController,
+              keyboardType: TextInputType.number,
               decoration: const InputDecoration(
                 labelText: 'Price Per Night',
                 border: OutlineInputBorder(),
               ),
-              keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 20),
-
-            // Status Dropdown
             DropdownButtonFormField<String>(
               value: status,
               decoration: const InputDecoration(
                 labelText: 'Status',
                 border: OutlineInputBorder(),
               ),
-              items: ['available', 'occupied', 'maintenance']
-                  .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                  .toList(),
-              onChanged: (val) => setState(() => status = val!),
+              items: const [
+                DropdownMenuItem(value: 'available', child: Text('available')),
+                DropdownMenuItem(value: 'occupied', child: Text('occupied')),
+                DropdownMenuItem(value: 'maintenance', child: Text('maintenance')),
+              ],
+              onChanged: (val) => setState(() => status = val ?? status),
             ),
             const SizedBox(height: 30),
-
-            // Save Button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: _saveChanges,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                child: const Text(
-                  'Save Changes',
-                  style: TextStyle(fontSize: 16),
-                ),
+                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
+                child: const Text('Save Changes', style: TextStyle(fontSize: 16)),
               ),
             ),
           ],
