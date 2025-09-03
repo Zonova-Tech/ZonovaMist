@@ -51,7 +51,7 @@ class LoginScreen extends ConsumerWidget {
                 const SizedBox(height: 48),
                 FormBuilderTextField(
                   name: 'email',
-                  initialValue: 'shan21@gmail.com', //for testing purposes
+                  // initialValue: 'shan21@gmail.com', //for testing purposes #TODO remove
                   decoration: InputDecoration(labelText: l10n.email, hintText: l10n.emailHint),
                   validator: FormBuilderValidators.compose([
                     FormBuilderValidators.required(errorText: l10n.fieldRequired),
@@ -61,7 +61,7 @@ class LoginScreen extends ConsumerWidget {
                 const SizedBox(height: 20),
                 FormBuilderTextField(
                   name: 'password',
-                  initialValue: '123456', //for testing purposes
+                  // initialValue: '123456', //for testing purposes #TODO remove
                   obscureText: true,
                   decoration: InputDecoration(labelText: l10n.password, hintText: l10n.passwordHint),
                   validator: FormBuilderValidators.required(errorText: l10n.fieldRequired),
