@@ -82,6 +82,10 @@ class BookingsScreen extends ConsumerWidget {
                       foregroundColor: Colors.white,
                       icon: Icons.edit,
                       label: 'Edit',
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        bottomLeft: Radius.circular(12),
+                      ),
                     ),
                     SlidableAction(
                       onPressed: (_) => _onDelete(context, ref, booking),
@@ -89,6 +93,10 @@ class BookingsScreen extends ConsumerWidget {
                       foregroundColor: Colors.white,
                       icon: Icons.delete,
                       label: 'Delete',
+                      borderRadius: const BorderRadius.only(
+                        topRight: Radius.circular(12),
+                        bottomRight: Radius.circular(12),
+                      ),
                     ),
                   ],
                 ),

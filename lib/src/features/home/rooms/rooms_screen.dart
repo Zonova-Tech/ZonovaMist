@@ -180,6 +180,10 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
                       foregroundColor: Colors.white,
                       icon: Icons.edit,
                       label: 'Edit',
+                      borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(12),
+                          bottomLeft: Radius.circular(12),
+                      ),
                     ),
                     SlidableAction(
                       onPressed: (_) => _onDelete(room), // ✅ use helper (page context)
@@ -187,6 +191,10 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
                       foregroundColor: Colors.white,
                       icon: Icons.delete,
                       label: 'Delete',
+                      borderRadius: const BorderRadius.only(
+                        topRight: Radius.circular(12),
+                        bottomRight: Radius.circular(12),
+                      ),
                     ),
                   ],
                 ),
