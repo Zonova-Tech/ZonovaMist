@@ -210,6 +210,7 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
   late TextEditingController roomNoController;
   late TextEditingController dateController;
   late TextEditingController notesController;
+  late TextEditingController birthdayController;
   late String status;
 
   @override
@@ -219,6 +220,7 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
     roomNoController = TextEditingController(text: widget.booking['booked_room_no']?.toString());
     dateController = TextEditingController(text: widget.booking['checkin_date']);
     notesController = TextEditingController(text: widget.booking['notes'] ?? '');
+    birthdayController = TextEditingController(text: widget.booking['birthday'] ?? '');
     status = widget.booking['status'] ?? 'pending';
   }
 
@@ -228,6 +230,7 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
     roomNoController.dispose();
     dateController.dispose();
     notesController.dispose();
+    birthdayController.dispose();
     super.dispose();
   }
 
@@ -238,6 +241,7 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
         'guest_name': clientNameController.text,
         'booked_room_no': int.tryParse(roomNoController.text) ?? roomNoController.text,
         'checkin_date': dateController.text,
+        'birthday': birthdayController.text,
         'notes': notesController.text,
         'status': status,
       });
@@ -303,6 +307,7 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
             _buildTextField("Room No", roomNoController, inputType: TextInputType.number),
             _buildTextField("Check-in Date", dateController, inputType: TextInputType.datetime),
             _buildTextField("Notes", notesController, maxLines: 3),
+            _buildTextField("Birthday (YYYY-MM-DD)", birthdayController, inputType: TextInputType.datetime),
             const SizedBox(height: 12),
             // Status Dropdown
             DropdownButtonFormField<String>(

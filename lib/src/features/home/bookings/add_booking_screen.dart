@@ -18,6 +18,7 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
   final _bookedRoomNoController = TextEditingController();
   DateTime? _checkinDate;
   DateTime? _checkoutDate;
+  DateTime? _birthday;
   final _phoneNoController = TextEditingController();
   final _adultCountController = TextEditingController();
   final _childCountController = TextEditingController();
@@ -45,23 +46,40 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
     }
   }
 
-  Future<void> _addBooking() async {
-    if (_formKey.currentState!.validate()) {
-      if (_checkinDate == null || _checkoutDate == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select check-in and check-out dates')),
-        );
-        return;
-      }
+  Future<void> _pickBirthday(BuildContext context) async {
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (selected != null) {
+      setState(() {
+        _birthday = selected;
+      });
+    }
+  }
 
+  Future<void> _addBooking() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (_checkinDate == null || _checkoutDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select check-in and check-out dates')),
+      );
+      return;
+    }
+
+    try {
       final dio = ref.read(dioProvider);
 
-      await dio.post('/bookings', data: {
+      final data = {
         'guest_nic': _guestNicController.text,
         'guest_name': _guestNameController.text,
         'booked_room_no': _bookedRoomNoController.text,
         'checkin_date': _checkinDate!.toIso8601String(),
         'checkout_date': _checkoutDate!.toIso8601String(),
+        'birthday': _birthday?.toIso8601String(), // safe null check
         'phone_no': _phoneNoController.text,
         'adult_count': int.tryParse(_adultCountController.text) ?? 0,
         'child_count': int.tryParse(_childCountController.text) ?? 0,
@@ -70,9 +88,24 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
         'special_notes': _specialNotesController.text,
         'advance_amount': double.tryParse(_advanceAmountController.text) ?? 0,
         'status': _status,
-      });
+      };
 
+      print("➡️ Sending booking data: $data"); // Debug log
+
+      final response = await dio.post('/bookings', data: data);
+
+      print("✅ Booking added successfully: ${response.data}");
+
+      if (!mounted) return;
       Navigator.pop(context, true);
+    } catch (e, stack) {
+      print("❌ Error adding booking: $e");
+      print(stack);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to add booking: $e')),
+        );
+      }
     }
   }
 
@@ -161,6 +194,14 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
                         ),
                       ),
                     ],
+                  ),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(_birthday == null
+                        ? 'Select Birthday'
+                        : dateFormat.format(_birthday!)),
+                    trailing: const Icon(Icons.cake),
+                    onTap: () => _pickBirthday(context),
                   ),
                   TextFormField(
                     controller: _adultCountController,
