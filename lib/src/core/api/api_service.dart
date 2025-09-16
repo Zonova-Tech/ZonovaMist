@@ -8,11 +8,11 @@ final dioProvider = Provider<Dio>((ref) {
 
   if (kIsWeb) {
     // Web must use LAN IP
-    baseUrl = 'http://192.168.8.149:3000/api';
+    baseUrl = 'http://192.168.1.10:3000/api';
   } else {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        baseUrl = 'http://192.168.8.149:3000/api'; // Android device
+        baseUrl = 'http://192.168.1.10:3000/api'; // Android device
         // Use 'http://192.168.1.10:3000/api' for real Android device
         break;
       case TargetPlatform.iOS:
