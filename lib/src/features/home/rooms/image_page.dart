@@ -1,8 +1,9 @@
-// room_details_page.dart
-
+// image_page.dart
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io'; // Required for the File class
+import 'dart:io' if (dart.library.html) 'dart:html';
+import 'dart:typed_data';
 
 class RoomDetailsPage extends StatefulWidget {
   final String roomId;
@@ -15,14 +16,25 @@ class RoomDetailsPage extends StatefulWidget {
 
 class _RoomDetailsPageState extends State<RoomDetailsPage> {
   List<XFile> _selectedImages = [];
+  List<Uint8List> _selectedImageBytes = [];
 
   Future<void> _pickImages() async {
     final ImagePicker picker = ImagePicker();
     final List<XFile>? images = await picker.pickMultiImage();
 
     if (images != null && images.isNotEmpty) {
+      List<Uint8List> imageBytes = [];
+      if (kIsWeb) {
+        for (var image in images) {
+          final bytes = await image.readAsBytes();
+          imageBytes.add(bytes);
+        }
+      }
       setState(() {
         _selectedImages.addAll(images);
+        if (kIsWeb) {
+          _selectedImageBytes.addAll(imageBytes);
+        }
       });
     }
   }
@@ -35,25 +47,32 @@ class _RoomDetailsPageState extends State<RoomDetailsPage> {
       ),
       body: Column(
         children: [
-          // A button to add photos
           ElevatedButton(
             onPressed: _pickImages,
             child: const Text('Add Photos'),
           ),
           const SizedBox(height: 10),
-          // Display the selected photos
           Expanded(
             child: GridView.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3, // Number of images per row
+                crossAxisCount: 3,
                 crossAxisSpacing: 4.0,
                 mainAxisSpacing: 4.0,
               ),
               itemCount: _selectedImages.length,
               itemBuilder: (context, index) {
-                return Image.file(
+                return kIsWeb
+                    ? Image.memory(
+                  _selectedImageBytes[index],
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                  const Icon(Icons.error, color: Colors.red),
+                )
+                    : Image.file(
                   File(_selectedImages[index].path),
                   fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                  const Icon(Icons.error, color: Colors.red),
                 );
               },
             ),

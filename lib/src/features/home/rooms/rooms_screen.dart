@@ -38,7 +38,7 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
 
   Future<void> _uploadImagesToServer(String roomId, List<XFile> images) async {
     final dio = ref.read(dioProvider);
-    final String apiUrl = '${dio.options.baseUrl}/images/upload';
+    final String apiUrl = '${dio.options.baseUrl}/images/upload/room';
 
     final request = http.MultipartRequest('POST', Uri.parse(apiUrl))
       ..fields['roomId'] = roomId;

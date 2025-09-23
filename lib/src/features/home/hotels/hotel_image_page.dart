@@ -1,24 +1,26 @@
-// room_details_screen.dart
+// hotel_image_page.dart
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'dart:io' if (dart.library.html) 'dart:html';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/api_service.dart';
-import '../edit_room_screen.dart';
 
-class RoomDetailsScreen extends ConsumerStatefulWidget {
-  final Map<String, dynamic> room;
+class HotelDetailsScreen extends ConsumerStatefulWidget {
+  final Map<String, dynamic> hotel;
 
-  const RoomDetailsScreen({super.key, required this.room});
+  const HotelDetailsScreen({super.key, required this.hotel});
 
   @override
-  ConsumerState<RoomDetailsScreen> createState() => _RoomDetailsScreenState();
+  ConsumerState<HotelDetailsScreen> createState() => _HotelDetailsScreenState();
 }
 
-class _RoomDetailsScreenState extends ConsumerState<RoomDetailsScreen> {
+class _HotelDetailsScreenState extends ConsumerState<HotelDetailsScreen> {
   List<XFile> _selectedFiles = [];
+  List<Uint8List> _selectedFileBytes = [];
   Future<void>? _uploadFuture;
 
   Future<void> _pickAndSaveImages() async {
@@ -26,8 +28,18 @@ class _RoomDetailsScreenState extends ConsumerState<RoomDetailsScreen> {
     final List<XFile>? images = await picker.pickMultiImage();
 
     if (images != null && images.isNotEmpty) {
+      List<Uint8List> imageBytes = [];
+      if (kIsWeb) {
+        for (var image in images) {
+          final bytes = await image.readAsBytes();
+          imageBytes.add(bytes);
+        }
+      }
       setState(() {
         _selectedFiles.addAll(images);
+        if (kIsWeb) {
+          _selectedFileBytes.addAll(imageBytes);
+        }
         _uploadFuture = _uploadImagesToServer(images);
       });
     }
@@ -35,16 +47,18 @@ class _RoomDetailsScreenState extends ConsumerState<RoomDetailsScreen> {
 
   Future<void> _uploadImagesToServer(List<XFile> images) async {
     final dio = ref.read(dioProvider);
-    final String apiUrl = '${dio.options.baseUrl}/images/upload';
+    final String apiUrl = '${dio.options.baseUrl}/images/upload/hotel';
 
     var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
-    request.fields['roomId'] = widget.room['_id'];
+    request.fields['hotelId'] = widget.hotel['_id'];
 
     for (var image in images) {
+      final bytes = await image.readAsBytes();
       request.files.add(
-        await http.MultipartFile.fromPath(
+        http.MultipartFile.fromBytes(
           'photos',
-          image.path,
+          bytes,
+          filename: image.name,
         ),
       );
     }
@@ -54,14 +68,16 @@ class _RoomDetailsScreenState extends ConsumerState<RoomDetailsScreen> {
 
       if (response.statusCode == 200) {
         final respStr = await response.stream.bytesToString();
-        debugPrint('✅ Image uploaded successfully: $respStr');
         final decoded = jsonDecode(respStr);
 
         if (decoded['photoUrls'] != null) {
           setState(() {
-            widget.room['photos'] = [...?widget.room['photos'], ...decoded['photoUrls']];
+            widget.hotel['photos'] = [...?widget.hotel['photos'], ...decoded['photoUrls']];
+            _selectedFiles = [];
+            _selectedFileBytes = [];
           });
         }
+
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Photos uploaded successfully')),
@@ -70,7 +86,7 @@ class _RoomDetailsScreenState extends ConsumerState<RoomDetailsScreen> {
       } else {
         final respStr = await response.stream.bytesToString();
         debugPrint('❌ Failed to upload image. Status: ${response.statusCode}');
-        debugPrint('Response body: $respStr');
+        debugPrint('Response: $respStr');
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Failed to upload photos: ${response.statusCode}')),
@@ -90,132 +106,46 @@ class _RoomDetailsScreenState extends ConsumerState<RoomDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final dio = ref.read(dioProvider);
-    final photos = widget.room['photos'] ?? [];
+    final photos = widget.hotel['photos'] ?? [];
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Room Details'),
+        title: Text('Hotel Details - ${widget.hotel['name'] ?? 'Hotel'}'),
         backgroundColor: Colors.blueAccent,
-        elevation: 2,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit, color: Colors.white),
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => EditRoomScreen(room: widget.room),
-                ),
-              );
-              if (result == true && context.mounted) {
-                setState(() {}); // Refresh UI if room data is updated
-              }
-            },
-          ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
-            // Room Info Card
             Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               elevation: 4,
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Icon(Icons.meeting_room, color: Colors.blue.shade700),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Room ${widget.room['roomNumber'] ?? 'N/A'} - ${widget.room['type'] ?? 'Unknown Type'}',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        const Icon(Icons.stairs, size: 18, color: Colors.grey),
-                        const SizedBox(width: 6),
-                        Text('Floor: ${widget.room['floor'] ?? 'N/A'}'),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.people, size: 18, color: Colors.grey),
-                        const SizedBox(width: 6),
-                        Text('Max Occupancy: ${widget.room['maxOccupancy'] ?? 'N/A'}'),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.bed, size: 18, color: Colors.grey),
-                        const SizedBox(width: 6),
-                        Text('Bed Count: ${widget.room['bedCount'] ?? 'N/A'}'),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.attach_money, size: 18, color: Colors.grey),
-                        const SizedBox(width: 6),
-                        Text('Price Per Night: LKR ${widget.room['pricePerNight'] ?? 'N/A'}'),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.check_circle, size: 18, color: Colors.grey),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Status: ${widget.room['status'] ?? 'N/A'}',
-                          style: TextStyle(
-                            color: widget.room['status'] == 'available' ? Colors.green : Colors.red,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Amenities',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                    const SizedBox(height: 4),
                     Text(
-                      widget.room['amenities']?.join(', ') ?? '-',
-                      style: const TextStyle(fontSize: 14),
+                      widget.hotel['name'] ?? 'Hotel Name',
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
+                    const SizedBox(height: 8),
+                    Text('City: ${widget.hotel['location']?['city'] ?? '-'}'),
+                    const SizedBox(height: 4),
+                    Text('Star Rating: ${widget.hotel['starRating'] ?? '-'}'),
+                    const SizedBox(height: 4),
+                    Text('Price Range: LKR ${widget.hotel['priceRange'] ?? '-'}'),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Photos',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            const SizedBox(height: 8),
             ElevatedButton(
               onPressed: _pickAndSaveImages,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blueAccent,
                 padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               child: const Text(
                 'Add Photos',
@@ -236,7 +166,7 @@ class _RoomDetailsScreenState extends ConsumerState<RoomDetailsScreen> {
                   }
                 },
               ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
             photos.isEmpty && _selectedFiles.isEmpty
                 ? const Text('No photos available.')
                 : GridView.builder(
@@ -252,14 +182,21 @@ class _RoomDetailsScreenState extends ConsumerState<RoomDetailsScreen> {
                 if (index < photos.length) {
                   final photoUrl = photos[index];
                   return Image.network(
-                    "${dio.options.baseUrl}/rooms/image/$photoUrl",
+                    "${dio.options.baseUrl}/images/image/$photoUrl",
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) =>
                     const Icon(Icons.error, color: Colors.red),
                   );
                 } else {
                   final localIndex = (index - photos.length).toInt();
-                  return Image.file(
+                  return kIsWeb
+                      ? Image.memory(
+                    _selectedFileBytes[localIndex],
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.error, color: Colors.red),
+                  )
+                      : Image.file(
                     File(_selectedFiles[localIndex].path),
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) =>
