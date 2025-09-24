@@ -26,7 +26,7 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
   final _totalPriceController = TextEditingController();
   final _specialNotesController = TextEditingController();
   final _advanceAmountController = TextEditingController();
-  String _status = 'paid';
+  String _status = 'pending';
 
   Future<void> _pickDate(BuildContext context, bool isCheckin) async {
     final selected = await showDatePicker(
@@ -134,7 +134,7 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
     final dateFormat = DateFormat('yyyy-MM-dd');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Booking')),
+      appBar: AppBar(title: const Text('Add Reservations')),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Form(
@@ -232,8 +232,8 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
                     value: _status,
                     decoration: const InputDecoration(labelText: 'Status'),
                     items: const [
-                      DropdownMenuItem(value: 'paid', child: Text('Paid')),
                       DropdownMenuItem(value: 'pending', child: Text('Pending')),
+                      DropdownMenuItem(value: 'paid', child: Text('Paid')),
                       DropdownMenuItem(value: 'cancelled', child: Text('Cancelled')),
                     ],
                     onChanged: (value) {
