@@ -30,6 +30,12 @@ class RegisterScreen extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Image.asset(
+                  'assets/icons/logo.png',
+                  width: 100,
+                  height: 100,
+                ),
+                const SizedBox(height: 16),
                 Text(
                   'Create Account',
                   textAlign: TextAlign.center,
@@ -61,10 +67,17 @@ class RegisterScreen extends ConsumerWidget {
                 Consumer(
                   builder: (context, ref, child) {
                     final authState = ref.watch(authProvider);
-                    final isLoading = authState.when(loading: () => true, authenticated: (_) => false, unauthenticated: () => false, error: (_) => false,);
+                    final isLoading = authState.when(
+                      loading: () => true,
+                      authenticated: (_) => false,
+                      unauthenticated: () => false,
+                      error: (_) => false,
+                    );
 
                     return ElevatedButton(
-                      onPressed: isLoading ? null : () async {
+                      onPressed: isLoading
+                          ? null
+                          : () async {
                         if (formKey.currentState?.saveAndValidate() ?? false) {
                           final fields = formKey.currentState!.value;
                           final result = await ref.read(authProvider.notifier).register(
@@ -76,7 +89,12 @@ class RegisterScreen extends ConsumerWidget {
                           if (result == 'Success' && context.mounted) {
                             ScaffoldMessenger.of(context)
                               ..hideCurrentSnackBar()
-                              ..showSnackBar(SnackBar(content: Text(l10n.registrationSuccess), backgroundColor: Colors.green,));
+                              ..showSnackBar(
+                                SnackBar(
+                                  content: Text(l10n.registrationSuccess),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
                             AppRouter.back();
                           } else {
                             ScaffoldMessenger.of(context)
@@ -85,7 +103,9 @@ class RegisterScreen extends ConsumerWidget {
                           }
                         }
                       },
-                      child: isLoading ? const CircularProgressIndicator(color: Colors.white) : Text(l10n.register),
+                      child: isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : Text(l10n.register),
                     );
                   },
                 ),

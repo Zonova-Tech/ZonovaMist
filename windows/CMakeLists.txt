@@ -4,7 +4,7 @@ project(map_market LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
-set(BINARY_NAME "map_market")
+set(BINARY_NAME "Zonova Mist")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
