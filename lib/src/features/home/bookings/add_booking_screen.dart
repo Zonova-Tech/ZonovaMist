@@ -79,7 +79,7 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
         'booked_room_no': _bookedRoomNoController.text,
         'checkin_date': _checkinDate!.toIso8601String(),
         'checkout_date': _checkoutDate!.toIso8601String(),
-        'birthday': _birthday?.toIso8601String(), // safe null check
+        'birthday': _birthday?.toIso8601String(),
         'phone_no': _phoneNoController.text,
         'adult_count': int.tryParse(_adultCountController.text) ?? 0,
         'child_count': int.tryParse(_childCountController.text) ?? 0,
@@ -90,22 +90,18 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
         'status': _status,
       };
 
-      print("➡️ Sending booking data: $data"); // Debug log
+      await dio.post('/bookings', data: data);
 
-      final response = await dio.post('/bookings', data: data);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Booking added successfully!')),
+      );
 
-      print("✅ Booking added successfully: ${response.data}");
-
-      if (!mounted) return;
-      Navigator.pop(context, true);
     } catch (e, stack) {
       print("❌ Error adding booking: $e");
       print(stack);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to add booking: $e')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to add booking: $e')),
+      );
     }
   }
 
@@ -119,8 +115,7 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             ...children,
           ],
@@ -134,7 +129,7 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
     final dateFormat = DateFormat('yyyy-MM-dd');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Reservations')),
+      appBar: AppBar(title: const Text('Add Reservation')),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Form(

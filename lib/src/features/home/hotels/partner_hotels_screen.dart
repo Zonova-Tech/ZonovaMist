@@ -1,15 +1,11 @@
-// partner_hotels_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../../core/auth/hotels_provider.dart';
 import '../../../core/api/api_service.dart';
+import '../../../shared/widgets/common_image_manager.dart';
 import 'add_hotel_screen.dart';
 import 'edit_hotel_screen.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 
 class PartnerHotelsScreen extends ConsumerStatefulWidget {
   const PartnerHotelsScreen({super.key});
@@ -19,72 +15,6 @@ class PartnerHotelsScreen extends ConsumerStatefulWidget {
 }
 
 class _PartnerHotelsScreenState extends ConsumerState<PartnerHotelsScreen> {
-  final Map<String, List<XFile>> _selectedFilesMap = {};
-  final Map<String, Future<void>?> _uploadFuturesMap = {};
-
-  Future<void> _pickAndSaveImages(String hotelId) async {
-    final picker = ImagePicker();
-    final List<XFile>? images = await picker.pickMultiImage();
-
-    if (images != null && images.isNotEmpty) {
-      setState(() {
-        _selectedFilesMap[hotelId] = [...?_selectedFilesMap[hotelId], ...images];
-        _uploadFuturesMap[hotelId] = _uploadImagesToServer(hotelId, images);
-      });
-    }
-  }
-
-  Future<void> _uploadImagesToServer(String hotelId, List<XFile> images) async {
-    final dio = ref.read(dioProvider);
-    final String apiUrl = '${dio.options.baseUrl}/images/upload';
-
-    final request = http.MultipartRequest('POST', Uri.parse(apiUrl))
-      ..fields['hotelId'] = hotelId;
-
-    for (var image in images) {
-      request.files.add(await http.MultipartFile.fromPath('photos', image.path));
-    }
-
-    try {
-      final response = await request.send();
-      if (response.statusCode == 200) {
-        final respStr = await response.stream.bytesToString();
-        final decoded = jsonDecode(respStr);
-
-        if (decoded['photoUrls'] != null) {
-          final hotels = ref.read(hotelsProvider).value ?? [];
-          final hotelIndex = hotels.indexWhere((h) => h['_id'] == hotelId);
-          if (hotelIndex != -1) {
-            setState(() {
-              hotels[hotelIndex]['photos'] = [
-                ...?hotels[hotelIndex]['photos'],
-                ...decoded['photoUrls']
-              ];
-              _selectedFilesMap[hotelId] = [];
-            });
-          }
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Photos uploaded successfully')),
-          );
-        }
-      } else {
-        final respStr = await response.stream.bytesToString();
-        debugPrint('❌ Failed upload: ${response.statusCode} - $respStr');
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to upload: ${response.statusCode}')),
-        );
-      }
-    } catch (e) {
-      debugPrint('⚠️ Upload error: $e');
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error uploading photos: $e')),
-      );
-    }
-  }
-
   Future<void> _onEdit(Map<String, dynamic> hotel) async {
     final result = await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => EditHotelScreen(hotel: Map<String, dynamic>.from(hotel))),
@@ -101,7 +31,7 @@ class _PartnerHotelsScreenState extends ConsumerState<PartnerHotelsScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Partner Hotel'),
+        title: const Text('Delete Hotel'),
         content: Text('Are you sure you want to delete $hotelName?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
@@ -119,7 +49,7 @@ class _PartnerHotelsScreenState extends ConsumerState<PartnerHotelsScreen> {
           if (mounted) {
             ref.refresh(hotelsProvider);
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Partner Hotel deleted')),
+              const SnackBar(content: Text('Hotel deleted')),
             );
           }
         } else {
@@ -130,10 +60,11 @@ class _PartnerHotelsScreenState extends ConsumerState<PartnerHotelsScreen> {
           }
         }
       } catch (e) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error deleting hotel: $e')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to delete: $e')),
+          );
+        }
       }
     }
   }
@@ -141,13 +72,9 @@ class _PartnerHotelsScreenState extends ConsumerState<PartnerHotelsScreen> {
   @override
   Widget build(BuildContext context) {
     final hotelsAsync = ref.watch(hotelsProvider);
-    final dio = ref.read(dioProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Partner Hotels'),
-        backgroundColor: Colors.blueAccent,
-      ),
+      appBar: AppBar(title: const Text('Partner Hotels'), backgroundColor: Colors.blueAccent),
       body: hotelsAsync.when(
         data: (hotels) {
           if (hotels.isEmpty) {
@@ -159,15 +86,13 @@ class _PartnerHotelsScreenState extends ConsumerState<PartnerHotelsScreen> {
             itemCount: hotels.length,
             itemBuilder: (context, index) {
               final hotel = hotels[index] as Map<String, dynamic>;
-              final hotelId = hotel['_id'] as String;
-              final photos = hotel['photos'] ?? [];
-              final selectedFiles = _selectedFilesMap[hotelId] ?? [];
+              final hotelId = hotel['_id'] as String? ?? '';
 
               return Slidable(
                 key: ValueKey(hotelId),
                 endActionPane: ActionPane(
                   motion: const DrawerMotion(),
-                  extentRatio: 0.45,
+                  extentRatio: 0.4,
                   children: [
                     SlidableAction(
                       onPressed: (_) => _onEdit(hotel),
@@ -175,10 +100,6 @@ class _PartnerHotelsScreenState extends ConsumerState<PartnerHotelsScreen> {
                       foregroundColor: Colors.white,
                       icon: Icons.edit,
                       label: 'Edit',
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(12),
-                        bottomLeft: Radius.circular(12),
-                      ),
                     ),
                     SlidableAction(
                       onPressed: (_) => _onDelete(hotel),
@@ -186,10 +107,6 @@ class _PartnerHotelsScreenState extends ConsumerState<PartnerHotelsScreen> {
                       foregroundColor: Colors.white,
                       icon: Icons.delete,
                       label: 'Delete',
-                      borderRadius: const BorderRadius.only(
-                        topRight: Radius.circular(12),
-                        bottomRight: Radius.circular(12),
-                      ),
                     ),
                   ],
                 ),
@@ -216,78 +133,33 @@ class _PartnerHotelsScreenState extends ConsumerState<PartnerHotelsScreen> {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Text('Location: ${hotel['location'] ?? 'N/A'}'),
-                        const SizedBox(height: 6),
-                        Text('Rating: ${hotel['rating'] ?? 'N/A'}'),
-                        const SizedBox(height: 6),
-                        Text('Contact: ${hotel['contact'] ?? 'N/A'}'),
-                        const SizedBox(height: 12),
-                        const Text('Photos', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                        const SizedBox(height: 8),
-                        ElevatedButton(
-                          onPressed: () => _pickAndSaveImages(hotelId),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueAccent,
-                            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          child: const Text(
-                            'Add Photos',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                          ),
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on, size: 18, color: Colors.grey),
+                            const SizedBox(width: 6),
+                            Text('Location: ${hotel['location'] ?? 'N/A'}'),
+                          ],
                         ),
-                        const SizedBox(height: 8),
-                        if (_uploadFuturesMap[hotelId] != null)
-                          FutureBuilder<void>(
-                            future: _uploadFuturesMap[hotelId],
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState == ConnectionState.waiting) {
-                                return const LinearProgressIndicator();
-                              } else if (snapshot.hasError) {
-                                return Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.red));
-                              } else {
-                                return const Text('Upload complete!', style: TextStyle(color: Colors.green));
-                              }
-                            },
-                          ),
-                        const SizedBox(height: 8),
-                        photos.isEmpty && selectedFiles.isEmpty
-                            ? const Text('No photos available.')
-                            : SizedBox(
-                          height: 100,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: photos.length + selectedFiles.length,
-                            itemBuilder: (context, photoIndex) {
-                              if (photoIndex < photos.length) {
-                                final photoUrl = photos[photoIndex];
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 8),
-                                  child: Image.network(
-                                    "${dio.options.baseUrl}/partner-hotels/image/$photoUrl",
-                                    width: 100,
-                                    height: 100,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) =>
-                                    const Icon(Icons.error, color: Colors.red),
-                                  ),
-                                );
-                              } else {
-                                final localIndex = (photoIndex - photos.length);
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 8),
-                                  child: Image.file(
-                                    File(selectedFiles[localIndex.toInt()].path),
-                                    width: 100,
-                                    height: 100,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) =>
-                                    const Icon(Icons.error, color: Colors.red),
-                                  ),
-                                );
-                              }
-                            },
-                          ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(Icons.star, size: 18, color: Colors.grey),
+                            const SizedBox(width: 6),
+                            Text('Rating: ${hotel['rating'] ?? 'N/A'}'),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(Icons.attach_money, size: 18, color: Colors.grey),
+                            const SizedBox(width: 6),
+                            Text('Price: LKR ${hotel['price'] ?? 'N/A'}'),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        CommonImageManager(
+                          entityType: 'Hotel',
+                          entityId: hotelId,
                         ),
                       ],
                     ),

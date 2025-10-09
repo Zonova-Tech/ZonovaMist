@@ -1,12 +1,11 @@
-// hotel_details_screen.dart
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:typed_data';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../../../core/api/api_service.dart';
-import 'edit_hotel_screen.dart';
+
 
 class HotelDetailsScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> hotel;
@@ -19,188 +18,122 @@ class HotelDetailsScreen extends ConsumerStatefulWidget {
 
 class _HotelDetailsScreenState extends ConsumerState<HotelDetailsScreen> {
   List<XFile> _selectedFiles = [];
+  List<Uint8List> _selectedFileBytes = [];
   Future<void>? _uploadFuture;
 
-  Future<void> _pickAndSaveImages() async {
+  Future<void> _pickImages() async {
     final picker = ImagePicker();
-    final List<XFile>? images = await picker.pickMultiImage();
+    final images = await picker.pickMultiImage();
 
     if (images != null && images.isNotEmpty) {
+      final bytesList = await Future.wait(images.map((f) => f.readAsBytes()));
+
       setState(() {
         _selectedFiles.addAll(images);
-        _uploadFuture = _uploadImagesToServer(images);
+        _selectedFileBytes.addAll(bytesList);
       });
     }
   }
 
-  Future<void> _uploadImagesToServer(List<XFile> images) async {
+  Future<void> _uploadImages() async {
+    if (_selectedFiles.isEmpty) return;
+
     final dio = ref.read(dioProvider);
     final String apiUrl = '${dio.options.baseUrl}/images/upload';
 
-    var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
-    request.fields['hotelId'] = widget.hotel['_id'];
+    var request = http.MultipartRequest('POST', Uri.parse(apiUrl))
+      ..fields['moduleId'] = widget.hotel['_id']
+      ..fields['moduleType'] = 'Hotel'
+      ..fields['uploadedBy'] = 'admin'
+      ..fields['imageType'] = 'general'
+      ..fields['api_key'] = '351448583232497';
 
-    for (var image in images) {
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          'photos',
-          image.path,
-        ),
-      );
+    for (var image in _selectedFiles) {
+      request.files.add(await http.MultipartFile.fromPath('photos', image.path));
     }
 
-    try {
-      var response = await request.send();
-
-      if (response.statusCode == 200) {
+    setState(() {
+      _uploadFuture = request.send().then((response) async {
         final respStr = await response.stream.bytesToString();
-        debugPrint('✅ Image uploaded successfully: $respStr');
-        final decoded = jsonDecode(respStr);
-
-        if (decoded['photoUrls'] != null) {
-          setState(() {
-            widget.hotel['photos'] = [...?widget.hotel['photos'], ...decoded['photoUrls']];
-          });
+        if (response.statusCode == 200) {
+          final decoded = jsonDecode(respStr);
+          if (decoded['results'] != null) {
+            setState(() {
+              widget.hotel['photos'] = [
+                ...?widget.hotel['photos'],
+                ...decoded['results'].map((r) => r['url']).toList()
+              ];
+              _selectedFiles.clear();
+              _selectedFileBytes.clear();
+            });
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Photos uploaded successfully')),
+              );
+            }
+          }
+        } else {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Upload failed: ${response.statusCode}')),
+            );
+          }
         }
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Photos uploaded successfully')),
-          );
-        }
-      } else {
-        final respStr = await response.stream.bytesToString();
-        debugPrint('❌ Failed to upload image. Status: ${response.statusCode}');
-        debugPrint('Response body: $respStr');
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to upload photos: ${response.statusCode}')),
-          );
-        }
-      }
-    } catch (e) {
-      debugPrint('⚠️ Error uploading image: $e');
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error uploading photos: $e')),
-        );
-      }
-    }
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final dio = ref.read(dioProvider);
-    final photos = widget.hotel['photos'] ?? [];
+    final photos = List<String>.from(widget.hotel['photos'] ?? []);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Hotel Details'),
+        title: Text(widget.hotel['name'] ?? 'Hotel Details'),
         backgroundColor: Colors.blueAccent,
-        elevation: 2,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit, color: Colors.white),
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => EditHotelScreen(hotel: widget.hotel),
-                ),
-              );
-              if (result == true && context.mounted) {
-                setState(() {}); // Refresh UI if hotel data is updated
-              }
-            },
-          ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
-            // Hotel Info Card
             Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               elevation: 4,
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Icon(Icons.hotel, color: Colors.blue.shade700),
-                        const SizedBox(width: 8),
-                        Text(
-                          widget.hotel['name'] ?? 'Unnamed Hotel',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on, size: 18, color: Colors.grey),
-                        const SizedBox(width: 6),
-                        Text('Location: ${widget.hotel['location'] ?? 'N/A'}'),
-                      ],
-                    ),
+                    Text(widget.hotel['name'] ?? 'Hotel Name',
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.star, size: 18, color: Colors.grey),
-                        const SizedBox(width: 6),
-                        Text('Rating: ${widget.hotel['rating'] ?? 'N/A'}'),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.attach_money, size: 18, color: Colors.grey),
-                        const SizedBox(width: 6),
-                        Text('Price: LKR ${widget.hotel['price'] ?? 'N/A'}'),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Amenities',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
+                    Text('City: ${widget.hotel['location']?['city'] ?? '-'}'),
                     const SizedBox(height: 4),
-                    Text(
-                      widget.hotel['amenities']?.join(', ') ?? '-',
-                      style: const TextStyle(fontSize: 14),
-                    ),
+                    Text('Star Rating: ${widget.hotel['starRating'] ?? '-'}'),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Photos',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            const SizedBox(height: 8),
             ElevatedButton(
-              onPressed: _pickAndSaveImages,
+              onPressed: _pickImages,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blueAccent,
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                padding: const EdgeInsets.symmetric(vertical: 14),
               ),
-              child: const Text(
-                'Add Photos',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
+              child: const Text('Select Images', style: TextStyle(color: Colors.white)),
             ),
             const SizedBox(height: 8),
+            if (_selectedFiles.isNotEmpty)
+              ElevatedButton(
+                onPressed: _uploadImages,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: const Text('Upload Images', style: TextStyle(color: Colors.white)),
+              ),
+            const SizedBox(height: 12),
             if (_uploadFuture != null)
               FutureBuilder<void>(
                 future: _uploadFuture,
@@ -214,7 +147,7 @@ class _HotelDetailsScreenState extends ConsumerState<HotelDetailsScreen> {
                   }
                 },
               ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             photos.isEmpty && _selectedFiles.isEmpty
                 ? const Text('No photos available.')
                 : GridView.builder(
@@ -225,24 +158,13 @@ class _HotelDetailsScreenState extends ConsumerState<HotelDetailsScreen> {
                 crossAxisSpacing: 8,
                 mainAxisSpacing: 8,
               ),
-              itemCount: photos.length + _selectedFiles.length,
+              itemCount: photos.length + _selectedFileBytes.length,
               itemBuilder: (context, index) {
                 if (index < photos.length) {
-                  final photoUrl = photos[index];
-                  return Image.network(
-                    "${dio.options.baseUrl}/hotels/image/$photoUrl",
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) =>
-                    const Icon(Icons.error, color: Colors.red),
-                  );
+                  return Image.network(photos[index], fit: BoxFit.cover);
                 } else {
-                  final localIndex = (index - photos.length).toInt();
-                  return Image.file(
-                    File(_selectedFiles[localIndex].path),
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) =>
-                    const Icon(Icons.error, color: Colors.red),
-                  );
+                  final localIndex = index - photos.length;
+                  return Image.memory(_selectedFileBytes[localIndex], fit: BoxFit.cover);
                 }
               },
             ),

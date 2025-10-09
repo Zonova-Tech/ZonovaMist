@@ -20,7 +20,17 @@ final dioProvider = Provider<Dio>((ref) {
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
+        print('➡️ Request: ${options.method} ${options.baseUrl}${options.path}');
         handler.next(options);
+      },
+      onResponse: (response, handler) {
+        print('⬅️ Response: ${response.statusCode} ${response.data}');
+        handler.next(response);
+      },
+      onError: (DioException e, handler) {
+        print('‼️ Dio error: ${e.message}');
+        print('   Response: ${e.response?.statusCode} - ${e.response?.data}');
+        handler.next(e);
       },
     ),
   );

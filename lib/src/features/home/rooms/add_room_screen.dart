@@ -23,55 +23,61 @@ class _AddRoomScreenState extends ConsumerState<AddRoomScreen> {
     if (_formKey.currentState!.validate()) {
       final dio = ref.read(dioProvider);
 
-      await dio.post('/rooms', data: {
-        'roomNumber': _roomNumberController.text,
-        'type': _typeController.text,
-        'floor': int.parse(_floorController.text),
-        'bedCount': int.parse(_bedCountController.text),
-        'maxOccupancy': int.parse(_maxOccupancyController.text),
-        'pricePerNight': double.parse(_priceController.text),
-        'status': _status,
-      });
+      try {
+        await dio.post('/rooms', data: {
+          'roomNumber': _roomNumberController.text,
+          'type': _typeController.text,
+          'floor': int.parse(_floorController.text),
+          'bedCount': int.parse(_bedCountController.text),
+          'maxOccupancy': int.parse(_maxOccupancyController.text),
+          'pricePerNight': double.parse(_priceController.text),
+          'status': _status,
+        });
 
-      Navigator.pop(context, true);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Room added successfully')),
+          );
+          Navigator.pop(context, true);
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to add room: $e')),
+          );
+        }
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Room')),
+      appBar: AppBar(title: const Text('Add Room'), backgroundColor: Colors.blueAccent),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
           child: ListView(
             children: [
-              // Room Number
               TextFormField(
                 controller: _roomNumberController,
                 decoration: const InputDecoration(
                   labelText: 'Room Number',
                   border: OutlineInputBorder(),
                 ),
-                validator: (value) =>
-                value!.isEmpty ? 'Enter room number' : null,
+                validator: (value) => value!.isEmpty ? 'Enter room number' : null,
               ),
               const SizedBox(height: 20),
-
-              // Room Type
               TextFormField(
                 controller: _typeController,
                 decoration: const InputDecoration(
                   labelText: 'Room Type',
                   border: OutlineInputBorder(),
                 ),
-                validator: (value) =>
-                value!.isEmpty ? 'Enter room type' : null,
+                validator: (value) => value!.isEmpty ? 'Enter room type' : null,
               ),
               const SizedBox(height: 20),
-
-              // Floor
               TextFormField(
                 controller: _floorController,
                 decoration: const InputDecoration(
@@ -81,8 +87,6 @@ class _AddRoomScreenState extends ConsumerState<AddRoomScreen> {
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 20),
-
-              // Bed Count
               TextFormField(
                 controller: _bedCountController,
                 decoration: const InputDecoration(
@@ -92,8 +96,6 @@ class _AddRoomScreenState extends ConsumerState<AddRoomScreen> {
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 20),
-
-              // Max Occupancy
               TextFormField(
                 controller: _maxOccupancyController,
                 decoration: const InputDecoration(
@@ -103,8 +105,6 @@ class _AddRoomScreenState extends ConsumerState<AddRoomScreen> {
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 20),
-
-              // Price Per Night
               TextFormField(
                 controller: _priceController,
                 decoration: const InputDecoration(
@@ -114,8 +114,6 @@ class _AddRoomScreenState extends ConsumerState<AddRoomScreen> {
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 20),
-
-              // Status Dropdown
               DropdownButtonFormField(
                 value: _status,
                 decoration: const InputDecoration(
@@ -123,12 +121,9 @@ class _AddRoomScreenState extends ConsumerState<AddRoomScreen> {
                   border: OutlineInputBorder(),
                 ),
                 items: const [
-                  DropdownMenuItem(
-                      value: 'available', child: Text('Available')),
-                  DropdownMenuItem(
-                      value: 'occupied', child: Text('Occupied')),
-                  DropdownMenuItem(
-                      value: 'maintenance', child: Text('Maintenance')),
+                  DropdownMenuItem(value: 'available', child: Text('Available')),
+                  DropdownMenuItem(value: 'occupied', child: Text('Occupied')),
+                  DropdownMenuItem(value: 'maintenance', child: Text('Maintenance')),
                 ],
                 onChanged: (value) {
                   setState(() {
@@ -137,8 +132,6 @@ class _AddRoomScreenState extends ConsumerState<AddRoomScreen> {
                 },
               ),
               const SizedBox(height: 30),
-
-              // Add Room Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(

@@ -1,10 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import '../../../core/api/api_service.dart';
+import '../../../shared/widgets/common_image_manager.dart';
 import 'add_booking_screen.dart';
 import 'bookings_provider.dart';
-import 'package:Zonova_Mist/src/core/api/api_service.dart';
+import 'edit_booking_screen.dart';
 
 class BookingsScreen extends ConsumerWidget {
   const BookingsScreen({super.key});
@@ -82,10 +85,6 @@ class BookingsScreen extends ConsumerWidget {
                       foregroundColor: Colors.white,
                       icon: Icons.edit,
                       label: 'Edit',
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(12),
-                        bottomLeft: Radius.circular(12),
-                      ),
                     ),
                     SlidableAction(
                       onPressed: (_) => _onDelete(context, ref, booking),
@@ -93,10 +92,6 @@ class BookingsScreen extends ConsumerWidget {
                       foregroundColor: Colors.white,
                       icon: Icons.delete,
                       label: 'Delete',
-                      borderRadius: const BorderRadius.only(
-                        topRight: Radius.circular(12),
-                        bottomRight: Radius.circular(12),
-                      ),
                     ),
                   ],
                 ),
@@ -127,48 +122,15 @@ class BookingsScreen extends ConsumerWidget {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Icon(Icons.meeting_room, size: 18, color: Colors.grey),
-                            const SizedBox(width: 6),
-                            Text("Room(s): ${booking['booked_room_no'] ?? 'N/A'}"),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Check-in: ${booking['checkin_date'] != null ? DateFormat('MMM dd, yyyy').format(DateTime.parse(booking['checkin_date'])) : 'N/A'}',
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            const Icon(Icons.phone, size: 18, color: Colors.grey),
-                            const SizedBox(width: 6),
-                            Text('Phone: ${booking['phone_no'] ?? 'N/A'}'),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            const Icon(Icons.check_circle, size: 18, color: Colors.grey),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Status: ${booking['status'] ?? 'N/A'}',
-                              style: TextStyle(
-                                color: (booking['status'] == 'paid')
-                                    ? Colors.green
-                                    : (booking['status'] == 'pending')
-                                    ? Colors.orange
-                                    : Colors.red,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
+                        Text('Room: ${booking['booked_room_no'] ?? 'N/A'}'),
+                        Text('Check-in: ${DateFormat('yyyy-MM-dd').format(DateTime.parse(booking['checkin_date'] ?? DateTime.now().toIso8601String()))}'),
+                        Text('Check-out: ${DateFormat('yyyy-MM-dd').format(DateTime.parse(booking['checkout_date'] ?? DateTime.now().toIso8601String()))}'),
+                        Text('Status: ${booking['status'] ?? 'N/A'}'),
+                        const SizedBox(height: 12),
+                        if (booking['_id'] != null && booking['_id'].isNotEmpty)
+                        CommonImageManager(
+                          entityType: 'Booking',
+                          entityId: booking['_id'],
                         ),
                       ],
                     ),
@@ -182,7 +144,6 @@ class BookingsScreen extends ConsumerWidget {
         error: (err, stack) => Center(child: Text('Error: $err')),
       ),
       floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add),
         onPressed: () async {
           final result = await Navigator.push(
             context,
@@ -192,154 +153,8 @@ class BookingsScreen extends ConsumerWidget {
             ref.refresh(bookingsProvider);
           }
         },
+        child: const Icon(Icons.add),
       ),
     );
   }
 }
-class EditBookingScreen extends ConsumerStatefulWidget {
-  final Map<String, dynamic> booking;
-
-  const EditBookingScreen({super.key, required this.booking});
-
-  @override
-  ConsumerState<EditBookingScreen> createState() => _EditBookingScreenState();
-}
-
-class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
-  late TextEditingController clientNameController;
-  late TextEditingController roomNoController;
-  late TextEditingController dateController;
-  late TextEditingController notesController;
-  late TextEditingController birthdayController;
-  late String status;
-
-  @override
-  void initState() {
-    super.initState();
-    clientNameController = TextEditingController(text: widget.booking['guest_name']);
-    roomNoController = TextEditingController(text: widget.booking['booked_room_no']?.toString());
-    dateController = TextEditingController(text: widget.booking['checkin_date']);
-    notesController = TextEditingController(text: widget.booking['notes'] ?? '');
-    birthdayController = TextEditingController(text: widget.booking['birthday'] ?? '');
-    status = widget.booking['status'] ?? 'pending';
-  }
-
-  @override
-  void dispose() {
-    clientNameController.dispose();
-    roomNoController.dispose();
-    dateController.dispose();
-    notesController.dispose();
-    birthdayController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _saveBooking() async {
-    final dio = ref.read(dioProvider);
-    try {
-      await dio.patch('/bookings/${widget.booking['_id']}', data: {
-        'guest_name': clientNameController.text,
-        'booked_room_no': int.tryParse(roomNoController.text) ?? roomNoController.text,
-        'checkin_date': dateController.text,
-        'birthday': birthdayController.text,
-        'notes': notesController.text,
-        'status': status,
-      });
-
-      ref.invalidate(bookingsProvider);
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Booking updated successfully')),
-        );
-        Navigator.pop(context, true);
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update booking: $e')),
-        );
-      }
-    }
-  }
-
-  Widget _buildTextField(
-      String label,
-      TextEditingController controller, {
-        TextInputType inputType = TextInputType.text,
-        int maxLines = 1,
-      }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: TextField(
-        controller: controller,
-        keyboardType: inputType,
-        maxLines: maxLines,
-        decoration: InputDecoration(
-          labelText: label,
-          filled: true,
-          fillColor: Colors.grey[100],
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Edit Booking"),
-        backgroundColor: Colors.blueAccent,
-        elevation: 2,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: [
-            _buildTextField("Guest Name", clientNameController),
-            _buildTextField("Room No", roomNoController, inputType: TextInputType.number),
-            _buildTextField("Check-in Date", dateController, inputType: TextInputType.datetime),
-            _buildTextField("Notes", notesController, maxLines: 3),
-            _buildTextField("Birthday (YYYY-MM-DD)", birthdayController, inputType: TextInputType.datetime),
-            const SizedBox(height: 12),
-            // Status Dropdown
-            DropdownButtonFormField<String>(
-              value: status,
-              decoration: const InputDecoration(
-                labelText: 'Status',
-                border: OutlineInputBorder(),
-              ),
-              items: ['paid', 'pending', 'cancelled']
-                  .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                  .toList(),
-              onChanged: (val) => setState(() => status = val!),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _saveBooking,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent,
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text(
-                "Save Booking",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
