@@ -217,8 +217,26 @@ class _CommonImageManagerState extends ConsumerState<CommonImageManager> {
                   top: 8,
                   right: 8,
                   child: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
                     onPressed: () => _deleteImage(img['public_id']),
+                    icon: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade100,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.red.shade200.withOpacity(0.4),
+                            blurRadius: 4,
+                            offset: const Offset(1, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.close, // ❌ Cross icon instead of trash
+                        color: Colors.red,
+                        size: 20,
+                      ),
+                    ),
                   ),
                 ),
               ],
