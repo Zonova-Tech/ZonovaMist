@@ -100,7 +100,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 // Email
                 FormBuilderTextField(
                   name: 'email',
-                  initialValue: _savedEmail ?? '', // auto-fill
+                  initialValue: "shan21@gmail.com", //TODO: remove
+                  // initialValue: _savedEmail ?? '', // auto-fill
                   decoration: InputDecoration(
                     labelText: l10n.email,
                     hintText: l10n.emailHint,
@@ -115,7 +116,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 // Password with eye button
                 FormBuilderTextField(
                   name: 'password',
-                  initialValue: _savedPassword ?? '', // auto-fill
+                  initialValue: "123456", //TODO: remove
+                  // initialValue: _savedPassword ?? '', // auto-fill
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     labelText: l10n.password,

@@ -14,6 +14,8 @@ class EditRoomScreen extends ConsumerStatefulWidget {
 
 class _EditRoomScreenState extends ConsumerState<EditRoomScreen> {
   late TextEditingController priceController;
+  late TextEditingController bedCountController;
+  late TextEditingController maxOccupancyController;
   late String status;
 
   @override
@@ -22,22 +24,34 @@ class _EditRoomScreenState extends ConsumerState<EditRoomScreen> {
     priceController = TextEditingController(
       text: widget.room['pricePerNight']?.toString() ?? '',
     );
+    bedCountController = TextEditingController(
+      text: widget.room['bedCount']?.toString() ?? '',
+    );
+    maxOccupancyController = TextEditingController(
+      text: widget.room['maxOccupancy']?.toString() ?? '',
+    );
     status = (widget.room['status'] as String?) ?? 'available';
   }
 
   Future<void> _saveChanges() async {
-    final text = priceController.text.trim();
-    if (text.isEmpty) {
+    final priceText = priceController.text.trim();
+    final bedsText = bedCountController.text.trim();
+    final maxText = maxOccupancyController.text.trim();
+
+    if (priceText.isEmpty || bedsText.isEmpty || maxText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Price cannot be empty')),
+        const SnackBar(content: Text('All fields are required')),
       );
       return;
     }
 
-    final price = int.tryParse(text);
-    if (price == null) {
+    final price = int.tryParse(priceText);
+    final beds = int.tryParse(bedsText);
+    final max = int.tryParse(maxText);
+
+    if (price == null || beds == null || max == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid number for price')),
+        const SnackBar(content: Text('Please enter valid numeric values')),
       );
       return;
     }
@@ -46,6 +60,8 @@ class _EditRoomScreenState extends ConsumerState<EditRoomScreen> {
       final dio = ref.read(dioProvider);
       final resp = await dio.patch('/rooms/${widget.room['_id']}', data: {
         'pricePerNight': price,
+        'bedCount': beds,
+        'maxOccupancy': max,
         'status': status,
       });
 
@@ -79,7 +95,25 @@ class _EditRoomScreenState extends ConsumerState<EditRoomScreen> {
               controller: priceController,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
-                labelText: 'Price Per Night',
+                labelText: 'Price Per Night (LKR)',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: bedCountController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Beds Count',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: maxOccupancyController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Maximum Occupancy',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -91,9 +125,9 @@ class _EditRoomScreenState extends ConsumerState<EditRoomScreen> {
                 border: OutlineInputBorder(),
               ),
               items: const [
-                DropdownMenuItem(value: 'available', child: Text('available')),
-                DropdownMenuItem(value: 'occupied', child: Text('occupied')),
-                DropdownMenuItem(value: 'maintenance', child: Text('maintenance')),
+                DropdownMenuItem(value: 'available', child: Text('Available')),
+                DropdownMenuItem(value: 'occupied', child: Text('Occupied')),
+                DropdownMenuItem(value: 'maintenance', child: Text('Maintenance')),
               ],
               onChanged: (val) => setState(() => status = val ?? status),
             ),
@@ -102,7 +136,10 @@ class _EditRoomScreenState extends ConsumerState<EditRoomScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: _saveChanges,
-                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  backgroundColor: Colors.blueAccent,
+                ),
                 child: const Text('Save Changes', style: TextStyle(fontSize: 16)),
               ),
             ),
