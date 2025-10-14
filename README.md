@@ -1,136 +1,88 @@
-# 🗺️ MapMarket - Flutter Project
+📱 Zonova Mist Admin – Frontend Release Notes
+🏷️ Version 4 (v1.0.0)
 
-MapMarket is a complete Flutter application for both **Web** and **Mobile**, featuring secure JWT authentication, modern UI, Riverpod for scalable state management, and built-in internationalization. It also comes with a **dummy Node.js backend** to handle user authentication.
+Release Date: October 2025
+Platforms: Android & Web (testing phase)
+Build Format: AAB (Play Console)
+Backend: Node.js + Express (hosted on Render)
 
----
+🚀 Overview
 
-## 🚀 Features
+Zonova Mist Admin is a Flutter-based management dashboard designed for hotel partners and admins.
+It allows managing hotel listings, prices, availability, and booking details with a modern, responsive UI.
 
-- ✅ **Cross-platform**: Works on Android, iOS, and Web
-- 🔐 **Authentication**: JWT-based login & registration
-- ⚙️ **State Management**: Powered by `Riverpod`
-- 🧾 **Form Handling**: Built using `flutter_form_builder`
-- 🌍 **Internationalization (i18n)**: Supports `en` and `es`
-- 🎨 **Modern UI**: Professional yellow & green themed interface
-- 🧪 **Testing**: Includes basic widget tests (e.g., login screen)
-- 🧰 **Linting**: Enforced with `flutter_lints`
-- 🖥️ **Backend**: Node.js + Express dummy server
+⚙️ Tech Stack
 
----
+Framework: Flutter (Dart)
 
-## 🛠️ Prerequisites
+State Management: Riverpod
 
-Before running the project, ensure the following are installed:
+Networking: Dio (for REST API calls)
 
-| Tool            | Required Version                     | Guide                                                                 |
-| --------------- | ------------------------------------ | --------------------------------------------------------------------- |
-| **Flutter SDK** | 3.19 or above                        | [Flutter Install Guide](https://flutter.dev/docs/get-started/install) |
-| **Node.js**     | 18.x or above                        | [Node.js Install Guide](https://nodejs.org/)                          |
-| **Editor**      | Android Studio (with Flutter plugin) | Recommended                                                           |
+UI/UX: Material Design + Flutter Slidable + Custom Components
 
----
+API Base: Render-hosted Express.js backend
 
-## 📦 Project Setup
+💡 Core Features
 
-### 🔹 Step 1: Backend Setup
+🏨 Manage partner hotel details (add, edit, delete)
 
-1. Navigate to the `backend` directory:
+💰 Update pricing and availability
 
-   ```bash
-   cd backend
-   ```
+🏷️ Filter & view hotels with status tags
 
-2. Install dependencies:
+📸 Upload and manage hotel images
 
-   ```bash
-   npm install
-   ```
+🌐 Works across Android and Web platforms
 
-3. Start the server:
-   ```bash
-   node server.js
-   ```
+🔁 Live API integration with backend
 
-> ✅ Server will run on `http://localhost:5000`. Keep it running while using the Flutter app.
+🧑‍💻 Setup & Run Locally
+1️⃣ Clone and navigate
+git clone <your-repo-link>
+cd frontend
 
----
+2️⃣ Install dependencies
+flutter pub get
 
-### 🔹 Step 2: Flutter App Setup
+3️⃣ Set your API endpoint
 
-> ⚠️ **Note:** The Flutter project (`zonova_mist`) is already created.
+In your API service file (usually api_service.dart), confirm the base URL:
 
-1. Open **Android Studio**
-2. Select **Open an existing project** and choose the `zonova_mist` folder
-3. Wait for Android Studio to load the project
-4. Click **"Get Dependencies"** or run:
-   ```bash
-   flutter pub get
-   ```
+const String baseUrl = "https://zonova-mist.onrender.com/";
 
----
+4️⃣ Run the app
+🖥️ For Web:
+flutter run -d chrome
 
-### 🔹 Step 3: Set Flutter & Dart SDK Paths
+📱 For Android:
+flutter run -d android
 
-> Ensure SDK paths are correctly configured:
 
-1. In Android Studio, go to:
+Ensure your backend server is running before starting the app.
 
-   - `File > Settings > Languages & Frameworks > Flutter` (Windows/Linux)
-   - `Android Studio > Preferences > Languages & Frameworks > Flutter` (macOS)
+🧪 Testing
 
-2. Set the **Flutter SDK path** (e.g., `C:\src\flutter`)
+Try editing a hotel record:
 
-3. Dart SDK path will auto-fill.
+Navigate to Partner Hotels
 
-4. Click **Apply** > **OK**
+Tap Edit on a hotel card
 
----
+Update price or status
 
-### 🔹 Step 4: Run the App
+Press Save Changes
 
-1. Make sure the backend is still running on `http://localhost:5000`
-2. In Android Studio:
-   - Select a device or **Chrome** from the device list
-   - Click the **Run ▶️** button
+You should see instant updates fetched from the backend after saving.
 
----
+🧾 Current Release Highlights (v1.0.0)
 
-## 📁 Project Structure
+🧱 Fully integrated CRUD interface
 
-```
-zonova_mist/
-│
-├── lib/
-│   ├── main.dart
-│   ├── features/           # Screens & UI
-│   ├── services/           # API & Auth logic
-│   ├── models/             # Data models
-│   ├── providers/          # Riverpod providers
-│   └── l10n/               # Localization files
-│
-├── test/                   # Unit & widget tests
-├── pubspec.yaml
-└── backend/                # Node.js dummy server
-```
+🔗 Connected with Render-hosted backend API
 
----
+🎨 Improved design consistency and responsiveness
 
-## 🧪 Sample Test
+🧩 Optimized hotel edit and delete workflows
 
-Run widget tests:
-
-```bash
-flutter test
-```
-
----
-
-## 🧑‍💻 Author & Credits
-
-- Created by **[ZONOVA (PVT) LTD]**
-
----
-
-## 📄 License
-
-This project is open source and available under the [MIT License](LICENSE).
+⚙️ Compatible with both Android and Web builds
