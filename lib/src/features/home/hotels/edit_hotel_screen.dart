@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/api_service.dart';
 import '../../../core/auth/hotels_provider.dart';
-import '../../../core/api/api_service.dart';
-import '../../../core/auth/hotels_provider.dart';
 
 class EditHotelScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> hotel;
@@ -17,6 +15,8 @@ class EditHotelScreen extends ConsumerStatefulWidget {
 
 class _EditHotelScreenState extends ConsumerState<EditHotelScreen> {
   late TextEditingController priceController;
+  late TextEditingController descriptionController;
+  late TextEditingController phoneController;
   late String status;
 
   @override
@@ -25,19 +25,28 @@ class _EditHotelScreenState extends ConsumerState<EditHotelScreen> {
     priceController = TextEditingController(
       text: widget.hotel['price']?.toString() ?? '',
     );
+    descriptionController = TextEditingController(
+      text: widget.hotel['description'] ?? '',
+    );
+    phoneController = TextEditingController(
+      text: widget.hotel['phone'] ?? '',
+    );
     status = (widget.hotel['status'] as String?) ?? 'available';
   }
 
   Future<void> _saveChanges() async {
-    final text = priceController.text.trim();
-    if (text.isEmpty) {
+    final priceText = priceController.text.trim();
+    final description = descriptionController.text.trim();
+    final phone = phoneController.text.trim();
+
+    if (priceText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Price cannot be empty')),
       );
       return;
     }
 
-    final price = int.tryParse(text);
+    final price = int.tryParse(priceText);
     if (price == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Enter a valid number for price')),
@@ -50,12 +59,14 @@ class _EditHotelScreenState extends ConsumerState<EditHotelScreen> {
       final resp = await dio.patch('/hotels/${widget.hotel['_id']}', data: {
         'price': price,
         'status': status,
+        'description': description,
+        'phone': phone,
       });
 
       if ((resp.statusCode ?? 500) >= 200 && (resp.statusCode ?? 500) < 300) {
         ref.refresh(hotelsProvider);
         if (!mounted) return;
-        Navigator.of(context).pop(true); // ✅ return success
+        Navigator.of(context).pop(true);
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -90,7 +101,7 @@ class _EditHotelScreenState extends ConsumerState<EditHotelScreen> {
             DropdownButtonFormField<String>(
               value: status,
               decoration: const InputDecoration(
-                labelText: 'Status',
+                labelText: 'Availability',
                 border: OutlineInputBorder(),
               ),
               items: const [
@@ -99,6 +110,24 @@ class _EditHotelScreenState extends ConsumerState<EditHotelScreen> {
                 DropdownMenuItem(value: 'maintenance', child: Text('Maintenance')),
               ],
               onChanged: (val) => setState(() => status = val ?? status),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: descriptionController,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: 'Description',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: phoneController,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
+                labelText: 'Phone Number',
+                border: OutlineInputBorder(),
+              ),
             ),
             const SizedBox(height: 30),
             SizedBox(

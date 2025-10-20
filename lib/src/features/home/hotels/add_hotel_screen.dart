@@ -14,8 +14,9 @@ class _AddHotelScreenState extends ConsumerState<AddHotelScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final _nameController = TextEditingController();
-  final _locationController = TextEditingController();
-  final _contactController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _cityController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _descriptionController = TextEditingController();
 
@@ -23,15 +24,30 @@ class _AddHotelScreenState extends ConsumerState<AddHotelScreen> {
     if (_formKey.currentState!.validate()) {
       final dio = ref.read(dioProvider);
 
-      await dio.post('/hotels', data: {
-        'name': _nameController.text,
-        'location': _locationController.text,
-        'contactNumber': _contactController.text,
-        'email': _emailController.text,
-        'description': _descriptionController.text,
-      });
+      try {
+        await dio.post('/hotels', data: {
+          'name': _nameController.text.trim(),
+          'location': {
+            'address': _addressController.text.trim(),
+            'city': _cityController.text.trim(),
+          },
+          'phone': _phoneController.text.trim(),
+          'email': _emailController.text.trim(),
+          'description': _descriptionController.text.trim(),
+          'price': 0,
+          'status': 'available',
+        });
 
-      Navigator.pop(context, true);
+        if (context.mounted) {
+          Navigator.pop(context, true);
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to add hotel: $e')),
+          );
+        }
+      }
     }
   }
 
@@ -52,33 +68,41 @@ class _AddHotelScreenState extends ConsumerState<AddHotelScreen> {
                   labelText: 'Hotel Name',
                   border: OutlineInputBorder(),
                 ),
-                validator: (value) =>
-                value!.isEmpty ? 'Enter hotel name' : null,
+                validator: (value) => value!.isEmpty ? 'Enter hotel name' : null,
               ),
               const SizedBox(height: 20),
 
-              // Location
+              // Address
               TextFormField(
-                controller: _locationController,
+                controller: _addressController,
                 decoration: const InputDecoration(
-                  labelText: 'Location',
+                  labelText: 'Address',
                   border: OutlineInputBorder(),
                 ),
-                validator: (value) =>
-                value!.isEmpty ? 'Enter location' : null,
+                validator: (value) => value!.isEmpty ? 'Enter address' : null,
               ),
               const SizedBox(height: 20),
 
-              // Contact Number
+              // City
               TextFormField(
-                controller: _contactController,
+                controller: _cityController,
                 decoration: const InputDecoration(
-                  labelText: 'Contact Number',
+                  labelText: 'City',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) => value!.isEmpty ? 'Enter city' : null,
+              ),
+              const SizedBox(height: 20),
+
+              // Phone
+              TextFormField(
+                controller: _phoneController,
+                decoration: const InputDecoration(
+                  labelText: 'Phone Number',
                   border: OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.phone,
-                validator: (value) =>
-                value!.isEmpty ? 'Enter contact number' : null,
+                validator: (value) => value!.isEmpty ? 'Enter phone number' : null,
               ),
               const SizedBox(height: 20),
 

@@ -1,3 +1,4 @@
+// partner_hotels_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -43,28 +44,21 @@ class _PartnerHotelsScreenState extends ConsumerState<PartnerHotelsScreen> {
     if (confirm == true) {
       try {
         final dio = ref.read(dioProvider);
-        final resp = await dio.delete('/partner-hotels/$hotelId');
-
+        final resp = await dio.delete('/hotels/$hotelId');
         if ((resp.statusCode ?? 500) >= 200 && (resp.statusCode ?? 500) < 300) {
-          if (mounted) {
-            ref.refresh(hotelsProvider);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Hotel deleted')),
-            );
-          }
-        } else {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Failed to delete: ${resp.statusCode}')),
-            );
-          }
-        }
-      } catch (e) {
-        if (mounted) {
+          ref.refresh(hotelsProvider);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to delete: $e')),
+            const SnackBar(content: Text('Hotel deleted')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to delete: ${resp.statusCode}')),
           );
         }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete: $e')),
+        );
       }
     }
   }
@@ -137,15 +131,21 @@ class _PartnerHotelsScreenState extends ConsumerState<PartnerHotelsScreen> {
                           children: [
                             const Icon(Icons.location_on, size: 18, color: Colors.grey),
                             const SizedBox(width: 6),
-                            Text('Location: ${hotel['location'] ?? 'N/A'}'),
+                            Expanded(
+                              child: Text(
+                                hotel['location']?['city'] ??
+                                    hotel['location']?['address'] ??
+                                    'N/A',
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 6),
                         Row(
                           children: [
-                            const Icon(Icons.star, size: 18, color: Colors.grey),
+                            const Icon(Icons.phone, size: 18, color: Colors.grey),
                             const SizedBox(width: 6),
-                            Text('Rating: ${hotel['rating'] ?? 'N/A'}'),
+                            Text(hotel['phone'] ?? 'N/A'),
                           ],
                         ),
                         const SizedBox(height: 6),
@@ -153,14 +153,19 @@ class _PartnerHotelsScreenState extends ConsumerState<PartnerHotelsScreen> {
                           children: [
                             const Icon(Icons.attach_money, size: 18, color: Colors.grey),
                             const SizedBox(width: 6),
-                            Text('Price: LKR ${hotel['price'] ?? 'N/A'}'),
+                            Text('LKR ${hotel['price'] ?? 'N/A'}'),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(Icons.info_outline, size: 18, color: Colors.grey),
+                            const SizedBox(width: 6),
+                            Text('Status: ${hotel['status'] ?? 'N/A'}'),
                           ],
                         ),
                         const SizedBox(height: 12),
-                        CommonImageManager(
-                          entityType: 'Hotel',
-                          entityId: hotelId,
-                        ),
+                        CommonImageManager(entityType: 'Hotel', entityId: hotelId),
                       ],
                     ),
                   ),

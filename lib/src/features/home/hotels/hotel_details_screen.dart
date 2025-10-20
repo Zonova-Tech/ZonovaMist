@@ -6,7 +6,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../../core/api/api_service.dart';
 
-
 class HotelDetailsScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> hotel;
 
@@ -24,10 +23,8 @@ class _HotelDetailsScreenState extends ConsumerState<HotelDetailsScreen> {
   Future<void> _pickImages() async {
     final picker = ImagePicker();
     final images = await picker.pickMultiImage();
-
-    if (images != null && images.isNotEmpty) {
+    if (images.isNotEmpty) {
       final bytesList = await Future.wait(images.map((f) => f.readAsBytes()));
-
       setState(() {
         _selectedFiles.addAll(images);
         _selectedFileBytes.addAll(bytesList);
@@ -37,7 +34,6 @@ class _HotelDetailsScreenState extends ConsumerState<HotelDetailsScreen> {
 
   Future<void> _uploadImages() async {
     if (_selectedFiles.isEmpty) return;
-
     final dio = ref.read(dioProvider);
     final String apiUrl = '${dio.options.baseUrl}/images/upload';
 
@@ -85,11 +81,12 @@ class _HotelDetailsScreenState extends ConsumerState<HotelDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final photos = List<String>.from(widget.hotel['photos'] ?? []);
+    final hotel = widget.hotel;
+    final photos = List<String>.from(hotel['photos'] ?? []);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.hotel['name'] ?? 'Hotel Details'),
+        title: Text(hotel['name'] ?? 'Hotel Details'),
         backgroundColor: Colors.blueAccent,
       ),
       body: Padding(
@@ -104,12 +101,19 @@ class _HotelDetailsScreenState extends ConsumerState<HotelDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(widget.hotel['name'] ?? 'Hotel Name',
+                    Text(hotel['name'] ?? 'Hotel Name',
                         style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
-                    Text('City: ${widget.hotel['location']?['city'] ?? '-'}'),
+                    Text('City: ${hotel['location']?['city'] ?? '-'}'),
+                    Text('Address: ${hotel['location']?['address'] ?? '-'}'),
                     const SizedBox(height: 4),
-                    Text('Star Rating: ${widget.hotel['starRating'] ?? '-'}'),
+                    Text('Email: ${hotel['email'] ?? '-'}'),
+                    Text('Phone: ${hotel['phone'] ?? '-'}'),
+                    const SizedBox(height: 4),
+                    Text('Price: LKR ${hotel['price'] ?? '-'}'),
+                    Text('Availability: ${hotel['status'] ?? '-'}'),
+                    const SizedBox(height: 4),
+                    Text('Description:\n${hotel['description'] ?? '-'}'),
                   ],
                 ),
               ),
