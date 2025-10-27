@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -8,6 +7,7 @@ import '../../../shared/widgets/common_image_manager.dart';
 import 'add_booking_screen.dart';
 import 'bookings_provider.dart';
 import 'edit_booking_screen.dart';
+import 'create_invoice_screen.dart'; // new import
 
 class BookingsScreen extends ConsumerWidget {
   const BookingsScreen({super.key});
@@ -77,7 +77,7 @@ class BookingsScreen extends ConsumerWidget {
                 key: ValueKey(booking['_id']),
                 endActionPane: ActionPane(
                   motion: const DrawerMotion(),
-                  extentRatio: 0.4,
+                  extentRatio: 0.5,
                   children: [
                     SlidableAction(
                       onPressed: (_) => _onEdit(context, ref, booking),
@@ -128,9 +128,30 @@ class BookingsScreen extends ConsumerWidget {
                         Text('Status: ${booking['status'] ?? 'N/A'}'),
                         const SizedBox(height: 12),
                         if (booking['_id'] != null && booking['_id'].isNotEmpty)
-                        CommonImageManager(
-                          entityType: 'Booking',
-                          entityId: booking['_id'],
+                          CommonImageManager(
+                            entityType: 'Booking',
+                            entityId: booking['_id'],
+                          ),
+                        const SizedBox(height: 10),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => CreateInvoiceScreen(
+                                    bookingId: booking['_id'],
+                                    guestName: booking['guest_name'],
+                                    phone: booking['phone_no'],
+                                  ),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.receipt_long),
+                            label: const Text('Create Invoice'),
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                          ),
                         ),
                       ],
                     ),
