@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -121,7 +120,7 @@ class BookingsScreen extends ConsumerWidget {
                 key: ValueKey('slidable_$bookingId'),
                 endActionPane: ActionPane(
                   motion: const DrawerMotion(),
-                  extentRatio: 0.4,
+                  extentRatio: 0.5,
                   children: [
                     SlidableAction(
                       onPressed: (_) => _onEdit(context, ref, booking),
