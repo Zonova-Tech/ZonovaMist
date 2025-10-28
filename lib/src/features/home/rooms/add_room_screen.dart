@@ -17,7 +17,6 @@ class _AddRoomScreenState extends ConsumerState<AddRoomScreen> {
   final _bedCountController = TextEditingController();
   final _maxOccupancyController = TextEditingController();
   final _priceController = TextEditingController();
-  String _status = 'available';
 
   Future<void> _addRoom() async {
     if (_formKey.currentState!.validate()) {
@@ -31,7 +30,7 @@ class _AddRoomScreenState extends ConsumerState<AddRoomScreen> {
           'bedCount': int.parse(_bedCountController.text),
           'maxOccupancy': int.parse(_maxOccupancyController.text),
           'pricePerNight': double.parse(_priceController.text),
-          'status': _status,
+          // Removed 'status'
         });
 
         if (context.mounted) {
@@ -112,24 +111,6 @@ class _AddRoomScreenState extends ConsumerState<AddRoomScreen> {
                   border: OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 20),
-              DropdownButtonFormField(
-                value: _status,
-                decoration: const InputDecoration(
-                  labelText: 'Status',
-                  border: OutlineInputBorder(),
-                ),
-                items: const [
-                  DropdownMenuItem(value: 'available', child: Text('Available')),
-                  DropdownMenuItem(value: 'occupied', child: Text('Occupied')),
-                  DropdownMenuItem(value: 'maintenance', child: Text('Maintenance')),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    _status = value.toString();
-                  });
-                },
               ),
               const SizedBox(height: 30),
               SizedBox(

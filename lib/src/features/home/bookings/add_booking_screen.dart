@@ -74,20 +74,26 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
       final dio = ref.read(dioProvider);
 
       final data = {
-        'guest_nic': _guestNicController.text,
         'guest_name': _guestNameController.text,
         'booked_room_no': _bookedRoomNoController.text,
         'checkin_date': _checkinDate!.toIso8601String(),
         'checkout_date': _checkoutDate!.toIso8601String(),
-        'birthday': _birthday?.toIso8601String(),
         'phone_no': _phoneNoController.text,
         'adult_count': int.tryParse(_adultCountController.text) ?? 0,
-        'child_count': int.tryParse(_childCountController.text) ?? 0,
-        'guest_address': _guestAddressController.text,
         'total_price': double.tryParse(_totalPriceController.text) ?? 0,
-        'special_notes': _specialNotesController.text,
-        'advance_amount': double.tryParse(_advanceAmountController.text) ?? 0,
         'status': _status,
+        if (_guestNicController.text.isNotEmpty)
+          'guest_nic': _guestNicController.text,
+        if (_guestAddressController.text.isNotEmpty)
+          'guest_address': _guestAddressController.text,
+        if (_childCountController.text.isNotEmpty)
+          'child_count': int.tryParse(_childCountController.text) ?? 0,
+        if (_advanceAmountController.text.isNotEmpty)
+          'advance_amount': double.tryParse(_advanceAmountController.text) ?? 0,
+        if (_specialNotesController.text.isNotEmpty)
+          'special_notes': _specialNotesController.text,
+        if (_birthday != null)
+          'birthday': _birthday!.toIso8601String(),
       };
 
       await dio.post('/bookings', data: data);
@@ -141,8 +147,10 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
                 children: [
                   TextFormField(
                     controller: _guestNicController,
-                    decoration: const InputDecoration(labelText: 'Guest NIC'),
-                    validator: (v) => v!.isEmpty ? 'Enter guest NIC' : null,
+                    decoration: InputDecoration(labelText: 'NIC'),
+                    validator: (value) {
+                      return null;
+                    },
                   ),
                   TextFormField(
                     controller: _guestNameController,
@@ -152,6 +160,9 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
                   TextFormField(
                     controller: _guestAddressController,
                     decoration: const InputDecoration(labelText: 'Guest Address'),
+                    validator: (value){
+                      return null;
+                    },
                   ),
                   TextFormField(
                     controller: _phoneNoController,
@@ -192,9 +203,11 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
                   ),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(_birthday == null
-                        ? 'Select Birthday'
-                        : dateFormat.format(_birthday!)),
+                    title: Text(
+                      _birthday == null
+                          ? 'Select Birthday (Optional)'
+                          : 'Birthday: ${dateFormat.format(_birthday!)}',
+                    ),
                     trailing: const Icon(Icons.cake),
                     onTap: () => _pickBirthday(context),
                   ),
@@ -207,6 +220,9 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
                     controller: _childCountController,
                     decoration: const InputDecoration(labelText: 'Child Count'),
                     keyboardType: TextInputType.number,
+                    validator: (value) {
+                      return null;
+                    }
                   ),
                 ],
               ),
@@ -222,6 +238,9 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
                     controller: _advanceAmountController,
                     decoration: const InputDecoration(labelText: 'Advance Amount'),
                     keyboardType: TextInputType.number,
+                    validator: (value) {
+                      return null;
+                    }
                   ),
                   DropdownButtonFormField(
                     value: _status,
@@ -245,6 +264,9 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
                   TextFormField(
                     controller: _specialNotesController,
                     decoration: const InputDecoration(labelText: 'Special Notes'),
+                    validator: (value) {
+                      return null;
+                    }
                   ),
                 ],
               ),
