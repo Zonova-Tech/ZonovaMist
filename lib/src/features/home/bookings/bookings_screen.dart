@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/api/api_service.dart';
 import '../../../shared/widgets/common_image_manager.dart';
 import 'add_booking_screen.dart';
 import 'bookings_provider.dart';
 import 'edit_booking_screen.dart';
+import 'invoice_form_screen.dart';
 
 class BookingsScreen extends ConsumerWidget {
   const BookingsScreen({super.key});
@@ -57,6 +59,46 @@ class BookingsScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _viewInvoice(BuildContext context, WidgetRef ref, String bookingId) async {
+    try {
+      // Get the base URL from your API service
+      final dio = ref.read(dioProvider);
+      final baseUrl = dio.options.baseUrl.replaceAll('/api', '');
+      final url = Uri.parse('$baseUrl/invoice/$bookingId');
+
+      print('🔗 Opening invoice URL: $url');
+
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not open invoice at: $url')),
+          );
+        }
+      }
+    } catch (e) {
+      print('❌ Error opening invoice: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error opening invoice: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _sendInvoice(BuildContext context, WidgetRef ref, Map<String, dynamic> booking) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => InvoiceFormScreen(booking: booking),
+      ),
+    );
+    if (result == true) {
+      ref.refresh(bookingsProvider);
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final bookingsAsync = ref.watch(bookingsProvider);
@@ -73,8 +115,10 @@ class BookingsScreen extends ConsumerWidget {
             itemCount: bookings.length,
             itemBuilder: (context, index) {
               final booking = bookings[index];
+              final bookingId = booking['_id'] ?? '';
+
               return Slidable(
-                key: ValueKey(booking['_id']),
+                key: ValueKey('slidable_$bookingId'),
                 endActionPane: ActionPane(
                   motion: const DrawerMotion(),
                   extentRatio: 0.4,
@@ -96,6 +140,7 @@ class BookingsScreen extends ConsumerWidget {
                   ],
                 ),
                 child: Card(
+                  key: ValueKey('card_$bookingId'),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -127,10 +172,51 @@ class BookingsScreen extends ConsumerWidget {
                         Text('Check-out: ${DateFormat('yyyy-MM-dd').format(DateTime.parse(booking['checkout_date'] ?? DateTime.now().toIso8601String()))}'),
                         Text('Status: ${booking['status'] ?? 'N/A'}'),
                         const SizedBox(height: 12),
-                        if (booking['_id'] != null && booking['_id'].isNotEmpty)
-                        CommonImageManager(
-                          entityType: 'Booking',
-                          entityId: booking['_id'],
+
+                        // Image Manager
+                        if (bookingId.isNotEmpty)
+                          Hero(
+                            tag: 'booking_images_$bookingId',
+                            child: Material(
+                              color: Colors.transparent,
+                              child: CommonImageManager(
+                                entityType: 'Booking',
+                                entityId: bookingId,
+                              ),
+                            ),
+                          ),
+
+                        const SizedBox(height: 12),
+
+                        // Invoice Buttons Row
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () => _sendInvoice(context, ref, booking),
+                                icon: const Icon(Icons.send, size: 18),
+                                label: const Text('Send Invoice'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green.shade600,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () => _viewInvoice(context, ref, bookingId),
+                                icon: const Icon(Icons.receipt_long, size: 18),
+                                label: const Text('View Invoice'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.blue.shade700,
+                                  side: BorderSide(color: Colors.blue.shade700),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -144,6 +230,7 @@ class BookingsScreen extends ConsumerWidget {
         error: (err, stack) => Center(child: Text('Error: $err')),
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'add_booking_fab',
         onPressed: () async {
           final result = await Navigator.push(
             context,
