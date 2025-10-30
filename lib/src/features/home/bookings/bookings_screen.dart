@@ -60,7 +60,6 @@ class BookingsScreen extends ConsumerWidget {
 
   Future<void> _viewInvoice(BuildContext context, WidgetRef ref, String bookingId) async {
     try {
-      // Get the base URL from your API service
       final dio = ref.read(dioProvider);
       final baseUrl = dio.options.baseUrl.replaceAll('/api', '');
       final url = Uri.parse('$baseUrl/invoice/$bookingId');
@@ -98,135 +97,300 @@ class BookingsScreen extends ConsumerWidget {
     }
   }
 
+  void _showFilterSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.5,
+        minChildSize: 0.3,
+        maxChildSize: 0.8,
+        expand: false,
+        builder: (context, scrollController) => FilterBottomSheet(
+          scrollController: scrollController,
+        ),
+      ),
+    );
+  }
+
+  void _showSearchDialog(BuildContext context, WidgetRef ref) {
+    final searchController = TextEditingController(
+      text: ref.read(bookingSearchProvider),
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Search Bookings'),
+        content: TextField(
+          controller: searchController,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Search by name, room, or phone',
+            prefixIcon: Icon(Icons.search),
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              ref.read(bookingSearchProvider.notifier).state = '';
+              Navigator.pop(context);
+            },
+            child: const Text('Clear'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              ref.read(bookingSearchProvider.notifier).state = searchController.text;
+              Navigator.pop(context);
+            },
+            child: const Text('Search'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final bookingsAsync = ref.watch(bookingsProvider);
+    final currentFilter = ref.watch(bookingFilterProvider);
+    final statusFilter = ref.watch(bookingStatusFilterProvider);
+    final searchQuery = ref.watch(bookingSearchProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Bookings')),
-      body: bookingsAsync.when(
-        data: (bookings) {
-          if (bookings.isEmpty) {
-            return const Center(child: Text('No bookings found.'));
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.all(12),
-            itemCount: bookings.length,
-            itemBuilder: (context, index) {
-              final booking = bookings[index];
-              final bookingId = booking['_id'] ?? '';
-
-              return Slidable(
-                key: ValueKey('slidable_$bookingId'),
-                endActionPane: ActionPane(
-                  motion: const DrawerMotion(),
-                  extentRatio: 0.5,
+      appBar: AppBar(
+        title: const Text('Bookings'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () => _showSearchDialog(context, ref),
+          ),
+          IconButton(
+            icon: Badge(
+              isLabelVisible: currentFilter != 'upcoming' || statusFilter != null || searchQuery.isNotEmpty,
+              label: const Text('•'),
+              child: const Icon(Icons.filter_list),
+            ),
+            onPressed: () => _showFilterSheet(context, ref),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Active Filter Chips
+          if (currentFilter != 'upcoming' || statusFilter != null || searchQuery.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              color: Colors.blue.shade50,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
                   children: [
-                    SlidableAction(
-                      onPressed: (_) => _onEdit(context, ref, booking),
-                      backgroundColor: Colors.blue.shade500,
-                      foregroundColor: Colors.white,
-                      icon: Icons.edit,
-                      label: 'Edit',
-                    ),
-                    SlidableAction(
-                      onPressed: (_) => _onDelete(context, ref, booking),
-                      backgroundColor: Colors.red.shade500,
-                      foregroundColor: Colors.white,
-                      icon: Icons.delete,
-                      label: 'Delete',
+                    if (currentFilter != 'upcoming')
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Chip(
+                          label: Text(_getFilterLabel(currentFilter)),
+                          deleteIcon: const Icon(Icons.close, size: 18),
+                          onDeleted: () {
+                            ref.read(bookingFilterProvider.notifier).state = 'upcoming';
+                          },
+                        ),
+                      ),
+                    if (statusFilter != null)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Chip(
+                          label: Text('Status: ${statusFilter.toUpperCase()}'),
+                          deleteIcon: const Icon(Icons.close, size: 18),
+                          onDeleted: () {
+                            ref.read(bookingStatusFilterProvider.notifier).state = null;
+                          },
+                        ),
+                      ),
+                    if (searchQuery.isNotEmpty)
+                      Chip(
+                        label: Text('Search: $searchQuery'),
+                        deleteIcon: const Icon(Icons.close, size: 18),
+                        onDeleted: () {
+                          ref.read(bookingSearchProvider.notifier).state = '';
+                        },
+                      ),
+                    TextButton.icon(
+                      onPressed: () {
+                        ref.read(bookingFilterProvider.notifier).state = 'upcoming';
+                        ref.read(bookingStatusFilterProvider.notifier).state = null;
+                        ref.read(bookingSearchProvider.notifier).state = '';
+                      },
+                      icon: const Icon(Icons.clear_all, size: 18),
+                      label: const Text('Clear All'),
                     ),
                   ],
                 ),
-                child: Card(
-                  key: ValueKey('card_$bookingId'),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 4,
-                  margin: const EdgeInsets.symmetric(vertical: 8),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
+              ),
+            ),
+
+          // Bookings List
+          Expanded(
+            child: bookingsAsync.when(
+              data: (bookings) {
+                if (bookings.isEmpty) {
+                  return Center(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Row(
-                          children: [
-                            Icon(Icons.person, color: Colors.blue.shade700),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                booking['guest_name'] ?? 'Unknown Guest',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
+                        Icon(Icons.inbox_outlined, size: 64, color: Colors.grey.shade400),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No bookings found',
+                          style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
                         ),
                         const SizedBox(height: 8),
-                        Text('Room: ${booking['booked_room_no'] ?? 'N/A'}'),
-                        Text('Check-in: ${DateFormat('yyyy-MM-dd').format(DateTime.parse(booking['checkin_date'] ?? DateTime.now().toIso8601String()))}'),
-                        Text('Check-out: ${DateFormat('yyyy-MM-dd').format(DateTime.parse(booking['checkout_date'] ?? DateTime.now().toIso8601String()))}'),
-                        Text('Status: ${booking['status'] ?? 'N/A'}'),
-                        const SizedBox(height: 12),
-
-                        // Image Manager
-                        if (bookingId.isNotEmpty)
-                          Hero(
-                            tag: 'booking_images_$bookingId',
-                            child: Material(
-                              color: Colors.transparent,
-                              child: CommonImageManager(
-                                entityType: 'Booking',
-                                entityId: bookingId,
-                              ),
-                            ),
-                          ),
-
-                        const SizedBox(height: 12),
-
-                        // Invoice Buttons Row
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: () => _sendInvoice(context, ref, booking),
-                                icon: const Icon(Icons.send, size: 18),
-                                label: const Text('Send Invoice'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green.shade600,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () => _viewInvoice(context, ref, bookingId),
-                                icon: const Icon(Icons.receipt_long, size: 18),
-                                label: const Text('View Invoice'),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.blue.shade700,
-                                  side: BorderSide(color: Colors.blue.shade700),
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                ),
-                              ),
-                            ),
-                          ],
+                        Text(
+                          'Try adjusting your filters',
+                          style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
                         ),
                       ],
                     ),
-                  ),
+                  );
+                }
+                return ListView.builder(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: bookings.length,
+                  itemBuilder: (context, index) {
+                    final booking = bookings[index];
+                    final bookingId = booking['_id'] ?? '';
+
+                    return Slidable(
+                      key: ValueKey('slidable_$bookingId'),
+                      endActionPane: ActionPane(
+                        motion: const DrawerMotion(),
+                        extentRatio: 0.5,
+                        children: [
+                          SlidableAction(
+                            onPressed: (_) => _onEdit(context, ref, booking),
+                            backgroundColor: Colors.blue.shade500,
+                            foregroundColor: Colors.white,
+                            icon: Icons.edit,
+                            label: 'Edit',
+                          ),
+                          SlidableAction(
+                            onPressed: (_) => _onDelete(context, ref, booking),
+                            backgroundColor: Colors.red.shade500,
+                            foregroundColor: Colors.white,
+                            icon: Icons.delete,
+                            label: 'Delete',
+                          ),
+                        ],
+                      ),
+                      child: Card(
+                        key: ValueKey('card_$bookingId'),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 4,
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.person, color: Colors.blue.shade700),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      booking['guest_name'] ?? 'Unknown Guest',
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  _buildStatusChip(booking['status']),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text('Room: ${booking['booked_room_no'] ?? 'N/A'}'),
+                              Text('Check-in: ${DateFormat('yyyy-MM-dd').format(DateTime.parse(booking['checkin_date'] ?? DateTime.now().toIso8601String()))}'),
+                              Text('Check-out: ${DateFormat('yyyy-MM-dd').format(DateTime.parse(booking['checkout_date'] ?? DateTime.now().toIso8601String()))}'),
+                              const SizedBox(height: 12),
+
+                              if (bookingId.isNotEmpty)
+                                Hero(
+                                  tag: 'booking_images_$bookingId',
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: CommonImageManager(
+                                      entityType: 'Booking',
+                                      entityId: bookingId,
+                                    ),
+                                  ),
+                                ),
+
+                              const SizedBox(height: 12),
+
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: () => _sendInvoice(context, ref, booking),
+                                      icon: const Icon(Icons.send, size: 18),
+                                      label: const Text('Send Invoice'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.green.shade600,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: () => _viewInvoice(context, ref, bookingId),
+                                      icon: const Icon(Icons.receipt_long, size: 18),
+                                      label: const Text('View Invoice'),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: Colors.blue.shade700,
+                                        side: BorderSide(color: Colors.blue.shade700),
+                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                    const SizedBox(height: 16),
+                    Text('Error: $err'),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => ref.refresh(bookingsProvider),
+                      child: const Text('Retry'),
+                    ),
+                  ],
                 ),
-              );
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
+              ),
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         heroTag: 'add_booking_fab',
@@ -241,6 +405,198 @@ class BookingsScreen extends ConsumerWidget {
         },
         child: const Icon(Icons.add),
       ),
+    );
+  }
+
+  Widget _buildStatusChip(String? status) {
+    Color color;
+    IconData icon;
+
+    switch (status?.toLowerCase()) {
+      case 'paid':
+        color = Colors.green;
+        icon = Icons.check_circle;
+        break;
+      case 'cancelled':
+        color = Colors.red;
+        icon = Icons.cancel;
+        break;
+      case 'pending':
+      default:
+        color = Colors.orange;
+        icon = Icons.pending;
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(
+            (status ?? 'pending').toUpperCase(),
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getFilterLabel(String filter) {
+    switch (filter) {
+      case 'upcoming':
+        return 'Upcoming & Today';
+      case 'recent':
+        return 'Last 7 Days';
+      case 'today':
+        return 'Today Only';
+      case 'week':
+        return 'This Week';
+      case 'month':
+        return 'This Month';
+      case 'past':
+        return 'Past';
+      case 'all':
+        return 'All Bookings';
+      default:
+        return filter;
+    }
+  }
+}
+
+class FilterBottomSheet extends ConsumerWidget {
+  final ScrollController scrollController;
+
+  const FilterBottomSheet({super.key, required this.scrollController});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentFilter = ref.watch(bookingFilterProvider);
+    final statusFilter = ref.watch(bookingStatusFilterProvider);
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: ListView(
+        controller: scrollController,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Filter Bookings',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Date Range Filters
+          const Text(
+            'Date Range',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildFilterChip(context, ref, 'upcoming', 'Upcoming & Today', Icons.arrow_forward, currentFilter),
+              _buildFilterChip(context, ref, 'today', 'Today Only', Icons.today, currentFilter),
+              _buildFilterChip(context, ref, 'recent', 'Last 7 Days', Icons.calendar_today, currentFilter),
+              _buildFilterChip(context, ref, 'week', 'This Week', Icons.date_range, currentFilter),
+              _buildFilterChip(context, ref, 'month', 'This Month', Icons.calendar_month, currentFilter),
+              _buildFilterChip(context, ref, 'past', 'Past', Icons.history, currentFilter),
+              _buildFilterChip(context, ref, 'all', 'All Bookings', Icons.all_inclusive, currentFilter),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // Status Filters
+          const Text(
+            'Payment Status',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildStatusFilterChip(context, ref, null, 'All Statuses', Icons.filter_list, statusFilter),
+              _buildStatusFilterChip(context, ref, 'pending', 'Pending', Icons.pending, statusFilter),
+              _buildStatusFilterChip(context, ref, 'paid', 'Paid', Icons.check_circle, statusFilter),
+              _buildStatusFilterChip(context, ref, 'cancelled', 'Cancelled', Icons.cancel, statusFilter),
+            ],
+          ),
+
+          const SizedBox(height: 32),
+
+          // Apply Button
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue.shade700,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Apply Filters', style: TextStyle(fontSize: 16)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(BuildContext context, WidgetRef ref, String value, String label, IconData icon, String currentFilter) {
+    final isSelected = currentFilter == value;
+    return FilterChip(
+      selected: isSelected,
+      label: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16),
+          const SizedBox(width: 4),
+          Text(label),
+        ],
+      ),
+      onSelected: (selected) {
+        ref.read(bookingFilterProvider.notifier).state = value;
+      },
+    );
+  }
+
+  Widget _buildStatusFilterChip(BuildContext context, WidgetRef ref, String? value, String label, IconData icon, String? currentStatus) {
+    final isSelected = currentStatus == value;
+    return FilterChip(
+      selected: isSelected,
+      label: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16),
+          const SizedBox(width: 4),
+          Text(label),
+        ],
+      ),
+      onSelected: (selected) {
+        ref.read(bookingStatusFilterProvider.notifier).state = value;
+      },
     );
   }
 }
