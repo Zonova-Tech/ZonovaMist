@@ -33,7 +33,7 @@ android {
         applicationId = "com.Zonova.Zonova_Mist"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode = 8 // 🔹 Increase this each Play Store upload
+        versionCode = 10 // 🔹 Increase this each Play Store upload
         versionName = flutter.versionName
     }
 
