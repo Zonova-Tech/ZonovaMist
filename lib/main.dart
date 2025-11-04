@@ -9,6 +9,8 @@ import 'package:Zonova_Mist/src/features/auth/login_screen.dart';
 import 'package:Zonova_Mist/src/features/home/home_screen.dart';
 import 'package:Zonova_Mist/src/shared/widgets/splash_screen.dart';
 
+// ===== new import for the room rate page =====
+import 'package:Zonova_Mist/src/features/home/room_rate_page.dart';
 
 void main() {
   runApp(
@@ -33,6 +35,14 @@ class MyApp extends ConsumerWidget {
       supportedLocales: AppLocalizations.supportedLocales,
       navigatorKey: AppRouter.navigatorKey,
       debugShowCheckedModeBanner: false,
+
+      // ===== add routes map so we can open the new page by name =====
+      routes: {
+        // keep existing behavior: login/home selection is still controlled by `home:`
+        '/room-rate': (context) => const RoomRatePage(),
+        // you can add more test routes here later if needed
+      },
+
       home: authState.when(
         // While checking for a stored token, show a splash screen
         loading: () => const SplashScreen(),
