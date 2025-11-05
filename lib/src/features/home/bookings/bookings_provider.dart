@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/api_service.dart';
 
-// Filter state provider - default to 'upcoming' instead of 'recent'
+// Filter state provider - default to 'upcoming' and 'advance_paid' status
 final bookingFilterProvider = StateProvider<String>((ref) => 'upcoming');
-final bookingStatusFilterProvider = StateProvider<String?>((ref) => null);
+final bookingStatusFilterProvider = StateProvider<String?>((ref) => 'advance_paid');
 final bookingSearchProvider = StateProvider<String>((ref) => '');
 
 // Bookings provider with filtering
@@ -34,5 +34,3 @@ final bookingsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async 
 
   return List<Map<String, dynamic>>.from(response.data);
 });
-
-// Note: bookingStatsProvider removed as statistics are no longer needed

@@ -33,7 +33,11 @@ class BookingsScreen extends ConsumerWidget {
         content: Text('Are you sure you want to delete ${booking['guest_name']}\'s booking?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
         ],
       ),
     );
@@ -56,6 +60,87 @@ class BookingsScreen extends ConsumerWidget {
         }
       }
     }
+  }
+
+  Future<void> _updateStatus(
+      BuildContext context,
+      WidgetRef ref,
+      Map<String, dynamic> booking,
+      String newStatus,
+      ) async {
+    try {
+      final dio = ref.read(dioProvider);
+      await dio.patch('/bookings/${booking['_id']}', data: {
+        'status': newStatus,
+      });
+      ref.refresh(bookingsProvider);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Booking marked as ${newStatus.toUpperCase()}')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update: $e')),
+        );
+      }
+    }
+  }
+
+  void _showStatusMenu(BuildContext context, WidgetRef ref, Map<String, dynamic> booking) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Change Status',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: Icon(Icons.pending, color: Colors.orange.shade700),
+              title: const Text('Pending'),
+              onTap: () {
+                Navigator.pop(context);
+                _updateStatus(context, ref, booking, 'pending');
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.payments, color: Colors.blue.shade700),
+              title: const Text('Advance Paid'),
+              onTap: () {
+                Navigator.pop(context);
+                _updateStatus(context, ref, booking, 'advance_paid');
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.check_circle, color: Colors.green.shade700),
+              title: const Text('Paid'),
+              onTap: () {
+                Navigator.pop(context);
+                _updateStatus(context, ref, booking, 'paid');
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.cancel, color: Colors.red.shade700),
+              title: const Text('Cancelled'),
+              onTap: () {
+                Navigator.pop(context);
+                _updateStatus(context, ref, booking, 'cancelled');
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _viewInvoice(BuildContext context, WidgetRef ref, String bookingId) async {
@@ -105,9 +190,9 @@ class BookingsScreen extends ConsumerWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.5,
-        minChildSize: 0.3,
-        maxChildSize: 0.8,
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
         expand: false,
         builder: (context, scrollController) => FilterBottomSheet(
           scrollController: scrollController,
@@ -171,7 +256,7 @@ class BookingsScreen extends ConsumerWidget {
           ),
           IconButton(
             icon: Badge(
-              isLabelVisible: currentFilter != 'upcoming' || statusFilter != null || searchQuery.isNotEmpty,
+              isLabelVisible: currentFilter != 'upcoming' || statusFilter != 'advance_paid' || searchQuery.isNotEmpty,
               label: const Text('•'),
               child: const Icon(Icons.filter_list),
             ),
@@ -182,7 +267,7 @@ class BookingsScreen extends ConsumerWidget {
       body: Column(
         children: [
           // Active Filter Chips
-          if (currentFilter != 'upcoming' || statusFilter != null || searchQuery.isNotEmpty)
+          if (currentFilter != 'upcoming' || statusFilter != 'advance_paid' || searchQuery.isNotEmpty)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               color: Colors.blue.shade50,
@@ -201,14 +286,14 @@ class BookingsScreen extends ConsumerWidget {
                           },
                         ),
                       ),
-                    if (statusFilter != null)
+                    if (statusFilter != 'advance_paid')
                       Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: Chip(
-                          label: Text('Status: ${statusFilter.toUpperCase()}'),
+                          label: Text('Status: ${_getStatusLabel(statusFilter)}'),
                           deleteIcon: const Icon(Icons.close, size: 18),
                           onDeleted: () {
-                            ref.read(bookingStatusFilterProvider.notifier).state = null;
+                            ref.read(bookingStatusFilterProvider.notifier).state = 'advance_paid';
                           },
                         ),
                       ),
@@ -223,7 +308,7 @@ class BookingsScreen extends ConsumerWidget {
                     TextButton.icon(
                       onPressed: () {
                         ref.read(bookingFilterProvider.notifier).state = 'upcoming';
-                        ref.read(bookingStatusFilterProvider.notifier).state = null;
+                        ref.read(bookingStatusFilterProvider.notifier).state = 'advance_paid';
                         ref.read(bookingSearchProvider.notifier).state = '';
                       },
                       icon: const Icon(Icons.clear_all, size: 18),
@@ -269,18 +354,32 @@ class BookingsScreen extends ConsumerWidget {
                       key: ValueKey('slidable_$bookingId'),
                       endActionPane: ActionPane(
                         motion: const DrawerMotion(),
-                        extentRatio: 0.5,
+                        extentRatio: 0.75,
                         children: [
                           SlidableAction(
+                            onPressed: (_) => _updateStatus(context, ref, booking, 'advance_paid'),
+                            backgroundColor: Colors.blue.shade600,
+                            foregroundColor: Colors.white,
+                            icon: Icons.payments,
+                            label: 'Advance',
+                          ),
+                          SlidableAction(
+                            onPressed: (_) => _updateStatus(context, ref, booking, 'paid'),
+                            backgroundColor: Colors.green.shade600,
+                            foregroundColor: Colors.white,
+                            icon: Icons.check_circle,
+                            label: 'Paid',
+                          ),
+                          SlidableAction(
                             onPressed: (_) => _onEdit(context, ref, booking),
-                            backgroundColor: Colors.blue.shade500,
+                            backgroundColor: Colors.orange.shade600,
                             foregroundColor: Colors.white,
                             icon: Icons.edit,
                             label: 'Edit',
                           ),
                           SlidableAction(
                             onPressed: (_) => _onDelete(context, ref, booking),
-                            backgroundColor: Colors.red.shade500,
+                            backgroundColor: Colors.red.shade600,
                             foregroundColor: Colors.white,
                             icon: Icons.delete,
                             label: 'Delete',
@@ -312,7 +411,10 @@ class BookingsScreen extends ConsumerWidget {
                                       ),
                                     ),
                                   ),
-                                  _buildStatusChip(booking['status']),
+                                  GestureDetector(
+                                    onTap: () => _showStatusMenu(context, ref, booking),
+                                    child: _buildStatusChip(booking['status']),
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: 8),
@@ -417,6 +519,10 @@ class BookingsScreen extends ConsumerWidget {
         color = Colors.green;
         icon = Icons.check_circle;
         break;
+      case 'advance_paid':
+        color = Colors.blue;
+        icon = Icons.payments;
+        break;
       case 'cancelled':
         color = Colors.red;
         icon = Icons.cancel;
@@ -441,7 +547,7 @@ class BookingsScreen extends ConsumerWidget {
           Icon(icon, size: 14, color: color),
           const SizedBox(width: 4),
           Text(
-            (status ?? 'pending').toUpperCase(),
+            _getStatusLabel(status),
             style: TextStyle(
               color: color,
               fontSize: 11,
@@ -451,6 +557,21 @@ class BookingsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  String _getStatusLabel(String? status) {
+    switch (status?.toLowerCase()) {
+      case 'advance_paid':
+        return 'ADVANCE PAID';
+      case 'paid':
+        return 'PAID';
+      case 'cancelled':
+        return 'CANCELLED';
+      case 'pending':
+        return 'PENDING';
+      default:
+        return (status ?? 'pending').toUpperCase();
+    }
   }
 
   String _getFilterLabel(String filter) {
@@ -539,6 +660,7 @@ class FilterBottomSheet extends ConsumerWidget {
             children: [
               _buildStatusFilterChip(context, ref, null, 'All Statuses', Icons.filter_list, statusFilter),
               _buildStatusFilterChip(context, ref, 'pending', 'Pending', Icons.pending, statusFilter),
+              _buildStatusFilterChip(context, ref, 'advance_paid', 'Advance Paid', Icons.payments, statusFilter),
               _buildStatusFilterChip(context, ref, 'paid', 'Paid', Icons.check_circle, statusFilter),
               _buildStatusFilterChip(context, ref, 'cancelled', 'Cancelled', Icons.cancel, statusFilter),
             ],
