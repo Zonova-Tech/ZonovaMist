@@ -22,7 +22,7 @@ class ReservationsScreen extends ConsumerWidget {
       ref.refresh(reservationsProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Booking marked as $newStatus')),
+          SnackBar(content: Text('Booking marked as ${newStatus.toUpperCase()}')),
         );
       }
     } catch (e) {
@@ -34,6 +34,61 @@ class ReservationsScreen extends ConsumerWidget {
     }
   }
 
+  void _showStatusMenu(BuildContext context, WidgetRef ref, Map<String, dynamic> booking) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Change Status',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: Icon(Icons.pending, color: Colors.orange.shade700),
+              title: const Text('Pending'),
+              onTap: () {
+                Navigator.pop(context);
+                _updateStatus(context, ref, booking, 'pending');
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.payments, color: Colors.blue.shade700),
+              title: const Text('Advance Paid'),
+              onTap: () {
+                Navigator.pop(context);
+                _updateStatus(context, ref, booking, 'advance_paid');
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.check_circle, color: Colors.green.shade700),
+              title: const Text('Paid'),
+              onTap: () {
+                Navigator.pop(context);
+                _updateStatus(context, ref, booking, 'paid');
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.cancel, color: Colors.red.shade700),
+              title: const Text('Cancelled'),
+              onTap: () {
+                Navigator.pop(context);
+                _updateStatus(context, ref, booking, 'cancelled');
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showFilterSheet(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
       context: context,
@@ -42,9 +97,9 @@ class ReservationsScreen extends ConsumerWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.5,
-        minChildSize: 0.3,
-        maxChildSize: 0.8,
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
         expand: false,
         builder: (context, scrollController) => ReservationFilterBottomSheet(
           scrollController: scrollController,
@@ -108,7 +163,7 @@ class ReservationsScreen extends ConsumerWidget {
           ),
           IconButton(
             icon: Badge(
-              isLabelVisible: currentFilter != 'upcoming' || statusFilter != null || searchQuery.isNotEmpty,
+              isLabelVisible: currentFilter != 'upcoming' || statusFilter != 'pending' || searchQuery.isNotEmpty,
               label: const Text('•'),
               child: const Icon(Icons.filter_list),
             ),
@@ -119,7 +174,7 @@ class ReservationsScreen extends ConsumerWidget {
       body: Column(
         children: [
           // Active Filter Chips
-          if (currentFilter != 'upcoming' || statusFilter != null || searchQuery.isNotEmpty)
+          if (currentFilter != 'upcoming' || statusFilter != 'pending' || searchQuery.isNotEmpty)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               color: Colors.blue.shade50,
@@ -138,14 +193,14 @@ class ReservationsScreen extends ConsumerWidget {
                           },
                         ),
                       ),
-                    if (statusFilter != null)
+                    if (statusFilter != 'pending')
                       Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: Chip(
-                          label: Text('Status: ${statusFilter.toUpperCase()}'),
+                          label: Text('Status: ${_getStatusLabel(statusFilter)}'),
                           deleteIcon: const Icon(Icons.close, size: 18),
                           onDeleted: () {
-                            ref.read(reservationStatusFilterProvider.notifier).state = null;
+                            ref.read(reservationStatusFilterProvider.notifier).state = 'pending';
                           },
                         ),
                       ),
@@ -160,7 +215,7 @@ class ReservationsScreen extends ConsumerWidget {
                     TextButton.icon(
                       onPressed: () {
                         ref.read(reservationFilterProvider.notifier).state = 'upcoming';
-                        ref.read(reservationStatusFilterProvider.notifier).state = null;
+                        ref.read(reservationStatusFilterProvider.notifier).state = 'pending';
                         ref.read(reservationSearchProvider.notifier).state = '';
                       },
                       icon: const Icon(Icons.clear_all, size: 18),
@@ -204,21 +259,28 @@ class ReservationsScreen extends ConsumerWidget {
                       key: ValueKey(booking['_id']),
                       endActionPane: ActionPane(
                         motion: const DrawerMotion(),
-                        extentRatio: 0.6,
+                        extentRatio: 0.75,
                         children: [
                           SlidableAction(
+                            onPressed: (_) => _updateStatus(context, ref, booking, "advance_paid"),
+                            backgroundColor: Colors.blue.shade600,
+                            foregroundColor: Colors.white,
+                            icon: Icons.payments,
+                            label: 'Advance Paid',
+                          ),
+                          SlidableAction(
                             onPressed: (_) => _updateStatus(context, ref, booking, "paid"),
-                            backgroundColor: Colors.green,
+                            backgroundColor: Colors.green.shade600,
                             foregroundColor: Colors.white,
                             icon: Icons.check,
                             label: 'Mark Paid',
                           ),
                           SlidableAction(
                             onPressed: (_) => _updateStatus(context, ref, booking, "cancelled"),
-                            backgroundColor: Colors.red,
+                            backgroundColor: Colors.red.shade600,
                             foregroundColor: Colors.white,
                             icon: Icons.block,
-                            label: 'Deny Entry',
+                            label: 'Cancel',
                           ),
                         ],
                       ),
@@ -246,7 +308,10 @@ class ReservationsScreen extends ConsumerWidget {
                                       ),
                                     ),
                                   ),
-                                  _buildStatusChip(booking['status']),
+                                  GestureDetector(
+                                    onTap: () => _showStatusMenu(context, ref, booking),
+                                    child: _buildStatusChip(booking['status']),
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: 8),
@@ -315,6 +380,10 @@ class ReservationsScreen extends ConsumerWidget {
         color = Colors.green;
         icon = Icons.check_circle;
         break;
+      case 'advance_paid':
+        color = Colors.blue;
+        icon = Icons.payments;
+        break;
       case 'cancelled':
         color = Colors.red;
         icon = Icons.cancel;
@@ -339,7 +408,7 @@ class ReservationsScreen extends ConsumerWidget {
           Icon(icon, size: 14, color: color),
           const SizedBox(width: 4),
           Text(
-            (status ?? 'pending').toUpperCase(),
+            _getStatusLabel(status),
             style: TextStyle(
               color: color,
               fontSize: 11,
@@ -349,6 +418,21 @@ class ReservationsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  String _getStatusLabel(String? status) {
+    switch (status?.toLowerCase()) {
+      case 'advance_paid':
+        return 'ADVANCE PAID';
+      case 'paid':
+        return 'PAID';
+      case 'cancelled':
+        return 'CANCELLED';
+      case 'pending':
+        return 'PENDING';
+      default:
+        return (status ?? 'pending').toUpperCase();
+    }
   }
 
   String _getFilterLabel(String filter) {
@@ -437,6 +521,7 @@ class ReservationFilterBottomSheet extends ConsumerWidget {
             children: [
               _buildStatusFilterChip(context, ref, null, 'All Statuses', Icons.filter_list, statusFilter),
               _buildStatusFilterChip(context, ref, 'pending', 'Pending', Icons.pending, statusFilter),
+              _buildStatusFilterChip(context, ref, 'advance_paid', 'Advance Paid', Icons.payments, statusFilter),
               _buildStatusFilterChip(context, ref, 'paid', 'Paid', Icons.check_circle, statusFilter),
               _buildStatusFilterChip(context, ref, 'cancelled', 'Cancelled', Icons.cancel, statusFilter),
             ],
