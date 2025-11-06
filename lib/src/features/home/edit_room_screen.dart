@@ -13,6 +13,7 @@ class EditRoomScreen extends ConsumerStatefulWidget {
 }
 
 class _EditRoomScreenState extends ConsumerState<EditRoomScreen> {
+  late TextEditingController roomNumberController;
   late TextEditingController priceController;
   late TextEditingController bedCountController;
   late TextEditingController maxOccupancyController;
@@ -21,6 +22,9 @@ class _EditRoomScreenState extends ConsumerState<EditRoomScreen> {
   @override
   void initState() {
     super.initState();
+    roomNumberController = TextEditingController(
+      text: widget.room['roomNumber']?.toString() ?? '',
+    );
     priceController = TextEditingController(
       text: widget.room['pricePerNight']?.toString() ?? '',
     );
@@ -33,12 +37,22 @@ class _EditRoomScreenState extends ConsumerState<EditRoomScreen> {
     status = (widget.room['status'] as String?) ?? 'available';
   }
 
+  @override
+  void dispose() {
+    roomNumberController.dispose();
+    priceController.dispose();
+    bedCountController.dispose();
+    maxOccupancyController.dispose();
+    super.dispose();
+  }
+
   Future<void> _saveChanges() async {
+    final roomNumber = roomNumberController.text.trim();
     final priceText = priceController.text.trim();
     final bedsText = bedCountController.text.trim();
     final maxText = maxOccupancyController.text.trim();
 
-    if (priceText.isEmpty || bedsText.isEmpty || maxText.isEmpty) {
+    if (roomNumber.isEmpty || priceText.isEmpty || bedsText.isEmpty || maxText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('All fields are required')),
       );
@@ -59,6 +73,7 @@ class _EditRoomScreenState extends ConsumerState<EditRoomScreen> {
     try {
       final dio = ref.read(dioProvider);
       final resp = await dio.patch('/rooms/${widget.room['_id']}', data: {
+        'roomNumber': roomNumber,
         'pricePerNight': price,
         'bedCount': beds,
         'maxOccupancy': max,
@@ -68,7 +83,7 @@ class _EditRoomScreenState extends ConsumerState<EditRoomScreen> {
       if ((resp.statusCode ?? 500) >= 200 && (resp.statusCode ?? 500) < 300) {
         ref.refresh(roomsProvider);
         if (!mounted) return;
-        Navigator.of(context).pop(true); // ✅ return success
+        Navigator.of(context).pop(true);
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -91,6 +106,14 @@ class _EditRoomScreenState extends ConsumerState<EditRoomScreen> {
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
+            TextField(
+              controller: roomNumberController,
+              decoration: const InputDecoration(
+                labelText: 'Room Number',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 20),
             TextField(
               controller: priceController,
               keyboardType: TextInputType.number,

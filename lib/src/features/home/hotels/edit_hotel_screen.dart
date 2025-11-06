@@ -14,7 +14,7 @@ class EditHotelScreen extends ConsumerStatefulWidget {
 }
 
 class _EditHotelScreenState extends ConsumerState<EditHotelScreen> {
-  late TextEditingController priceController;
+  late TextEditingController nameController;
   late TextEditingController descriptionController;
   late TextEditingController phoneController;
   late String status;
@@ -22,8 +22,8 @@ class _EditHotelScreenState extends ConsumerState<EditHotelScreen> {
   @override
   void initState() {
     super.initState();
-    priceController = TextEditingController(
-      text: widget.hotel['price']?.toString() ?? '',
+    nameController = TextEditingController(
+      text: widget.hotel['name']?.toString() ?? '',
     );
     descriptionController = TextEditingController(
       text: widget.hotel['description'] ?? '',
@@ -34,22 +34,22 @@ class _EditHotelScreenState extends ConsumerState<EditHotelScreen> {
     status = (widget.hotel['status'] as String?) ?? 'available';
   }
 
+  @override
+  void dispose() {
+    nameController.dispose();
+    descriptionController.dispose();
+    phoneController.dispose();
+    super.dispose();
+  }
+
   Future<void> _saveChanges() async {
-    final priceText = priceController.text.trim();
+    final name = nameController.text.trim();
     final description = descriptionController.text.trim();
     final phone = phoneController.text.trim();
 
-    if (priceText.isEmpty) {
+    if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Price cannot be empty')),
-      );
-      return;
-    }
-
-    final price = int.tryParse(priceText);
-    if (price == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid number for price')),
+        const SnackBar(content: Text('Hotel name cannot be empty')),
       );
       return;
     }
@@ -57,7 +57,7 @@ class _EditHotelScreenState extends ConsumerState<EditHotelScreen> {
     try {
       final dio = ref.read(dioProvider);
       final resp = await dio.patch('/hotels/${widget.hotel['_id']}', data: {
-        'price': price,
+        'name': name,
         'status': status,
         'description': description,
         'phone': phone,
@@ -90,10 +90,9 @@ class _EditHotelScreenState extends ConsumerState<EditHotelScreen> {
         child: ListView(
           children: [
             TextField(
-              controller: priceController,
-              keyboardType: TextInputType.number,
+              controller: nameController,
               decoration: const InputDecoration(
-                labelText: 'Price',
+                labelText: 'Hotel Name',
                 border: OutlineInputBorder(),
               ),
             ),
