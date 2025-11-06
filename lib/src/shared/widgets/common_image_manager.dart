@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import '../../core/api/api_service.dart';
+import 'image_zoom_viewer.dart'; // Import the new zoom viewer
 
 class CommonImageManager extends ConsumerStatefulWidget {
   final String entityType; // e.g., "booking", "room"
@@ -27,11 +28,62 @@ class _CommonImageManagerState extends ConsumerState<CommonImageManager> {
   List<Uint8List> _selectedFileBytes = [];
   bool _isLoading = false;
   bool _isUploading = false;
+  CarouselSliderController? _carouselController;
+  int _currentIndex = 0;
+  bool _movingForward = true;
 
   @override
   void initState() {
     super.initState();
+    _carouselController = CarouselSliderController();
     if (widget.entityId.isNotEmpty) _fetchImages();
+  }
+
+  void _autoSlide() {
+    final totalItems = _images.length + _selectedFiles.length;
+    if (totalItems <= 1) return;
+
+    if (_movingForward) {
+      if (_currentIndex < totalItems - 1) {
+        _currentIndex++;
+        _carouselController?.nextPage(
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.easeInOut,
+        );
+      } else {
+        // Reached the end, pause then change direction
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            _movingForward = false;
+            _currentIndex--;
+            _carouselController?.previousPage(
+              duration: const Duration(milliseconds: 800),
+              curve: Curves.easeInOut,
+            );
+          }
+        });
+      }
+    } else {
+      if (_currentIndex > 0) {
+        _currentIndex--;
+        _carouselController?.previousPage(
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.easeInOut,
+        );
+      } else {
+        // Reached the start, pause then change direction
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            _movingForward = true;
+            _currentIndex++;
+            _carouselController?.nextPage(
+              duration: const Duration(milliseconds: 800),
+              curve: Curves.easeInOut,
+            );
+          }
+        });
+      }
+    }
   }
 
   Future<void> _fetchImages() async {
@@ -174,6 +226,26 @@ class _CommonImageManagerState extends ConsumerState<CommonImageManager> {
     }
   }
 
+  void _openImageViewer(int initialIndex) {
+    // Only show uploaded images in the viewer, not pending ones
+    final imageUrls = _images.map((img) => img['url'] as String).toList();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ImageZoomViewer(
+          imageUrls: imageUrls,
+          initialIndex: initialIndex,
+          onDelete: (url) {
+            // Find the public_id for this URL
+            final image = _images.firstWhere((img) => img['url'] == url);
+            _deleteImage(image['public_id']);
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) return const Center(child: CircularProgressIndicator());
@@ -197,50 +269,97 @@ class _CommonImageManagerState extends ConsumerState<CommonImageManager> {
         _images.isEmpty && _selectedFiles.isEmpty
             ? const Text('No photos available.')
             : CarouselSlider(
+          carouselController: _carouselController,
           options: CarouselOptions(
             height: 200,
             enlargeCenterPage: true,
+            enableInfiniteScroll: false,
             autoPlay: true,
+            autoPlayInterval: const Duration(seconds: 3),
+            autoPlayAnimationDuration: const Duration(milliseconds: 800),
+            autoPlayCurve: Curves.easeInOut,
+            pauseAutoPlayOnTouch: true,
             aspectRatio: 16 / 9,
             viewportFraction: 0.8,
+            onPageChanged: (index, reason) {
+              setState(() {
+                _currentIndex = index;
+              });
+              if (reason == CarouselPageChangedReason.timed) {
+                _autoSlide();
+              }
+            },
           ),
           items: [
-            ..._images.map((img) => Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.network(
-                  img['url'],
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.error, color: Colors.red),
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: IconButton(
-                    onPressed: () => _deleteImage(img['public_id']),
-                    icon: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade100,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.red.shade200.withOpacity(0.4),
-                            blurRadius: 4,
-                            offset: const Offset(1, 2),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.close, // ❌ Cross icon instead of trash
-                        color: Colors.red,
-                        size: 20,
+            // Uploaded images (clickable to zoom)
+            ..._images.asMap().entries.map((entry) {
+              final index = entry.key;
+              final img = entry.value;
+              return GestureDetector(
+                onTap: () => _openImageViewer(index),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.network(
+                      img['url'],
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const Icon(Icons.error, color: Colors.red),
+                    ),
+                    // Zoom indicator
+                    Positioned(
+                      bottom: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.zoom_in, color: Colors.white, size: 16),
+                            SizedBox(width: 4),
+                            Text(
+                              'Tap to zoom',
+                              style: TextStyle(color: Colors.white, fontSize: 10),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
+                    // Delete button
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: IconButton(
+                        onPressed: () => _deleteImage(img['public_id']),
+                        icon: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade100,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.red.shade200.withOpacity(0.4),
+                                blurRadius: 4,
+                                offset: const Offset(1, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            color: Colors.red,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            )),
+              );
+            }),
+            // Pending images (not clickable)
             ..._selectedFiles.asMap().entries.map((entry) {
               final index = entry.key;
               final file = entry.value;
