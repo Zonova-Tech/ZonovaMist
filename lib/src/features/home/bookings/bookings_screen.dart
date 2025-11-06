@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/api/api_service.dart';
 import '../../../shared/widgets/common_image_manager.dart';
 import 'add_booking_screen.dart';
@@ -141,33 +140,6 @@ class BookingsScreen extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  Future<void> _viewInvoice(BuildContext context, WidgetRef ref, String bookingId) async {
-    try {
-      final dio = ref.read(dioProvider);
-      final baseUrl = dio.options.baseUrl.replaceAll('/api', '');
-      final url = Uri.parse('$baseUrl/invoice/$bookingId');
-
-      print('🔗 Opening invoice URL: $url');
-
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url, mode: LaunchMode.externalApplication);
-      } else {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Could not open invoice at: $url')),
-          );
-        }
-      }
-    } catch (e) {
-      print('❌ Error opening invoice: $e');
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error opening invoice: $e')),
-        );
-      }
-    }
   }
 
   Future<void> _sendInvoice(BuildContext context, WidgetRef ref, Map<String, dynamic> booking) async {
@@ -354,35 +326,31 @@ class BookingsScreen extends ConsumerWidget {
                       key: ValueKey('slidable_$bookingId'),
                       endActionPane: ActionPane(
                         motion: const DrawerMotion(),
-                        extentRatio: 0.75,
+                        extentRatio: 0.5,
                         children: [
                           SlidableAction(
                             onPressed: (_) => _updateStatus(context, ref, booking, 'advance_paid'),
                             backgroundColor: Colors.blue.shade600,
                             foregroundColor: Colors.white,
                             icon: Icons.payments,
-                            label: 'Advance',
                           ),
                           SlidableAction(
                             onPressed: (_) => _updateStatus(context, ref, booking, 'paid'),
                             backgroundColor: Colors.green.shade600,
                             foregroundColor: Colors.white,
                             icon: Icons.check_circle,
-                            label: 'Paid',
                           ),
                           SlidableAction(
                             onPressed: (_) => _onEdit(context, ref, booking),
                             backgroundColor: Colors.orange.shade600,
                             foregroundColor: Colors.white,
                             icon: Icons.edit,
-                            label: 'Edit',
                           ),
                           SlidableAction(
                             onPressed: (_) => _onDelete(context, ref, booking),
                             backgroundColor: Colors.red.shade600,
                             foregroundColor: Colors.white,
                             icon: Icons.delete,
-                            label: 'Delete',
                           ),
                         ],
                       ),
@@ -437,34 +405,19 @@ class BookingsScreen extends ConsumerWidget {
 
                               const SizedBox(height: 12),
 
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: ElevatedButton.icon(
-                                      onPressed: () => _sendInvoice(context, ref, booking),
-                                      icon: const Icon(Icons.send, size: 18),
-                                      label: const Text('Send Invoice'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.green.shade600,
-                                        foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(vertical: 12),
-                                      ),
-                                    ),
+                              // Only Send Invoice button
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: () => _sendInvoice(context, ref, booking),
+                                  icon: const Icon(Icons.send, size: 18),
+                                  label: const Text('Send Invoice'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green.shade600,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: OutlinedButton.icon(
-                                      onPressed: () => _viewInvoice(context, ref, bookingId),
-                                      icon: const Icon(Icons.receipt_long, size: 18),
-                                      label: const Text('View Invoice'),
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: Colors.blue.shade700,
-                                        side: BorderSide(color: Colors.blue.shade700),
-                                        padding: const EdgeInsets.symmetric(vertical: 12),
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                             ],
                           ),
@@ -659,7 +612,6 @@ class FilterBottomSheet extends ConsumerWidget {
             runSpacing: 8,
             children: [
               _buildStatusFilterChip(context, ref, null, 'All Statuses', Icons.filter_list, statusFilter),
-              _buildStatusFilterChip(context, ref, 'pending', 'Pending', Icons.pending, statusFilter),
               _buildStatusFilterChip(context, ref, 'advance_paid', 'Advance Paid', Icons.payments, statusFilter),
               _buildStatusFilterChip(context, ref, 'paid', 'Paid', Icons.check_circle, statusFilter),
               _buildStatusFilterChip(context, ref, 'cancelled', 'Cancelled', Icons.cancel, statusFilter),

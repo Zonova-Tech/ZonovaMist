@@ -259,28 +259,25 @@ class ReservationsScreen extends ConsumerWidget {
                       key: ValueKey(booking['_id']),
                       endActionPane: ActionPane(
                         motion: const DrawerMotion(),
-                        extentRatio: 0.75,
+                        extentRatio: 0.4,
                         children: [
                           SlidableAction(
                             onPressed: (_) => _updateStatus(context, ref, booking, "advance_paid"),
                             backgroundColor: Colors.blue.shade600,
                             foregroundColor: Colors.white,
                             icon: Icons.payments,
-                            label: 'Advance Paid',
                           ),
                           SlidableAction(
                             onPressed: (_) => _updateStatus(context, ref, booking, "paid"),
                             backgroundColor: Colors.green.shade600,
                             foregroundColor: Colors.white,
-                            icon: Icons.check,
-                            label: 'Mark Paid',
+                            icon: Icons.check_circle,
                           ),
                           SlidableAction(
                             onPressed: (_) => _updateStatus(context, ref, booking, "cancelled"),
                             backgroundColor: Colors.red.shade600,
                             foregroundColor: Colors.white,
-                            icon: Icons.block,
-                            label: 'Cancel',
+                            icon: Icons.cancel,
                           ),
                         ],
                       ),
@@ -521,9 +518,6 @@ class ReservationFilterBottomSheet extends ConsumerWidget {
             children: [
               _buildStatusFilterChip(context, ref, null, 'All Statuses', Icons.filter_list, statusFilter),
               _buildStatusFilterChip(context, ref, 'pending', 'Pending', Icons.pending, statusFilter),
-              _buildStatusFilterChip(context, ref, 'advance_paid', 'Advance Paid', Icons.payments, statusFilter),
-              _buildStatusFilterChip(context, ref, 'paid', 'Paid', Icons.check_circle, statusFilter),
-              _buildStatusFilterChip(context, ref, 'cancelled', 'Cancelled', Icons.cancel, statusFilter),
             ],
           ),
 

@@ -29,6 +29,28 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
   DateTime? birthday;
   late String status;
 
+  /// Helper to extract decimal value from MongoDB Decimal128 format
+  String _extractDecimalValue(dynamic value) {
+    if (value == null) return '';
+
+    // Handle Decimal128 format: {$numberDecimal: "5000"}
+    if (value is Map && value.containsKey('\$numberDecimal')) {
+      return value['\$numberDecimal'].toString();
+    }
+
+    // Handle regular numbers
+    if (value is num) {
+      return value.toString();
+    }
+
+    // Handle strings
+    if (value is String) {
+      return value;
+    }
+
+    return '';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -40,8 +62,14 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
     guestNicController = TextEditingController(text: widget.booking['guest_nic'] ?? '');
     adultCountController = TextEditingController(text: widget.booking['adult_count']?.toString() ?? '');
     childCountController = TextEditingController(text: widget.booking['child_count']?.toString() ?? '');
-    totalPriceController = TextEditingController(text: widget.booking['total_price']?.toString() ?? '');
-    advanceAmountController = TextEditingController(text: widget.booking['advance_amount']?.toString() ?? '');
+
+    // ✅ Fixed: Extract decimal values properly
+    totalPriceController = TextEditingController(
+        text: _extractDecimalValue(widget.booking['total_price'])
+    );
+    advanceAmountController = TextEditingController(
+        text: _extractDecimalValue(widget.booking['advance_amount'])
+    );
 
     // Parse dates
     if (widget.booking['checkin_date'] != null) {
