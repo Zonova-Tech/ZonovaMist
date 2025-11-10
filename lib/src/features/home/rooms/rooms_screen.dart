@@ -6,15 +6,35 @@ import '../../../core/api/api_service.dart';
 import '../../../shared/widgets/common_image_manager.dart';
 import 'add_room_screen.dart';
 import '../edit_room_screen.dart';
-import '../../../shared/widgets/app_drawer.dart';
+import '../room_rate_page.dart'; //  NEW IMPORT
 
 class RoomsScreen extends ConsumerStatefulWidget {
   const RoomsScreen({super.key});
 
   @override
   ConsumerState<RoomsScreen> createState() => _RoomsScreenState();
-}
+} return Scaffold(
+ return Scaffold(
+  appBar: AppBar(
+    title: const Text('Rooms'),
+    actions: [
+      IconButton(
+        icon: const Icon(Icons.attach_money),
+        tooltip: 'Room Rates',
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const RoomRatePage()),
+          );
+        },
+      ),
+    ],
+  ),
+  drawer: const AppDrawer(), // Company repo 
+  body: Container(), // Temporarily keep this line to avoid compile errors
+);
 
+    
 class _RoomsScreenState extends ConsumerState<RoomsScreen> {
   Future<void> _onEdit(Map<String, dynamic> room) async {
     final result = await Navigator.of(context).push(
