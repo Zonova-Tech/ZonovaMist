@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/api/api_service.dart';
 import '../../../shared/widgets/common_image_manager.dart';
+import '../../../core/utils/decimal_helper.dart';
 import 'staff_provider.dart';
 
 class EditStaffScreen extends ConsumerStatefulWidget {
@@ -32,9 +33,20 @@ class _EditStaffScreenState extends ConsumerState<EditStaffScreen> {
     _nameController = TextEditingController(text: widget.staff['name']);
     _emailController = TextEditingController(text: widget.staff['email']);
     _phoneController = TextEditingController(text: widget.staff['phone']);
-    _salaryController = TextEditingController(
-      text: widget.staff['current_salary']?.toString() ?? '',
-    );
+
+    // Handle Decimal128 format from MongoDB
+    String salaryText = '';
+    if (widget.staff['current_salary'] != null) {
+      final salary = widget.staff['current_salary'];
+      if (salary is Map && salary.containsKey('\$numberDecimal')) {
+        salaryText = salary['\$numberDecimal'].toString();
+      } else if (salary is num) {
+        salaryText = salary.toString();
+      } else if (salary is String) {
+        salaryText = salary;
+      }
+    }
+    _salaryController = TextEditingController(text: salaryText);
 
     if (widget.staff['birthday'] != null) {
       _birthday = DateTime.parse(widget.staff['birthday']);

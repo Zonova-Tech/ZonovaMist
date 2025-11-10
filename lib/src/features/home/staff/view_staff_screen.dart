@@ -2,12 +2,42 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../shared/widgets/common_image_manager.dart';
+import '../../../core/utils/decimal_helper.dart';
 import 'edit_staff_screen.dart';
 
 class ViewStaffScreen extends ConsumerWidget {
   final Map<String, dynamic> staff;
 
   const ViewStaffScreen({super.key, required this.staff});
+
+  // Helper method to safely format salary
+  String _formatSalary(dynamic salary) {
+    if (salary == null) return 'N/A';
+
+    try {
+      // Handle Decimal128 format from MongoDB
+      if (salary is Map && salary.containsKey('\$numberDecimal')) {
+        final value = double.tryParse(salary['\$numberDecimal'].toString()) ?? 0.0;
+        return '\${value.toStringAsFixed(2)}';
+      }
+
+      // Handle regular number
+      if (salary is num) {
+        return '\${salary.toStringAsFixed(2)}';
+      }
+
+      // Handle string
+      if (salary is String) {
+        final value = double.tryParse(salary) ?? 0.0;
+        return '\${value.toStringAsFixed(2)}';
+      }
+
+      return '\${salary.toString()}';
+    } catch (e) {
+      print('Error formatting salary: $e');
+      return 'N/A';
+    }
+  }
 
   Color _getRoleColor(String? role) {
     switch (role?.toLowerCase()) {
@@ -238,7 +268,7 @@ class ViewStaffScreen extends ConsumerWidget {
                       _buildInfoRow(
                         Icons.attach_money,
                         'Current Salary',
-                        '\$${staff['current_salary'].toStringAsFixed(2)}',
+                        _formatSalary(staff['current_salary']),
                       ),
                   ],
                 ),
