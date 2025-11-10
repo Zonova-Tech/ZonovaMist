@@ -4,6 +4,8 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 import 'reservations_provider.dart';
 import 'package:Zonova_Mist/src/core/api/api_service.dart';
+import '../../../shared/widgets/app_drawer.dart';
+
 
 class ReservationsScreen extends ConsumerWidget {
   const ReservationsScreen({super.key});
@@ -171,6 +173,7 @@ class ReservationsScreen extends ConsumerWidget {
           ),
         ],
       ),
+      drawer: const AppDrawer(),
       body: Column(
         children: [
           // Active Filter Chips
