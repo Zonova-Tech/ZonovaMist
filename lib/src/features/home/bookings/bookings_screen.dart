@@ -8,6 +8,7 @@ import 'add_booking_screen.dart';
 import 'bookings_provider.dart';
 import 'edit_booking_screen.dart';
 import 'invoice_form_screen.dart';
+import '../../../shared/widgets/app_drawer.dart';
 
 class BookingsScreen extends ConsumerWidget {
   const BookingsScreen({super.key});
@@ -236,6 +237,7 @@ class BookingsScreen extends ConsumerWidget {
           ),
         ],
       ),
+      drawer: const AppDrawer(),
       body: Column(
         children: [
           // Active Filter Chips

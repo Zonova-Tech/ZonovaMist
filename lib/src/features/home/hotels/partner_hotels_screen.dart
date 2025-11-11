@@ -7,6 +7,7 @@ import '../../../core/api/api_service.dart';
 import '../../../shared/widgets/common_image_manager.dart';
 import 'add_hotel_screen.dart';
 import 'edit_hotel_screen.dart';
+import '../../../shared/widgets/app_drawer.dart';
 
 class PartnerHotelsScreen extends ConsumerStatefulWidget {
   const PartnerHotelsScreen({super.key});
@@ -69,6 +70,7 @@ class _PartnerHotelsScreenState extends ConsumerState<PartnerHotelsScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Partner Hotels'), backgroundColor: Colors.blueAccent),
+      drawer: const AppDrawer(),
       body: hotelsAsync.when(
         data: (hotels) {
           if (hotels.isEmpty) {
