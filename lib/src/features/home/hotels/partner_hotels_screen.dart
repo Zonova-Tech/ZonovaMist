@@ -115,6 +115,7 @@ class _PartnerHotelsScreenState extends ConsumerState<PartnerHotelsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Hotel name header
                         Row(
                           children: [
                             Icon(Icons.hotel, color: Colors.blue.shade700),
@@ -128,42 +129,83 @@ class _PartnerHotelsScreenState extends ConsumerState<PartnerHotelsScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 12),
+
+                        // Two column layout for details
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.location_on, size: 18, color: Colors.grey),
-                            const SizedBox(width: 6),
+                            // Left side: Address and Phone
                             Expanded(
-                              child: Text(
-                                hotel['location']?['city'] ??
-                                    hotel['location']?['address'] ??
-                                    'N/A',
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Icon(Icons.location_on, size: 18, color: Colors.grey),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          hotel['location']?['city'] ??
+                                              hotel['location']?['address'] ??
+                                              'N/A',
+                                          style: const TextStyle(fontSize: 14),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.phone, size: 18, color: Colors.grey),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          hotel['phone'] ?? 'N/A',
+                                          style: const TextStyle(fontSize: 14),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            const Icon(Icons.phone, size: 18, color: Colors.grey),
-                            const SizedBox(width: 6),
-                            Text(hotel['phone'] ?? 'N/A'),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            const Icon(Icons.attach_money, size: 18, color: Colors.grey),
-                            const SizedBox(width: 6),
-                            Text('LKR ${hotel['price'] ?? 'N/A'}'),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            const Icon(Icons.info_outline, size: 18, color: Colors.grey),
-                            const SizedBox(width: 6),
-                            Text('Status: ${hotel['status'] ?? 'N/A'}'),
+                            const SizedBox(width: 16),
+
+                            // Right side: Price and Status
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.attach_money, size: 18, color: Colors.grey),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          'LKR ${hotel['price'] ?? 'N/A'}',
+                                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.info_outline, size: 18, color: Colors.grey),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          hotel['status'] ?? 'N/A',
+                                          style: const TextStyle(fontSize: 14),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 12),
