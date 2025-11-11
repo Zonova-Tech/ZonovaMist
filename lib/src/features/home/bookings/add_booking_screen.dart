@@ -119,16 +119,24 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
     required String label,
     required TextEditingController controller,
     TextInputType keyboardType = TextInputType.text,
-    int maxLines = 1,
+    int? maxLines = 1,
+    int? minLines,
     String? Function(String?)? validator,
   }) {
+    // Determine if this is a multi-line field
+    final isMultiline = maxLines == null || (maxLines > 1);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
         controller: controller,
-        keyboardType: keyboardType,
+        keyboardType: isMultiline ? TextInputType.multiline : keyboardType,
         maxLines: maxLines,
+        minLines: minLines,
         validator: validator,
+        textInputAction: isMultiline
+            ? TextInputAction.newline
+            : TextInputAction.done,
         decoration: InputDecoration(
           labelText: label,
           filled: true,
@@ -279,7 +287,8 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
                 _buildTextField(
                   label: 'Address (Optional)',
                   controller: _guestAddressController,
-                  maxLines: 2,
+                  maxLines: null,
+                  minLines: 2,
                 ),
               ],
             ),
@@ -422,7 +431,8 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
                 _buildTextField(
                   label: 'Special Notes (Optional)',
                   controller: _specialNotesController,
-                  maxLines: 4,
+                  maxLines: null,
+                  minLines: 4,
                 ),
               ],
             ),
