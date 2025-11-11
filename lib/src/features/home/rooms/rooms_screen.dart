@@ -6,6 +6,7 @@ import '../../../core/api/api_service.dart';
 import '../../../shared/widgets/common_image_manager.dart';
 import 'add_room_screen.dart';
 import '../edit_room_screen.dart';
+import '../../../shared/widgets/app_drawer.dart';
 
 class RoomsScreen extends ConsumerStatefulWidget {
   const RoomsScreen({super.key});
@@ -74,6 +75,7 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Rooms')),
+      drawer: const AppDrawer(),
       body: roomsAsync.when(
         data: (rooms) {
           if (rooms.isEmpty) {

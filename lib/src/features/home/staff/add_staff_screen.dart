@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/api/api_service.dart';
+import '../../../shared/widgets/profile_picture_uploader.dart';
 import 'staff_provider.dart';
 
 class AddStaffScreen extends ConsumerStatefulWidget {
@@ -21,6 +22,7 @@ class _AddStaffScreenState extends ConsumerState<AddStaffScreen> {
   DateTime? _birthday;
   DateTime? _joinedDate;
   String? _selectedRole;
+  String? _profilePictureUrl;
   bool _isLoading = false;
 
   @override
@@ -74,6 +76,7 @@ class _AddStaffScreenState extends ConsumerState<AddStaffScreen> {
             ? double.tryParse(_salaryController.text)
             : null,
         'role': _selectedRole,
+        'profile_picture': _profilePictureUrl, // ✅ Save profile picture URL
       });
 
       if (mounted) {
@@ -112,29 +115,40 @@ class _AddStaffScreenState extends ConsumerState<AddStaffScreen> {
             children: [
               // Profile Picture Placeholder
               Center(
-                child: Stack(
+                child: Column(
                   children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.blue.shade100,
-                      child: Icon(Icons.person, size: 50, color: Colors.blue.shade700),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: CircleAvatar(
-                        radius: 18,
-                        backgroundColor: Colors.blue,
-                        child: IconButton(
-                          icon: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
-                          onPressed: () {
-                            // TODO: Implement image upload
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Image upload coming soon')),
-                            );
-                          },
+                    Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 50,
+                          backgroundColor: Colors.blue.shade100,
+                          backgroundImage: _profilePictureUrl != null
+                              ? NetworkImage(_profilePictureUrl!)
+                              : null,
+                          child: _profilePictureUrl == null
+                              ? Icon(Icons.person, size: 50, color: Colors.blue.shade700)
+                              : null,
                         ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: CircleAvatar(
+                            radius: 18,
+                            backgroundColor: Colors.blue,
+                            child: Icon(Icons.camera_alt, size: 18, color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Profile picture can be added after creating staff',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                        fontStyle: FontStyle.italic,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),

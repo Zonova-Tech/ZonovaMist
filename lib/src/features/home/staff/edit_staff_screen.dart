@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/api/api_service.dart';
 import '../../../shared/widgets/common_image_manager.dart';
+import '../../../shared/widgets/profile_picture_uploader.dart';
 import '../../../core/utils/decimal_helper.dart';
 import 'staff_provider.dart';
 
@@ -25,6 +26,7 @@ class _EditStaffScreenState extends ConsumerState<EditStaffScreen> {
   DateTime? _birthday;
   DateTime? _joinedDate;
   String? _selectedRole;
+  String? _profilePictureUrl;
   bool _isLoading = false;
 
   @override
@@ -34,19 +36,10 @@ class _EditStaffScreenState extends ConsumerState<EditStaffScreen> {
     _emailController = TextEditingController(text: widget.staff['email']);
     _phoneController = TextEditingController(text: widget.staff['phone']);
 
-    // Handle Decimal128 format from MongoDB
-    String salaryText = '';
-    if (widget.staff['current_salary'] != null) {
-      final salary = widget.staff['current_salary'];
-      if (salary is Map && salary.containsKey('\$numberDecimal')) {
-        salaryText = salary['\$numberDecimal'].toString();
-      } else if (salary is num) {
-        salaryText = salary.toString();
-      } else if (salary is String) {
-        salaryText = salary;
-      }
-    }
-    _salaryController = TextEditingController(text: salaryText);
+    // Use helper to handle Decimal128 format
+    _salaryController = TextEditingController(
+      text: DecimalHelper.toEditableString(widget.staff['current_salary']),
+    );
 
     if (widget.staff['birthday'] != null) {
       _birthday = DateTime.parse(widget.staff['birthday']);
@@ -55,6 +48,7 @@ class _EditStaffScreenState extends ConsumerState<EditStaffScreen> {
       _joinedDate = DateTime.parse(widget.staff['joined_date']);
     }
     _selectedRole = widget.staff['role'];
+    _profilePictureUrl = widget.staff['profile_picture'];
   }
 
   @override
@@ -110,6 +104,7 @@ class _EditStaffScreenState extends ConsumerState<EditStaffScreen> {
             ? double.tryParse(_salaryController.text)
             : null,
         'role': _selectedRole,
+        'profile_picture': _profilePictureUrl, // ✅ Save profile picture URL
       });
 
       if (mounted) {
@@ -147,37 +142,18 @@ class _EditStaffScreenState extends ConsumerState<EditStaffScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Profile Picture
+              // Profile Picture with Uploader
               Center(
-                child: Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.blue.shade100,
-                      backgroundImage: widget.staff['profile_picture'] != null
-                          ? NetworkImage(widget.staff['profile_picture'])
-                          : null,
-                      child: widget.staff['profile_picture'] == null
-                          ? Icon(Icons.person, size: 50, color: Colors.blue.shade700)
-                          : null,
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: CircleAvatar(
-                        radius: 18,
-                        backgroundColor: Colors.blue,
-                        child: IconButton(
-                          icon: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Image upload coming soon')),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
+                child: ProfilePictureUploader(
+                  entityType: 'Staff',
+                  entityId: staffId,
+                  currentImageUrl: _profilePictureUrl,
+                  size: 100,
+                  onImageUpdated: (url) {
+                    setState(() {
+                      _profilePictureUrl = url;
+                    });
+                  },
                 ),
               ),
               const SizedBox(height: 24),
