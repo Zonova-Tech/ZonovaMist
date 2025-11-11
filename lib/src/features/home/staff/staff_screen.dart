@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../../core/api/api_service.dart';
 import '../../../shared/widgets/common_image_manager.dart';
 import 'staff_provider.dart';
@@ -93,140 +94,156 @@ class StaffScreen extends ConsumerWidget {
               final member = staff[index];
               final staffId = member['_id'] ?? '';
 
-              return Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+              return Slidable(
+                key: ValueKey('slidable_staff_$staffId'),
+                endActionPane: ActionPane(
+                  motion: const DrawerMotion(),
+                  extentRatio: 0.4,
+                  children: [
+                    SlidableAction(
+                      onPressed: (_) async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => EditStaffScreen(staff: member),
+                          ),
+                        );
+                        if (result == true) {
+                          ref.refresh(staffProvider);
+                        }
+                      },
+                      backgroundColor: Colors.orange.shade600,
+                      foregroundColor: Colors.white,
+                      icon: Icons.edit,
+                      label: 'Edit',
+                    ),
+                    SlidableAction(
+                      onPressed: (_) => _onDelete(context, ref, member),
+                      backgroundColor: Colors.red.shade600,
+                      foregroundColor: Colors.white,
+                      icon: Icons.delete,
+                      label: 'Delete',
+                    ),
+                  ],
                 ),
-                elevation: 3,
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                child: InkWell(
-                  onTap: () async {
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ViewStaffScreen(staff: member),
-                      ),
-                    );
-                    if (result == true) {
-                      ref.refresh(staffProvider);
-                    }
-                  },
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        // Profile Picture
-                        CircleAvatar(
-                          radius: 35,
-                          backgroundColor: Colors.blue.shade100,
-                          backgroundImage: member['profile_picture'] != null
-                              ? NetworkImage(member['profile_picture'])
-                              : null,
-                          child: member['profile_picture'] == null
-                              ? Icon(Icons.person, size: 35, color: Colors.blue.shade700)
-                              : null,
+                child: Card(
+                  key: ValueKey('card_staff_$staffId'),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 3,
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  child: InkWell(
+                    onTap: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ViewStaffScreen(staff: member),
                         ),
-                        const SizedBox(width: 16),
+                      );
+                      if (result == true) {
+                        ref.refresh(staffProvider);
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          // Profile Picture
+                          CircleAvatar(
+                            radius: 35,
+                            backgroundColor: Colors.blue.shade100,
+                            backgroundImage: member['profile_picture'] != null
+                                ? NetworkImage(member['profile_picture'])
+                                : null,
+                            child: member['profile_picture'] == null
+                                ? Icon(Icons.person, size: 35, color: Colors.blue.shade700)
+                                : null,
+                          ),
+                          const SizedBox(width: 16),
 
-                        // Staff Details
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                member['name'] ?? 'Unknown',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: _getRoleColor(member['role']).withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: _getRoleColor(member['role']),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      member['role'] ?? 'N/A',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: _getRoleColor(member['role']),
-                                      ),
-                                    ),
+                          // Staff Details
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  member['name'] ?? 'Unknown',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              if (member['email'] != null)
+                                ),
+                                const SizedBox(height: 4),
                                 Row(
                                   children: [
-                                    Icon(Icons.email, size: 14, color: Colors.grey.shade600),
-                                    const SizedBox(width: 4),
-                                    Expanded(
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: _getRoleColor(member['role']).withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: _getRoleColor(member['role']),
+                                        ),
+                                      ),
                                       child: Text(
-                                        member['email'],
+                                        member['role'] ?? 'N/A',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: _getRoleColor(member['role']),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                if (member['email'] != null)
+                                  Row(
+                                    children: [
+                                      Icon(Icons.email, size: 14, color: Colors.grey.shade600),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          member['email'],
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: Colors.grey.shade700,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                if (member['phone'] != null)
+                                  Row(
+                                    children: [
+                                      Icon(Icons.phone, size: 14, color: Colors.grey.shade600),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        member['phone'],
                                         style: TextStyle(
                                           fontSize: 13,
                                           color: Colors.grey.shade700,
                                         ),
-                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              if (member['phone'] != null)
-                                Row(
-                                  children: [
-                                    Icon(Icons.phone, size: 14, color: Colors.grey.shade600),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      member['phone'],
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: Colors.grey.shade700,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                            ],
-                          ),
-                        ),
-
-                        // Action Buttons
-                        Column(
-                          children: [
-                            IconButton(
-                              icon: Icon(Icons.edit, color: Colors.orange.shade700),
-                              onPressed: () async {
-                                final result = await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => EditStaffScreen(staff: member),
+                                    ],
                                   ),
-                                );
-                                if (result == true) {
-                                  ref.refresh(staffProvider);
-                                }
-                              },
+                              ],
                             ),
-                            IconButton(
-                              icon: Icon(Icons.delete, color: Colors.red.shade700),
-                              onPressed: () => _onDelete(context, ref, member),
-                            ),
-                          ],
-                        ),
-                      ],
+                          ),
+
+                          // Arrow indicator
+                          Icon(
+                            Icons.chevron_right,
+                            color: Colors.grey.shade400,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
