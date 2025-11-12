@@ -18,9 +18,12 @@ final reservationsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) as
     'filter': filter,
   };
 
+  // When statusFilter is null or empty, backend will automatically exclude cancelled
+  // When statusFilter has a specific value, backend will show only that status
   if (statusFilter != null && statusFilter.isNotEmpty) {
     queryParams['status'] = statusFilter;
   }
+  // If statusFilter is null/empty, don't add status param - backend will exclude cancelled by default
 
   if (search.isNotEmpty) {
     queryParams['search'] = search;
