@@ -521,6 +521,9 @@ class ReservationFilterBottomSheet extends ConsumerWidget {
             children: [
               _buildStatusFilterChip(context, ref, null, 'All Statuses', Icons.filter_list, statusFilter),
               _buildStatusFilterChip(context, ref, 'pending', 'Pending', Icons.pending, statusFilter),
+              _buildStatusFilterChip(context, ref, 'advance_paid', 'Advance Paid', Icons.payments, statusFilter),
+              _buildStatusFilterChip(context, ref, 'paid', 'Paid', Icons.check_circle, statusFilter),
+              _buildStatusFilterChip(context, ref, 'cancelled', 'Cancelled', Icons.cancel, statusFilter),
             ],
           ),
 
