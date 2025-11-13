@@ -19,6 +19,17 @@ class _AddHotelScreenState extends ConsumerState<AddHotelScreen> {
   final _emailController = TextEditingController();
   final _descriptionController = TextEditingController();
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _cityController.dispose();
+    _phoneController.dispose();
+    _addressController.dispose();
+    _emailController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
   Future<void> _addHotel() async {
     if (_formKey.currentState!.validate()) {
       final dio = ref.read(dioProvider);
@@ -58,9 +69,11 @@ class _AddHotelScreenState extends ConsumerState<AddHotelScreen> {
         controller: controller,
         keyboardType: inputType,
         maxLines: maxLines,
+        minLines: maxLines > 1 ? 3 : 1, // Ensures multiline fields start with visible lines
         decoration: InputDecoration(
           labelText: label,
-          border: OutlineInputBorder(),
+          border: const OutlineInputBorder(),
+          alignLabelWithHint: maxLines > 1, // Aligns label to top for multiline
         ),
         validator: required ? (value) => value!.isEmpty ? 'Enter $label' : null : null,
       ),
@@ -82,7 +95,10 @@ class _AddHotelScreenState extends ConsumerState<AddHotelScreen> {
               _buildTextField("Phone Number", _phoneController, inputType: TextInputType.phone),
               _buildTextField("Address (Optional)", _addressController, required: false),
               _buildTextField("Email (Optional)", _emailController, inputType: TextInputType.emailAddress, required: false),
-              _buildTextField("Description (Optional)", _descriptionController, maxLines: 3, required: false),
+              _buildTextField("Description (Optional)", _descriptionController,
+                  maxLines: 5, // Increased to 5 lines for better visibility
+                  inputType: TextInputType.multiline, // Better keyboard for multiline
+                  required: false),
               const SizedBox(height: 30),
               SizedBox(
                 width: double.infinity,
