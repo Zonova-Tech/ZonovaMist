@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'bookings/bookings_screen.dart';
-import 'rooms/rooms_screen.dart';
-import 'reservations/reservations_screen.dart';
-import 'hotels/partner_hotels_screen.dart';
-import 'profile/settings_screen.dart';
-import 'bookings/add_booking_screen.dart';
+import '../bookings/bookings_screen.dart';
+import 'rooms_screen.dart';
+import '../reservations/reservations_screen.dart';
+import '../hotels/partner_hotels_screen.dart';
+import '../profile/settings_screen.dart';
+import '../bookings/add_booking_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

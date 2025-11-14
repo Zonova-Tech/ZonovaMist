@@ -6,11 +6,11 @@ import 'package:Zonova_Mist/src/core/i18n/arb/app_localizations.dart';
 import 'package:Zonova_Mist/src/core/routing/app_router.dart';
 import 'package:Zonova_Mist/src/core/theme/app_theme.dart';
 import 'package:Zonova_Mist/src/features/auth/login_screen.dart';
-import 'package:Zonova_Mist/src/features/home/home_screen.dart';
+import 'package:Zonova_Mist/src/features/home/rooms/home_screen.dart';
 import 'package:Zonova_Mist/src/shared/widgets/splash_screen.dart';
 
 // ===== new import for the room rate page =====
-import 'package:Zonova_Mist/src/features/home/room_rate_page.dart';
+import 'package:Zonova_Mist/src/features/home/rooms/room_rate_page.dart';
 
 void main() {
   runApp(

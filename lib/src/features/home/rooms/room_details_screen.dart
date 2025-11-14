@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/api/api_service.dart';
 import '../../../shared/widgets/common_image_manager.dart';
-import '../edit_room_screen.dart';
+import 'edit_room_screen.dart';
 
 class RoomDetailsScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> room;
