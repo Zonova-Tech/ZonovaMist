@@ -40,7 +40,28 @@ class DashboardScreen extends ConsumerWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.hotel, color: Colors.white, size: 32),
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.asset(
+                              'assets/icons/logo.png',
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Icon(
+                                  Icons.hotel,
+                                  size: 32,
+                                  color: Colors.blue.shade700,
+                                );
+                              },
+                            ),
+                          ),
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -57,7 +78,7 @@ class DashboardScreen extends ConsumerWidget {
                               Text(
                                 'Guest House Management',
                                 style: TextStyle(
-                                  color: Colors.white.withAlpha(230),
+                                  color: Colors.white.withOpacity(0.9),
                                   fontSize: 14,
                                 ),
                               ),
@@ -70,7 +91,7 @@ class DashboardScreen extends ConsumerWidget {
                     Text(
                       'Welcome back!',
                       style: TextStyle(
-                        color: Colors.white.withAlpha(242),
+                        color: Colors.white.withOpacity(0.95),
                         fontSize: 16,
                       ),
                     ),
@@ -243,7 +264,7 @@ class DashboardScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withAlpha(26),
+                  color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: color, size: 28),
