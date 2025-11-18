@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'bookings/bookings_screen.dart';
-import 'rooms/rooms_screen.dart';
 import 'reservations/reservations_screen.dart';
 import 'hotels/partner_hotels_screen.dart';
 import 'profile/settings_screen.dart';
 import 'bookings/add_booking_screen.dart';
+import 'dashboard/dashboard_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,10 +17,10 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
   final _pages = const [
+    DashboardScreen(),
     BookingsScreen(),
     ReservationsScreen(),
     PartnerHotelsScreen(),
-    RoomsScreen(),
     SettingsScreen(),
   ];
 
@@ -36,10 +36,14 @@ class _HomeScreenState extends State<HomeScreen> {
             _selectedIndex = index;
           });
         },
-        selectedItemColor: Theme.of(context).primaryColor, // ✅ theme color
-        unselectedItemColor: Colors.grey, // ✅ dimmed icons for inactive
-        showUnselectedLabels: true, // optional: show labels for all
+        selectedItemColor: Theme.of(context).primaryColor,
+        unselectedItemColor: Colors.grey,
+        showUnselectedLabels: true,
         items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard),
+            label: "Dashboard",
+          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.book_online),
             label: "Bookings",
@@ -53,16 +57,12 @@ class _HomeScreenState extends State<HomeScreen> {
             label: "Hotels",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.meeting_room),
-            label: "Rooms",
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.settings),
             label: "Settings",
           ),
         ],
       ),
-      floatingActionButton: _selectedIndex == 0
+      floatingActionButton: _selectedIndex == 1 // Changed from 0 to 1 since Bookings is now at index 1
           ? FloatingActionButton(
         onPressed: () async {
           await Navigator.push(

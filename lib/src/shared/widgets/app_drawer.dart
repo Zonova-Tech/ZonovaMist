@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../features/home/staff/staff_screen.dart';
+import '../../features/home/rooms/rooms_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -84,6 +85,28 @@ class AppDrawer extends StatelessWidget {
                 ],
               ),
             ),
+            // Rooms Menu Item
+            ListTile(
+              leading: Icon(Icons.meeting_room, color: Colors.blue.shade700),
+              title: Text(
+                'Rooms',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              subtitle: Text(
+                'Manage rooms',
+                style: TextStyle(fontSize: 12),
+              ),
+              onTap: () {
+                Navigator.pop(context); // Close the drawer
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const RoomsScreen(showBackButton: true),
+                  ),
+                );
+              },
+            ),
+            Divider(height: 1),
             // Staff Menu Item
             ListTile(
               leading: Icon(Icons.people, color: Colors.blue.shade700),
