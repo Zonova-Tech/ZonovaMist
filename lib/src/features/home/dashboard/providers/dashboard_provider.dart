@@ -1,13 +1,17 @@
-// lib/src/features/home/dashboard/providers/dashboard_provider.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:math';
 import '../models/dashboard_models.dart';
+import '../../../../core/api/dashboard_service.dart';
+
+/// Provider for dashboard service
+final dashboardServiceProvider = Provider<DashboardService>((ref) {
+  return DashboardService();
+});
 
 /// Provider for dashboard state
 final dashboardProvider = StateNotifierProvider<DashboardNotifier, DashboardState>((ref) {
-  return DashboardNotifier();
+  final service = ref.watch(dashboardServiceProvider);
+  return DashboardNotifier(service);
 });
 
 /// Dashboard state
@@ -16,12 +20,24 @@ class DashboardState {
   final Set<ComparisonPeriod> selectedComparisons;
   final DateRangeFilter? customDateRange;
   final bool isLoading;
+  final String? error;
+
+  // Cached data
+  final Map<String, StatData>? stats;
+  final ComparisonChartData? revenueData;
+  final ComparisonChartData? expenseData;
+  final List<ExpenseCategoryData>? categoryData;
 
   DashboardState({
     this.timePeriod = TimePeriod.month,
     Set<ComparisonPeriod>? selectedComparisons,
     this.customDateRange,
     this.isLoading = false,
+    this.error,
+    this.stats,
+    this.revenueData,
+    this.expenseData,
+    this.categoryData,
   }) : selectedComparisons = selectedComparisons ?? {ComparisonPeriod.now};
 
   DashboardState copyWith({
@@ -29,24 +45,145 @@ class DashboardState {
     Set<ComparisonPeriod>? selectedComparisons,
     DateRangeFilter? customDateRange,
     bool? isLoading,
+    String? error,
+    Map<String, StatData>? stats,
+    ComparisonChartData? revenueData,
+    ComparisonChartData? expenseData,
+    List<ExpenseCategoryData>? categoryData,
   }) {
     return DashboardState(
       timePeriod: timePeriod ?? this.timePeriod,
       selectedComparisons: selectedComparisons ?? this.selectedComparisons,
       customDateRange: customDateRange ?? this.customDateRange,
       isLoading: isLoading ?? this.isLoading,
+      error: error,
+      stats: stats ?? this.stats,
+      revenueData: revenueData ?? this.revenueData,
+      expenseData: expenseData ?? this.expenseData,
+      categoryData: categoryData ?? this.categoryData,
     );
   }
 }
 
-/// Dashboard notifier with dummy data generation
+/// Dashboard notifier with real API integration
 class DashboardNotifier extends StateNotifier<DashboardState> {
-  DashboardNotifier() : super(DashboardState());
+  final DashboardService _service;
 
-  void setTimePeriod(TimePeriod period) {
-    state = state.copyWith(timePeriod: period);
+  DashboardNotifier(this._service) : super(DashboardState()) {
+    // Load initial data
+    loadAllData();
   }
 
+  /// Load all dashboard data
+  Future<void> loadAllData() async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      await Future.wait([
+        loadStats(),
+        loadRevenueData(),
+        loadExpenseData(),
+        loadCategoryData(),
+      ]);
+
+      state = state.copyWith(isLoading: false);
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Failed to load dashboard data: $e',
+      );
+    }
+  }
+
+  /// Load statistics
+  Future<void> loadStats() async {
+    try {
+      final stats = await _service.fetchStats(
+        timePeriod: state.timePeriod,
+        customStartDate: state.customDateRange?.startDate,
+        customEndDate: state.customDateRange?.endDate,
+      );
+
+      state = state.copyWith(stats: stats);
+    } catch (e) {
+      print('❌ Error loading stats: $e');
+      // Use dummy data as fallback
+      state = state.copyWith(stats: _getDummyStats());
+    }
+  }
+
+  /// Load revenue comparison data
+  Future<void> loadRevenueData() async {
+    try {
+      final revenueData = await _service.fetchRevenueComparison(
+        timePeriod: state.timePeriod,
+        comparisons: state.selectedComparisons,
+        customStartDate: state.customDateRange?.startDate,
+        customEndDate: state.customDateRange?.endDate,
+      );
+
+      state = state.copyWith(revenueData: revenueData);
+    } catch (e) {
+      print('❌ Error loading revenue data: $e');
+      // Set empty data if API fails
+      state = state.copyWith(
+        revenueData: ComparisonChartData(
+          prevData: [],
+          nowData: [],
+          nextData: [],
+        ),
+      );
+    }
+  }
+
+  /// Load expense comparison data
+  Future<void> loadExpenseData() async {
+    try {
+      final expenseData = await _service.fetchExpenseComparison(
+        timePeriod: state.timePeriod,
+        comparisons: state.selectedComparisons,
+        customStartDate: state.customDateRange?.startDate,
+        customEndDate: state.customDateRange?.endDate,
+      );
+
+      state = state.copyWith(expenseData: expenseData);
+    } catch (e) {
+      print('❌ Error loading expense data: $e');
+      // Set empty data if API fails
+      state = state.copyWith(
+        expenseData: ComparisonChartData(
+          prevData: [],
+          nowData: [],
+          nextData: [],
+        ),
+      );
+    }
+  }
+
+  /// Load expense category data
+  Future<void> loadCategoryData() async {
+    try {
+      final categoryData = await _service.fetchExpenseCategories(
+        timePeriod: state.timePeriod,
+        customStartDate: state.customDateRange?.startDate,
+        customEndDate: state.customDateRange?.endDate,
+      );
+
+      state = state.copyWith(categoryData: categoryData);
+    } catch (e) {
+      print('❌ Error loading category data: $e');
+      // Set empty data if API fails
+      state = state.copyWith(categoryData: []);
+    }
+  }
+
+  /// Set time period and reload data
+  void setTimePeriod(TimePeriod period) {
+    state = state.copyWith(timePeriod: period);
+    loadAllData();
+  }
+
+  /// Toggle comparison period and reload data
   void toggleComparison(ComparisonPeriod period) {
     final newComparisons = Set<ComparisonPeriod>.from(state.selectedComparisons);
     if (newComparisons.contains(period)) {
@@ -57,254 +194,99 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
       newComparisons.add(period);
     }
     state = state.copyWith(selectedComparisons: newComparisons);
+    loadAllData();
   }
 
+  /// Set custom date range and reload data
   void setCustomDateRange(DateRangeFilter dateRange) {
     state = state.copyWith(
       timePeriod: TimePeriod.custom,
       customDateRange: dateRange,
     );
+    loadAllData();
   }
 
-  /// Generate stat panel data (dummy)
+  /// Get stat panel data (from cached state)
   List<StatData> getStatPanelData() {
+    if (state.stats == null) return _getDummyStatsList();
+
     return [
-      StatData(
+      state.stats!['revenue']!,
+      state.stats!['advances']!,
+      state.stats!['commission']!,
+      state.stats!['expenses']!,
+    ];
+  }
+
+  /// Get revenue comparison data (from cached state)
+  ComparisonChartData getRevenueComparisonData() {
+    return state.revenueData ?? ComparisonChartData(
+      prevData: [],
+      nowData: [],
+      nextData: [],
+    );
+  }
+
+  /// Get expense comparison data (from cached state)
+  ComparisonChartData getExpenseComparisonData() {
+    return state.expenseData ?? ComparisonChartData(
+      prevData: [],
+      nowData: [],
+      nextData: [],
+    );
+  }
+
+  /// Get expense category data (from cached state)
+  List<ExpenseCategoryData> getExpenseCategoryData() {
+    return state.categoryData ?? [];
+  }
+
+  // Dummy data fallbacks
+
+  Map<String, StatData> _getDummyStats() {
+    return {
+      'revenue': StatData(
         title: 'Revenue',
-        value: 125340.50,
+        value: 0,
         icon: Icons.trending_up,
         color: Colors.green,
-        trend: '+12.5%',
+        trend: '+0.0%',
         isPositive: true,
       ),
-      StatData(
+      'advances': StatData(
         title: 'Advances',
-        value: 45200.00,
+        value: 0,
         icon: Icons.payments,
         color: Colors.blue,
-        trend: '+8.3%',
+        trend: '+0.0%',
         isPositive: true,
       ),
-      StatData(
+      'commission': StatData(
         title: 'Commission',
-        value: 8750.25,
+        value: 0,
         icon: Icons.account_balance_wallet,
         color: Colors.orange,
-        trend: '+5.2%',
+        trend: '+0.0%',
         isPositive: true,
       ),
-      StatData(
+      'expenses': StatData(
         title: 'Expenses',
-        value: 32450.75,
+        value: 0,
         icon: Icons.money_off,
         color: Colors.red,
-        trend: '-3.1%',
+        trend: '+0.0%',
         isPositive: true,
       ),
-    ];
+    };
   }
 
-  /// Generate revenue comparison data (dummy)
-  ComparisonChartData getRevenueComparisonData() {
-    final now = DateTime.now();
-    return _generateComparisonData(now, baseAmount: 4000, variance: 1500);
-  }
-
-  /// Generate expense comparison data (dummy)
-  ComparisonChartData getExpenseComparisonData() {
-    final now = DateTime.now();
-    return _generateComparisonData(now, baseAmount: 1200, variance: 500);
-  }
-
-  /// Generate expense category data (dummy)
-  List<ExpenseCategoryData> getExpenseCategoryData() {
+  List<StatData> _getDummyStatsList() {
+    final stats = _getDummyStats();
     return [
-      ExpenseCategoryData(
-        category: 'Light Bill',
-        amount: 5200.00,
-        color: Colors.amber,
-      ),
-      ExpenseCategoryData(
-        category: 'Water Bill',
-        amount: 2800.00,
-        color: Colors.blue,
-      ),
-      ExpenseCategoryData(
-        category: 'Internet Bill',
-        amount: 3500.00,
-        color: Colors.purple,
-      ),
-      ExpenseCategoryData(
-        category: 'Salary',
-        amount: 15000.00,
-        color: Colors.green,
-      ),
-      ExpenseCategoryData(
-        category: 'Cleaning',
-        amount: 1800.00,
-        color: Colors.teal,
-      ),
-      ExpenseCategoryData(
-        category: 'Rent',
-        amount: 8000.00,
-        color: Colors.orange,
-      ),
-      ExpenseCategoryData(
-        category: 'Purchases',
-        amount: 4150.75,
-        color: Colors.pink,
-      ),
+      stats['revenue']!,
+      stats['advances']!,
+      stats['commission']!,
+      stats['expenses']!,
     ];
-  }
-
-  /// Private helper to generate comparison data
-  ComparisonChartData _generateComparisonData(
-      DateTime now, {
-        required double baseAmount,
-        required double variance,
-      }) {
-    final random = Random();
-
-    switch (state.timePeriod) {
-      case TimePeriod.week:
-        return _generateWeeklyData(now, baseAmount, variance, random);
-      case TimePeriod.month:
-        return _generateMonthlyData(now, baseAmount, variance, random);
-      case TimePeriod.year:
-        return _generateYearlyData(now, baseAmount, variance, random);
-      case TimePeriod.custom:
-        if (state.customDateRange != null) {
-          return _generateCustomData(
-            state.customDateRange!,
-            baseAmount,
-            variance,
-            random,
-          );
-        }
-        return _generateMonthlyData(now, baseAmount, variance, random);
-    }
-  }
-
-  ComparisonChartData _generateWeeklyData(
-      DateTime now,
-      double baseAmount,
-      double variance,
-      Random random,
-      ) {
-    return ComparisonChartData(
-      prevData: _generateDataPoints(7, now.subtract(const Duration(days: 14)), baseAmount * 0.9, variance, random),
-      nowData: _generateDataPoints(7, now.subtract(const Duration(days: 7)), baseAmount, variance, random),
-      nextData: _generateDataPoints(7, now, baseAmount * 1.1, variance, random),
-    );
-  }
-
-  ComparisonChartData _generateMonthlyData(
-      DateTime now,
-      double baseAmount,
-      double variance,
-      Random random,
-      ) {
-    final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
-    final prevMonth = DateTime(now.year, now.month - 1, 1);
-    final currentMonth = DateTime(now.year, now.month, 1);
-    final nextMonth = DateTime(now.year, now.month + 1, 1);
-
-    return ComparisonChartData(
-      prevData: _generateDataPoints(daysInMonth, prevMonth, baseAmount * 0.85, variance, random),
-      nowData: _generateDataPoints(daysInMonth, currentMonth, baseAmount, variance, random),
-      nextData: _generateDataPoints(daysInMonth, nextMonth, baseAmount * 1.15, variance, random),
-    );
-  }
-
-  ComparisonChartData _generateYearlyData(
-      DateTime now,
-      double baseAmount,
-      double variance,
-      Random random,
-      ) {
-    final prevYear = DateTime(now.year - 1, 1, 1);
-    final currentYear = DateTime(now.year, 1, 1);
-    final nextYear = DateTime(now.year + 1, 1, 1);
-
-    return ComparisonChartData(
-      prevData: _generateMonthlyDataPoints(12, prevYear, baseAmount * 0.8, variance, random),
-      nowData: _generateMonthlyDataPoints(12, currentYear, baseAmount, variance, random),
-      nextData: _generateMonthlyDataPoints(12, nextYear, baseAmount * 1.2, variance, random),
-    );
-  }
-
-  ComparisonChartData _generateCustomData(
-      DateRangeFilter dateRange,
-      double baseAmount,
-      double variance,
-      Random random,
-      ) {
-    final daysDiff = dateRange.endDate.difference(dateRange.startDate).inDays;
-    final duration = Duration(days: daysDiff);
-
-    return ComparisonChartData(
-      prevData: _generateDataPoints(
-        daysDiff,
-        dateRange.startDate.subtract(duration),
-        baseAmount * 0.9,
-        variance,
-        random,
-      ),
-      nowData: _generateDataPoints(
-        daysDiff,
-        dateRange.startDate,
-        baseAmount,
-        variance,
-        random,
-      ),
-      nextData: _generateDataPoints(
-        daysDiff,
-        dateRange.endDate,
-        baseAmount * 1.1,
-        variance,
-        random,
-      ),
-    );
-  }
-
-  List<ChartDataPoint> _generateDataPoints(
-      int count,
-      DateTime startDate,
-      double baseAmount,
-      double variance,
-      Random random,
-      ) {
-    return List.generate(count, (index) {
-      final date = startDate.add(Duration(days: index));
-      final value = baseAmount + (random.nextDouble() - 0.5) * variance;
-      return ChartDataPoint(
-        label: '${date.day}',
-        value: value.clamp(0, double.infinity),
-        date: date,
-      );
-    });
-  }
-
-  List<ChartDataPoint> _generateMonthlyDataPoints(
-      int count,
-      DateTime startDate,
-      double baseAmount,
-      double variance,
-      Random random,
-      ) {
-    const monthNames = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-
-    return List.generate(count, (index) {
-      final date = DateTime(startDate.year, startDate.month + index, 1);
-      final value = baseAmount + (random.nextDouble() - 0.5) * variance;
-      return ChartDataPoint(
-        label: monthNames[date.month - 1],
-        value: value.clamp(0, double.infinity),
-        date: date,
-      );
-    });
   }
 }

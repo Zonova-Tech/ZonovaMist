@@ -14,6 +14,9 @@ class ExpenseCategoryChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Check if data is empty or all zeros
+    final hasData = data.isNotEmpty && data.any((e) => e.amount > 0);
+
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(
@@ -28,12 +31,44 @@ class ExpenseCategoryChart extends StatelessWidget {
             const SizedBox(height: 20),
             SizedBox(
               height: 300,
-              child: BarChart(
-                _buildBarChartData(),
-              ),
+              child: hasData
+                  ? BarChart(_buildBarChartData())
+                  : _buildEmptyState(),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.assessment_outlined,
+            size: 64,
+            color: Colors.grey.shade300,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No expense data available',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Expense data will appear here once recorded',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade500,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -185,7 +220,13 @@ class ExpenseCategoryChart extends StatelessWidget {
   }
 
   double _getMaxY() {
+    if (data.isEmpty) return 100.0; // Default if no data
+
     final maxAmount = data.map((e) => e.amount).reduce((a, b) => a > b ? a : b);
+
+    // If all amounts are 0, return a default value
+    if (maxAmount == 0) return 100.0;
+
     return (maxAmount * 1.2).ceilToDouble();
   }
 

@@ -18,6 +18,11 @@ class RevenueComparisonChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Check if any data exists
+    final hasData = (selectedComparisons.contains(ComparisonPeriod.prev) && data.prevData.isNotEmpty) ||
+        (selectedComparisons.contains(ComparisonPeriod.now) && data.nowData.isNotEmpty) ||
+        (selectedComparisons.contains(ComparisonPeriod.next) && data.nextData.isNotEmpty);
+
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(
@@ -32,12 +37,44 @@ class RevenueComparisonChart extends StatelessWidget {
             const SizedBox(height: 20),
             SizedBox(
               height: 250,
-              child: LineChart(
-                _buildLineChartData(),
-              ),
+              child: hasData
+                  ? LineChart(_buildLineChartData())
+                  : _buildEmptyState(),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.show_chart,
+            size: 64,
+            color: Colors.grey.shade300,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No revenue data available',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Revenue data will appear here once bookings are paid',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade500,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -229,17 +266,21 @@ class RevenueComparisonChart extends StatelessWidget {
   double _getGridInterval() {
     // Find max value across all datasets
     double maxValue = 0;
-    if (selectedComparisons.contains(ComparisonPeriod.prev)) {
+    if (selectedComparisons.contains(ComparisonPeriod.prev) && data.prevData.isNotEmpty) {
       maxValue = data.prevData.map((e) => e.value).reduce((a, b) => a > b ? a : b);
     }
-    if (selectedComparisons.contains(ComparisonPeriod.now)) {
+    if (selectedComparisons.contains(ComparisonPeriod.now) && data.nowData.isNotEmpty) {
       final nowMax = data.nowData.map((e) => e.value).reduce((a, b) => a > b ? a : b);
       maxValue = nowMax > maxValue ? nowMax : maxValue;
     }
-    if (selectedComparisons.contains(ComparisonPeriod.next)) {
+    if (selectedComparisons.contains(ComparisonPeriod.next) && data.nextData.isNotEmpty) {
       final nextMax = data.nextData.map((e) => e.value).reduce((a, b) => a > b ? a : b);
       maxValue = nextMax > maxValue ? nextMax : maxValue;
     }
+
+    // If maxValue is 0, return a default interval
+    if (maxValue == 0) return 20;
+
     return maxValue / 5;
   }
 
