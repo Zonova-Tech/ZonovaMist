@@ -6,10 +6,11 @@ import '../../../core/api/api_service.dart';
 import '../../../shared/widgets/common_image_manager.dart';
 import 'add_room_screen.dart';
 import '../edit_room_screen.dart';
-import '../../../shared/widgets/app_drawer.dart';
 
 class RoomsScreen extends ConsumerStatefulWidget {
-  const RoomsScreen({super.key});
+  final bool showBackButton;
+
+  const RoomsScreen({super.key, this.showBackButton = false});
 
   @override
   ConsumerState<RoomsScreen> createState() => _RoomsScreenState();
@@ -74,8 +75,16 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
     final roomsAsync = ref.watch(roomsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Rooms')),
-      drawer: const AppDrawer(),
+      appBar: AppBar(
+        title: const Text('Rooms'),
+        leading: widget.showBackButton
+            ? IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        )
+            : null,
+        automaticallyImplyLeading: widget.showBackButton,
+      ),
       body: roomsAsync.when(
         data: (rooms) {
           if (rooms.isEmpty) {
