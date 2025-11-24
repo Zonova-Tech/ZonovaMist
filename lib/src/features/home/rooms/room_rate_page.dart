@@ -83,7 +83,7 @@ class _RoomRatePageState extends State<RoomRatePage> {
                 child: const Text('Cancel', style: TextStyle(fontSize: 13)),
               ),
             ),
-            SizedBox(width: 9),
+            const SizedBox(width: 9),
             SizedBox(
               width: 100,
               height: 36,
@@ -157,36 +157,21 @@ class _RoomRatePageState extends State<RoomRatePage> {
     }
   }
 
+  /// ⭐ NEW: Only Text, No Blue Box
   Widget _buildPriceBox(Map<String, dynamic> room) {
     final price = room['pricePerNight'] ?? 0;
     final totalPrice = price * numberOfNights * numberOfRooms;
 
     return GestureDetector(
       onTap: () => _openEditDialog(room),
-      child: Container(
-        width: 110,
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.blue.shade50,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: Colors.blue.shade200),
+      child: Text(
+        'LKR $totalPrice',
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Colors.black,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'LKR $totalPrice',
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 4),
-            Icon(Icons.edit, size: 14, color: Colors.white),
-          ],
-        ),
+        textAlign: TextAlign.center,
       ),
     );
   }
@@ -205,14 +190,14 @@ class _RoomRatePageState extends State<RoomRatePage> {
             1: FixedColumnWidth(60),
             2: FixedColumnWidth(130),
           },
-          border: TableBorder.all(color: Colors.grey.shade300),
+          border: TableBorder.all(color: Colors.grey),
           defaultVerticalAlignment: TableCellVerticalAlignment.middle,
           children: [
             TableRow(
               decoration: BoxDecoration(color: Colors.yellow.shade600),
               children: const [
                 Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 6.0),
+                  padding: EdgeInsets.all(8.0),
                   child: Text(
                     "Number of Pax",
                     style: TextStyle(
@@ -223,7 +208,7 @@ class _RoomRatePageState extends State<RoomRatePage> {
                   ),
                 ),
                 Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 6.0),
+                  padding: EdgeInsets.all(8.0),
                   child: Text(
                     "# Rooms",
                     style: TextStyle(
@@ -234,7 +219,7 @@ class _RoomRatePageState extends State<RoomRatePage> {
                   ),
                 ),
                 Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 6.0),
+                  padding: EdgeInsets.all(8.0),
                   child: Text(
                     "Total Price",
                     style: TextStyle(
@@ -281,7 +266,7 @@ class _RoomRatePageState extends State<RoomRatePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Room Rate Display"),
-        backgroundColor: Colors.blue.shade700,
+        backgroundColor: Colors.blue,
         centerTitle: true,
       ),
       body: isLoading
@@ -289,7 +274,6 @@ class _RoomRatePageState extends State<RoomRatePage> {
           : rooms.isEmpty
           ? const Center(child: Text("No rooms found"))
           : SingleChildScrollView(
-        scrollDirection: Axis.vertical,
         child: Padding(
           padding: const EdgeInsets.all(12.0),
           child: _buildTable(screenWidth),

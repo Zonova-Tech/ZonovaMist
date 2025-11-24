@@ -8,8 +8,6 @@ import 'package:Zonova_Mist/src/core/theme/app_theme.dart';
 import 'package:Zonova_Mist/src/features/auth/login_screen.dart';
 import 'package:Zonova_Mist/src/features/home/rooms/home_screen.dart';
 import 'package:Zonova_Mist/src/shared/widgets/splash_screen.dart';
-
-// ===== new import for the room rate page =====
 import 'package:Zonova_Mist/src/features/home/rooms/room_rate_page.dart';
 
 void main() {
@@ -25,7 +23,6 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Watch the auth state to decide which screen to show
     final authState = ref.watch(authProvider);
 
     return MaterialApp(
@@ -36,21 +33,17 @@ class MyApp extends ConsumerWidget {
       navigatorKey: AppRouter.navigatorKey,
       debugShowCheckedModeBanner: false,
 
-      // ===== add routes map so we can open the new page by name =====
+      // 🔥 FIXED: Dashboard route එක add කරලා
       routes: {
-        // keep existing behavior: login/home selection is still controlled by `home:`
+        '/dashboard': (context) => const HomeScreen(), // 🎯 මේක තමයි dashboard
         '/room-rate': (context) => const RoomRatePage(),
-        // you can add more test routes here later if needed
       },
 
+      // Auth state අනුව home screen එක select කරනවා
       home: authState.when(
-        // While checking for a stored token, show a splash screen
         loading: () => const SplashScreen(),
-        // If authenticated, show the home screen
         authenticated: (_) => const HomeScreen(),
-        // If not, show the login screen
         unauthenticated: () => const LoginScreen(),
-        // On error, also default to login screen
         error: (_) => const LoginScreen(),
       ),
     );

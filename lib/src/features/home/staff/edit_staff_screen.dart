@@ -9,7 +9,6 @@ import 'staff_provider.dart';
 
 class EditStaffScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> staff;
-
   const EditStaffScreen({super.key, required this.staff});
 
   @override
@@ -22,7 +21,6 @@ class _EditStaffScreenState extends ConsumerState<EditStaffScreen> {
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
   late TextEditingController _salaryController;
-
   DateTime? _birthday;
   DateTime? _joinedDate;
   String? _selectedRole;
@@ -35,12 +33,10 @@ class _EditStaffScreenState extends ConsumerState<EditStaffScreen> {
     _nameController = TextEditingController(text: widget.staff['name']);
     _emailController = TextEditingController(text: widget.staff['email']);
     _phoneController = TextEditingController(text: widget.staff['phone']);
-
     // Use helper to handle Decimal128 format
     _salaryController = TextEditingController(
       text: DecimalHelper.toEditableString(widget.staff['current_salary']),
     );
-
     if (widget.staff['birthday'] != null) {
       _birthday = DateTime.parse(widget.staff['birthday']);
     }
@@ -63,9 +59,7 @@ class _EditStaffScreenState extends ConsumerState<EditStaffScreen> {
   Future<void> _selectDate(BuildContext context, bool isBirthday) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: isBirthday
-          ? (_birthday ?? DateTime.now())
-          : (_joinedDate ?? DateTime.now()),
+      initialDate: isBirthday ? (_birthday ?? DateTime.now()) : (_joinedDate ?? DateTime.now()),
       firstDate: isBirthday ? DateTime(1950) : DateTime(2000),
       lastDate: DateTime.now(),
     );
@@ -82,7 +76,6 @@ class _EditStaffScreenState extends ConsumerState<EditStaffScreen> {
 
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
-
     if (_selectedRole == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a role')),
@@ -91,7 +84,6 @@ class _EditStaffScreenState extends ConsumerState<EditStaffScreen> {
     }
 
     setState(() => _isLoading = true);
-
     try {
       final dio = ref.read(dioProvider);
       await dio.patch('/staff/${widget.staff['_id']}', data: {
@@ -100,9 +92,7 @@ class _EditStaffScreenState extends ConsumerState<EditStaffScreen> {
         'phone': _phoneController.text,
         'birthday': _birthday?.toIso8601String(),
         'joined_date': _joinedDate?.toIso8601String(),
-        'current_salary': _salaryController.text.isNotEmpty
-            ? double.tryParse(_salaryController.text)
-            : null,
+        'current_salary': _salaryController.text.isNotEmpty ? double.tryParse(_salaryController.text) : null,
         'role': _selectedRole,
         'profile_picture': _profilePictureUrl, // ✅ Save profile picture URL
       });
@@ -217,9 +207,7 @@ class _EditStaffScreenState extends ConsumerState<EditStaffScreen> {
                     border: OutlineInputBorder(),
                   ),
                   child: Text(
-                    _birthday != null
-                        ? DateFormat('yyyy-MM-dd').format(_birthday!)
-                        : 'Select birthday',
+                    _birthday != null ? DateFormat('yyyy-MM-dd').format(_birthday!) : 'Select birthday',
                     style: TextStyle(
                       color: _birthday != null ? Colors.black : Colors.grey,
                     ),
@@ -238,9 +226,7 @@ class _EditStaffScreenState extends ConsumerState<EditStaffScreen> {
                     border: OutlineInputBorder(),
                   ),
                   child: Text(
-                    _joinedDate != null
-                        ? DateFormat('yyyy-MM-dd').format(_joinedDate!)
-                        : 'Select joined date',
+                    _joinedDate != null ? DateFormat('yyyy-MM-dd').format(_joinedDate!) : 'Select joined date',
                     style: TextStyle(
                       color: _joinedDate != null ? Colors.black : Colors.grey,
                     ),
