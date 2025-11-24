@@ -1,3 +1,5 @@
+// lib/src/features/home/dashboard/dashboard_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/widgets/app_drawer.dart';
@@ -22,11 +24,6 @@ class DashboardScreen extends ConsumerWidget {
         title: const Text('Dashboard'),
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.calendar_today),
-            tooltip: 'Custom Date Range',
-            onPressed: () => _showDateRangePicker(context, ref),
-          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh',
@@ -53,6 +50,7 @@ class DashboardScreen extends ConsumerWidget {
               selectedComparisons: dashboardState.selectedComparisons,
               onTimePeriodChanged: notifier.setTimePeriod,
               onComparisonToggled: notifier.toggleComparison,
+              onCustomDatePressed: () => _showDateRangePicker(context, ref),
             ),
             const SizedBox(height: 24),
 

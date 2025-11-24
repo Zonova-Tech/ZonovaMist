@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../features/home/staff/staff_screen.dart';
 import '../../features/home/rooms/rooms_screen.dart';
+import '../../features/todos/todos_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -124,6 +125,19 @@ class AppDrawer extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (context) => const StaffScreen(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.checklist),
+              title: const Text('Todos'),
+              onTap: () {
+                Navigator.pop(context); // Close drawer
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const TodosScreen(),
                   ),
                 );
               },

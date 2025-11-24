@@ -214,8 +214,6 @@ class DashboardService {
 
   String _timePeriodToString(TimePeriod period) {
     switch (period) {
-      case TimePeriod.week:
-        return 'week';
       case TimePeriod.month:
         return 'month';
       case TimePeriod.year:

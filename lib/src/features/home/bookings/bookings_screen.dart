@@ -213,6 +213,17 @@ class BookingsScreen extends ConsumerWidget {
     );
   }
 
+  int _calculateNumberOfDays(String? checkinDate, String? checkoutDate) {
+    if (checkinDate == null || checkoutDate == null) return 0;
+    try {
+      final checkin = DateTime.parse(checkinDate);
+      final checkout = DateTime.parse(checkoutDate);
+      return checkout.difference(checkin).inDays;
+    } catch (e) {
+      return 0;
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final bookingsAsync = ref.watch(bookingsProvider);
@@ -324,6 +335,10 @@ class BookingsScreen extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final booking = bookings[index];
                     final bookingId = booking['_id'] ?? '';
+                    final numberOfDays = _calculateNumberOfDays(
+                      booking['checkin_date'],
+                      booking['checkout_date'],
+                    );
 
                     return Slidable(
                       key: ValueKey('slidable_$bookingId'),
@@ -369,6 +384,7 @@ class BookingsScreen extends ConsumerWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // Guest Name and Status
                               Row(
                                 children: [
                                   Icon(Icons.person, color: Colors.blue.shade700),
@@ -388,12 +404,53 @@ class BookingsScreen extends ConsumerWidget {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 8),
-                              Text('Room: ${booking['booked_room_no'] ?? 'N/A'}'),
-                              Text('Check-in: ${DateFormat('yyyy-MM-dd').format(DateTime.parse(booking['checkin_date'] ?? DateTime.now().toIso8601String()))}'),
-                              Text('Check-out: ${DateFormat('yyyy-MM-dd').format(DateTime.parse(booking['checkout_date'] ?? DateTime.now().toIso8601String()))}'),
                               const SizedBox(height: 12),
 
+                              // Main content with two columns
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Left Column
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text('Room: ${booking['booked_room_no'] ?? 'N/A'}'),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Check-in: ${DateFormat('yyyy-MM-dd').format(DateTime.parse(booking['checkin_date'] ?? DateTime.now().toIso8601String()))} (${numberOfDays}d)',
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  // Right Column
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        'Total: ${booking['total_price'] ?? 0}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Adults: ${booking['adult_count'] ?? 0}, Kids: ${booking['child_count'] ?? 0}',
+                                        style: TextStyle(
+                                          color: Colors.grey.shade700,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 12),
+
+                              // Images (without label)
                               if (bookingId.isNotEmpty)
                                 Hero(
                                   tag: 'booking_images_$bookingId',
@@ -407,32 +464,19 @@ class BookingsScreen extends ConsumerWidget {
                                 ),
 
                               const SizedBox(height: 12),
-
-                              const SizedBox(height: 12),
                               const Divider(height: 1),
                               const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  Icon(Icons.mic, size: 18, color: Colors.grey.shade700),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Recordings',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.grey.shade700,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
+
+                              // Recordings (without label)
                               AudioRecordingsWidget(
                                 bookingId: bookingId,
                                 recordings: booking['recordings'] ?? [],
                                 onRecordingsChanged: () => ref.refresh(bookingsProvider),
                               ),
 
-                              // Only Send Invoice button
+                              const SizedBox(height: 12),
+
+                              // Send Invoice button
                               SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton.icon(
@@ -560,8 +604,6 @@ class BookingsScreen extends ConsumerWidget {
         return 'Upcoming & Today';
       case 'recent':
         return 'Last 7 Days';
-      case 'today':
-        return 'Today Only';
       case 'week':
         return 'This Week';
       case 'month':
@@ -617,7 +659,6 @@ class FilterBottomSheet extends ConsumerWidget {
             runSpacing: 8,
             children: [
               _buildFilterChip(context, ref, 'upcoming', 'Upcoming & Today', Icons.arrow_forward, currentFilter),
-              _buildFilterChip(context, ref, 'today', 'Today Only', Icons.today, currentFilter),
               _buildFilterChip(context, ref, 'recent', 'Last 7 Days', Icons.calendar_today, currentFilter),
               _buildFilterChip(context, ref, 'week', 'This Week', Icons.date_range, currentFilter),
               _buildFilterChip(context, ref, 'month', 'This Month', Icons.calendar_month, currentFilter),

@@ -135,73 +135,37 @@ class _PartnerHotelsScreenState extends ConsumerState<PartnerHotelsScreen> {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Left side: Address and Phone
+                            // Left side: Address only
                             Expanded(
-                              child: Column(
+                              child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Icon(Icons.location_on, size: 18, color: Colors.grey),
-                                      const SizedBox(width: 6),
-                                      Expanded(
-                                        child: Text(
-                                          hotel['location']?['city'] ??
-                                              hotel['location']?['address'] ??
-                                              'N/A',
-                                          style: const TextStyle(fontSize: 14),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.phone, size: 18, color: Colors.grey),
-                                      const SizedBox(width: 6),
-                                      Expanded(
-                                        child: Text(
-                                          hotel['phone'] ?? 'N/A',
-                                          style: const TextStyle(fontSize: 14),
-                                        ),
-                                      ),
-                                    ],
+                                  const Icon(Icons.location_on, size: 18, color: Colors.grey),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      hotel['location']?['city'] ??
+                                          hotel['location']?['address'] ??
+                                          'N/A',
+                                      style: const TextStyle(fontSize: 14),
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
                             const SizedBox(width: 16),
 
-                            // Right side: Price and Status
+                            // Right side: Phone number only
                             Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              child: Row(
                                 children: [
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.attach_money, size: 18, color: Colors.grey),
-                                      const SizedBox(width: 6),
-                                      Expanded(
-                                        child: Text(
-                                          'LKR ${hotel['price'] ?? 'N/A'}',
-                                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.info_outline, size: 18, color: Colors.grey),
-                                      const SizedBox(width: 6),
-                                      Expanded(
-                                        child: Text(
-                                          hotel['status'] ?? 'N/A',
-                                          style: const TextStyle(fontSize: 14),
-                                        ),
-                                      ),
-                                    ],
+                                  const Icon(Icons.phone, size: 18, color: Colors.grey),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      hotel['phone'] ?? 'N/A',
+                                      style: const TextStyle(fontSize: 14),
+                                    ),
                                   ),
                                 ],
                               ),
