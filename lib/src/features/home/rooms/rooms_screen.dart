@@ -6,8 +6,8 @@ import '../../../core/api/api_service.dart';
 import '../../../shared/widgets/common_image_manager.dart';
 import 'add_room_screen.dart';
 import 'edit_room_screen.dart';
-import 'room_rate_page.dart'; //  NEW IMPORT
-import '../../../shared/widgets/app_drawer.dart'; // make sure this import exists
+import 'room_rate_page.dart';
+import '../../../shared/widgets/app_drawer.dart';
 
 class RoomsScreen extends ConsumerStatefulWidget {
   const RoomsScreen({super.key});
@@ -90,7 +90,7 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
           ),
         ],
       ),
-      drawer: const AppDrawer(), // Company repo
+      drawer: const AppDrawer(),
       body: roomsAsync.when(
         data: (rooms) {
           if (rooms.isEmpty) {

@@ -176,7 +176,7 @@ class ViewExpensePage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // ✅ Date and Description in ONE Card with Left-Right Layout
+
             Card(
               elevation: 2,
               shape: RoundedRectangleBorder(

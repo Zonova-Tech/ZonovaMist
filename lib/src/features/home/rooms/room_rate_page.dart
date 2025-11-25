@@ -1,15 +1,16 @@
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/api/api_service.dart';
 
-class RoomRatePage extends StatefulWidget {
+class RoomRatePage extends ConsumerStatefulWidget {
   const RoomRatePage({super.key});
 
   @override
-  State<RoomRatePage> createState() => _RoomRatePageState();
+  ConsumerState<RoomRatePage> createState() => _RoomRatePageState();
 }
 
-class _RoomRatePageState extends State<RoomRatePage> {
+class _RoomRatePageState extends ConsumerState<RoomRatePage> {
   List<Map<String, dynamic>> rooms = [];
   bool isLoading = true;
 
@@ -24,23 +25,20 @@ class _RoomRatePageState extends State<RoomRatePage> {
 
   Future<void> fetchRooms() async {
     try {
-      final response = await http.get(
-        Uri.parse("https://zonova-mist.onrender.com/api/rooms"),
-      );
+      final dio = ref.read(dioProvider);
+      final resp = await dio.get('/rooms');
 
-      if (response.statusCode == 200) {
-        final List data = json.decode(response.body);
+      if (resp.statusCode == 200) {
         setState(() {
-          rooms = List<Map<String, dynamic>>.from(data);
+          rooms = List<Map<String, dynamic>>.from(resp.data);
           isLoading = false;
         });
       } else {
         setState(() => isLoading = false);
-        debugPrint("Error: ${response.statusCode}");
       }
     } catch (e) {
       setState(() => isLoading = false);
-      debugPrint("Error fetching data: $e");
+      debugPrint("Error: $e");
     }
   }
 
@@ -68,27 +66,23 @@ class _RoomRatePageState extends State<RoomRatePage> {
           content: TextField(
             controller: controller,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-            ),
+            decoration: const InputDecoration(border: OutlineInputBorder()),
             autofocus: true,
           ),
           actionsAlignment: MainAxisAlignment.center,
           actions: [
             SizedBox(
               width: 100,
-              height: 36,
               child: OutlinedButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
+                onPressed: () => Navigator.pop(ctx, false),
                 child: const Text('Cancel', style: TextStyle(fontSize: 13)),
               ),
             ),
             const SizedBox(width: 9),
             SizedBox(
               width: 100,
-              height: 36,
               child: ElevatedButton(
-                onPressed: () => Navigator.of(ctx).pop(true),
+                onPressed: () => Navigator.pop(ctx, true),
                 child: const Text('Save', style: TextStyle(fontSize: 13)),
               ),
             ),
@@ -118,15 +112,15 @@ class _RoomRatePageState extends State<RoomRatePage> {
       );
 
       try {
-        final response = await http.patch(
-          Uri.parse("https://zonova-mist.onrender.com/api/rooms/${room['_id']}"),
-          headers: {"Content-Type": "application/json"},
-          body: json.encode({"pricePerNight": newPrice}),
+        final dio = ref.read(dioProvider);
+        final resp = await dio.patch(
+          '/rooms/${room['_id']}',
+          data: {"pricePerNight": newPrice},
         );
 
         Navigator.of(context).pop();
 
-        if (response.statusCode == 200) {
+        if (resp.statusCode == 200) {
           setState(() {
             room['pricePerNight'] = newPrice;
           });
@@ -140,7 +134,7 @@ class _RoomRatePageState extends State<RoomRatePage> {
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Update failed: ${response.statusCode}'),
+              content: Text('Update failed: ${resp.statusCode}'),
               backgroundColor: Colors.red,
             ),
           );
@@ -157,7 +151,6 @@ class _RoomRatePageState extends State<RoomRatePage> {
     }
   }
 
-  /// ⭐ NEW: Only Text, No Blue Box
   Widget _buildPriceBox(Map<String, dynamic> room) {
     final price = room['pricePerNight'] ?? 0;
     final totalPrice = price * numberOfNights * numberOfRooms;
@@ -183,7 +176,6 @@ class _RoomRatePageState extends State<RoomRatePage> {
       scrollDirection: Axis.horizontal,
       child: SizedBox(
         width: minWidth > 280 ? minWidth : 280,
-        height: 350,
         child: Table(
           columnWidths: const {
             0: FixedColumnWidth(90),
@@ -200,10 +192,7 @@ class _RoomRatePageState extends State<RoomRatePage> {
                   padding: EdgeInsets.all(8.0),
                   child: Text(
                     "Number of Pax",
-                    style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -211,10 +200,7 @@ class _RoomRatePageState extends State<RoomRatePage> {
                   padding: EdgeInsets.all(8.0),
                   child: Text(
                     "# Rooms",
-                    style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -222,10 +208,7 @@ class _RoomRatePageState extends State<RoomRatePage> {
                   padding: EdgeInsets.all(8.0),
                   child: Text(
                     "Total Price",
-                    style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -233,26 +216,25 @@ class _RoomRatePageState extends State<RoomRatePage> {
             ),
             ...tableRows.map((room) {
               return TableRow(
-                decoration: const BoxDecoration(color: Colors.white),
                 children: [
-                  Container(
+                  Padding(
                     padding: const EdgeInsets.symmetric(vertical: 6.0),
-                    alignment: Alignment.center,
-                    child: Text(room['maxOccupancy'].toString()),
+                    child: Text(
+                      room['maxOccupancy'].toString(),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 6.0),
-                    alignment: Alignment.center,
-                    child: const Text('1'),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 6.0),
+                    child: Text('1', textAlign: TextAlign.center),
                   ),
-                  Container(
+                  Padding(
                     padding: const EdgeInsets.symmetric(vertical: 6.0),
-                    alignment: Alignment.center,
                     child: _buildPriceBox(room),
                   ),
                 ],
               );
-            }).toList(),
+            }),
           ],
         ),
       ),
@@ -273,10 +255,116 @@ class _RoomRatePageState extends State<RoomRatePage> {
           ? const Center(child: CircularProgressIndicator())
           : rooms.isEmpty
           ? const Center(child: Text("No rooms found"))
-          : SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: _buildTable(screenWidth),
+          : Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: SingleChildScrollView(child: _buildTable(screenWidth)),
+      ),
+    );
+  }
+}
+
+/// ADD RoomRateDisplay widget HERE ↓↓↓
+
+class RoomRateDisplay extends StatefulWidget {
+  final double basePrice;
+
+  const RoomRateDisplay({super.key, required this.basePrice});
+
+  @override
+  State<RoomRateDisplay> createState() => _RoomRateDisplayState();
+}
+
+class _RoomRateDisplayState extends State<RoomRateDisplay> {
+  DateTime? checkInDate;
+  int nights = 1;
+  int rooms = 1;
+  int people = 1;
+
+  double calculateRate() {
+    double extraPersonRate = 20;
+    return (widget.basePrice * nights * rooms) +
+        ((people - 1) * extraPersonRate * nights * rooms);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Text('Check-in: '),
+                TextButton(
+                  child: Text(checkInDate != null
+                      ? DateFormat('MMM dd, yyyy').format(checkInDate!)
+                      : 'Select Date'),
+                  onPressed: () async {
+                    DateTime? picked = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                    );
+                    if (picked != null) {
+                      setState(() {
+                        checkInDate = picked;
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
+
+            Row(
+              children: [
+                const Text('Nights: '),
+                DropdownButton<int>(
+                  value: nights,
+                  items: List.generate(30, (index) => index + 1)
+                      .map((e) => DropdownMenuItem(value: e, child: Text('$e')))
+                      .toList(),
+                  onChanged: (val) => setState(() => nights = val!),
+                ),
+              ],
+            ),
+
+            Row(
+              children: [
+                const Text('Rooms: '),
+                DropdownButton<int>(
+                  value: rooms,
+                  items: List.generate(10, (index) => index + 1)
+                      .map((e) => DropdownMenuItem(value: e, child: Text('$e')))
+                      .toList(),
+                  onChanged: (val) => setState(() => rooms = val!),
+                ),
+              ],
+            ),
+
+            Row(
+              children: [
+                const Text('People: '),
+                DropdownButton<int>(
+                  value: people,
+                  items: List.generate(10, (index) => index + 1)
+                      .map((e) => DropdownMenuItem(value: e, child: Text('$e')))
+                      .toList(),
+                  onChanged: (val) => setState(() => people = val!),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+            Text(
+              'Total Price: LKR ${calculateRate().toStringAsFixed(2)}',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          ],
         ),
       ),
     );

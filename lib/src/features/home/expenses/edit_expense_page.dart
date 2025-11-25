@@ -187,7 +187,7 @@ class _EditExpensePageState extends State<EditExpensePage> {
     }
   }
 
-  // ✅ Show image preview with delete button (staff page style)
+
   void _showImagePreview(String imagePath, {Map<String, dynamic>? imgObj}) {
     showDialog(
       context: context,
@@ -198,7 +198,7 @@ class _EditExpensePageState extends State<EditExpensePage> {
             InteractiveViewer(
               child: _buildImageWidget(imagePath),
             ),
-            // Close button (top right)
+
             Positioned(
               top: 10,
               right: 10,
@@ -210,15 +210,15 @@ class _EditExpensePageState extends State<EditExpensePage> {
                 ),
               ),
             ),
-            // ✅ Delete button (top left) - only for existing images
+
             if (imgObj != null)
               Positioned(
                 top: 10,
                 left: 10,
                 child: IconButton(
                   onPressed: () async {
-                    Navigator.pop(context); // Close preview dialog
-                    await _deleteImage(imgObj); // Delete image
+                    Navigator.pop(context);
+                    await _deleteImage(imgObj);
                   },
                   icon: const Icon(Icons.delete, color: Colors.white),
                   style: IconButton.styleFrom(
@@ -323,7 +323,7 @@ class _EditExpensePageState extends State<EditExpensePage> {
                                 return GestureDetector(
                                   onTap: () => _showImagePreview(
                                     imgObj['url']!,
-                                    imgObj: imgObj, // ✅ Pass imgObj for delete
+                                    imgObj: imgObj,
                                   ),
                                   child: Container(
                                     width: 200,

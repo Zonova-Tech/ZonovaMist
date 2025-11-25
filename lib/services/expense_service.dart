@@ -25,9 +25,6 @@ class ExpenseService {
     }
   }
 
-  // =========================================================
-  // CREATE EXPENSE
-  // =========================================================
   static Future<Map<String, dynamic>> createExpense(Map<String, dynamic> data) async {
     try {
       print('📤 Starting createExpense...');
@@ -96,9 +93,6 @@ class ExpenseService {
     }
   }
 
-  // =========================================================
-  // FETCH EXPENSES
-  // =========================================================
   static Future<List<dynamic>> fetchExpenses() async {
     try {
       final token = await _getToken();
@@ -127,9 +121,7 @@ class ExpenseService {
     }
   }
 
-  // =========================================================
-  // UPDATE EXPENSE (FIXED)
-  // =========================================================
+
   static Future<Map<String, dynamic>> updateExpense(String id, Map<String, dynamic> data) async {
     try {
       final token = await _getToken();
@@ -139,14 +131,14 @@ class ExpenseService {
 
       print('📤 Starting updateExpense...');
 
-      // 1. Keep existing images (already uploaded to Cloudinary)
+
       List<Map<String, String>> allImages = [];
 
-      // Add existing Cloudinary images with full data
+
       if (data['existingImages'] != null && data['existingImages'] is List) {
         print('📷 Keeping ${data['existingImages'].length} existing images');
         for (var imgObj in data['existingImages']) {
-          // ✅ Handle Map objects (full image data)
+
           if (imgObj is Map) {
             allImages.add({
               'url': imgObj['url']?.toString() ?? '',
@@ -154,7 +146,8 @@ class ExpenseService {
               'filename': imgObj['filename']?.toString() ?? '',
             });
           }
-          // Handle String URLs (fallback)
+
+
           else if (imgObj is String && imgObj.isNotEmpty) {
             allImages.add({
               'url': imgObj,
@@ -165,7 +158,7 @@ class ExpenseService {
         }
       }
 
-      // 2. Upload new images to Cloudinary
+
       if (data['imageFiles'] != null && data['imageFiles'] is List) {
         print('📸 Uploading ${data['imageFiles'].length} new images...');
 
@@ -224,9 +217,6 @@ class ExpenseService {
     }
   }
 
-  // =========================================================
-  // DELETE EXPENSE
-  // =========================================================
   static Future<void> deleteExpense(String id) async {
     try {
       final token = await _getToken();

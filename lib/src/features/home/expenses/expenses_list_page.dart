@@ -238,7 +238,7 @@ class _ExpensesListPageState extends State<ExpensesListPage> {
                 ),
                 margin: const EdgeInsets.symmetric(vertical: 12),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12), // ❌ Card height වැඩි කරන්න padding වැඩි කරලා
+                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
                   child: ListTile(
                     onTap: () {
                       Navigator.push(
@@ -258,7 +258,7 @@ class _ExpensesListPageState extends State<ExpensesListPage> {
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('${e['category']}'), // ❌ Rs. text ඉවත් කරලා, amount එක නොපෙන්වන්න
+                        Text('${e['category']}'),
                         Text(
                           e['date']?.toString().split('T')[0] ?? '',
                           style: TextStyle(color: Colors.grey.shade600),

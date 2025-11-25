@@ -130,7 +130,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
               ),
               const SizedBox(height: 16),
 
-              // Title
+
               TextFormField(
                 controller: _titleCtrl,
                 decoration: const InputDecoration(
@@ -142,7 +142,6 @@ class _AddExpensePageState extends State<AddExpensePage> {
               ),
               const SizedBox(height: 16),
 
-              // Amount
               TextFormField(
                 controller: _amountCtrl,
                 decoration: const InputDecoration(
@@ -159,7 +158,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
               ),
               const SizedBox(height: 16),
 
-              // Date
+
               InkWell(
                 onTap: _selectDate,
                 child: InputDecorator(
@@ -173,7 +172,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
               ),
               const SizedBox(height: 16),
 
-              // Note
+
               TextFormField(
                 controller: _noteCtrl,
                 decoration: const InputDecoration(
