@@ -44,8 +44,6 @@ class _AddHotelScreenState extends ConsumerState<AddHotelScreen> {
           'phone': _phoneController.text.trim(),
           'email': _emailController.text.trim(),
           'description': _descriptionController.text.trim(),
-          'price': 0,
-          'status': 'available',
         });
 
         if (context.mounted) {

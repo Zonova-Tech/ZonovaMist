@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 
 /// Enum for time period filter
-enum TimePeriod { week, month, year, custom }
+enum TimePeriod { month, year, custom }
 
 /// Enum for comparison filter (Prev, Now, Next)
 enum ComparisonPeriod { prev, now, next }

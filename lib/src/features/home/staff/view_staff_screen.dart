@@ -18,23 +18,25 @@ class ViewStaffScreen extends ConsumerWidget {
       // Handle Decimal128 format from MongoDB
       if (salary is Map && salary.containsKey('\$numberDecimal')) {
         final value = double.tryParse(salary['\$numberDecimal'].toString()) ?? 0.0;
-        return '\${value.toStringAsFixed(2)}';
+        return NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(value);
       }
 
       // Handle regular number
       if (salary is num) {
-        return '\${salary.toStringAsFixed(2)}';
+        return NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(salary);
       }
 
       // Handle string
       if (salary is String) {
         final value = double.tryParse(salary) ?? 0.0;
-        return '\${value.toStringAsFixed(2)}';
+        return NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(value);
       }
 
-      return '\${salary.toString()}';
+      return 'N/A';
     } catch (e) {
       print('Error formatting salary: $e');
+      print('Salary value: $salary');
+      print('Salary type: ${salary.runtimeType}');
       return 'N/A';
     }
   }
@@ -240,40 +242,40 @@ class ViewStaffScreen extends ConsumerWidget {
             const SizedBox(height: 16),
 
             // Employment Information
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.work_outline, color: Colors.blue.shade700),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Employment Information',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+            if (staff['current_salary'] != null)
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.work_outline, color: Colors.blue.shade700),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Employment Information',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const Divider(height: 24),
-                    if (staff['current_salary'] != null)
+                        ],
+                      ),
+                      const Divider(height: 24),
                       _buildInfoRow(
                         Icons.attach_money,
                         'Current Salary',
                         _formatSalary(staff['current_salary']),
                       ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
             const SizedBox(height: 16),
 
             // Documents Section
