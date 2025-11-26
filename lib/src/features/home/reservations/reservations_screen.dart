@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'reservations_provider.dart';
 import 'package:Zonova_Mist/src/core/api/api_service.dart';
 import '../../../shared/widgets/app_drawer.dart';
+import '../../../shared/widgets/audio_recordings_widget.dart';
 
 
 class ReservationsScreen extends ConsumerWidget {
@@ -333,11 +334,47 @@ class ReservationsScreen extends ConsumerWidget {
                                 ],
                               ),
                               const SizedBox(height: 6),
-                              Row(
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Icon(Icons.phone, size: 18, color: Colors.grey),
-                                  const SizedBox(width: 6),
-                                  Text('Phone: ${booking['phone_no'] ?? 'N/A'}'),
+                                  // Phone number row
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.phone, size: 18, color: Colors.grey),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text('Phone: ${booking['phone_no'] ?? 'N/A'}'),
+                                      ),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 12),
+                                  const Divider(height: 1),
+                                  const SizedBox(height: 12),
+
+                                  // Recordings section
+                                  Row(
+                                    children: [
+                                      Icon(Icons.mic, size: 18, color: Colors.grey.shade700),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Recordings',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.grey.shade700,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+
+                                  // Recordings widget
+                                  AudioRecordingsWidget(
+                                    bookingId: booking['_id'] ?? '',
+                                    recordings: booking['recordings'] ?? [],
+                                    onRecordingsChanged: () => ref.refresh(reservationsProvider),
+                                  ),
                                 ],
                               ),
                             ],

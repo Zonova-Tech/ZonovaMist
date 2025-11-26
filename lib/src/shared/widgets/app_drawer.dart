@@ -5,6 +5,7 @@ import '../../features/home/rooms/room_rate_page.dart';
 
 // IMPORT EXPENSE PAGES YOU CREATED
 import '../../features/home/expenses/expenses_list_page.dart';
+import '../../features/home/rooms/rooms_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -91,8 +92,29 @@ class AppDrawer extends StatelessWidget {
                 ],
               ),
             ),
-
-            // ---------- Guest Staff ----------
+            // Rooms Menu Item
+            ListTile(
+              leading: Icon(Icons.meeting_room, color: Colors.blue.shade700),
+              title: Text(
+                'Rooms',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              subtitle: Text(
+                'Manage rooms',
+                style: TextStyle(fontSize: 12),
+              ),
+              onTap: () {
+                Navigator.pop(context); // Close the drawer
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const RoomsScreen(showBackButton: true),
+                  ),
+                );
+              },
+            ),
+            Divider(height: 1),
+            // Staff Menu Item
             ListTile(
               leading: Icon(Icons.people, color: Colors.blue.shade700),
               title: Text('Guest Staff', style: TextStyle(fontWeight: FontWeight.w500)),

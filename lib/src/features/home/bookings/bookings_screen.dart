@@ -9,6 +9,7 @@ import 'bookings_provider.dart';
 import 'edit_booking_screen.dart';
 import 'invoice_form_screen.dart';
 import '../../../shared/widgets/app_drawer.dart';
+import '../../../shared/widgets/audio_recordings_widget.dart';
 
 class BookingsScreen extends ConsumerWidget {
   const BookingsScreen({super.key});
@@ -406,6 +407,30 @@ class BookingsScreen extends ConsumerWidget {
                                 ),
 
                               const SizedBox(height: 12),
+
+                              const SizedBox(height: 12),
+                              const Divider(height: 1),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Icon(Icons.mic, size: 18, color: Colors.grey.shade700),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Recordings',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey.shade700,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              AudioRecordingsWidget(
+                                bookingId: bookingId,
+                                recordings: booking['recordings'] ?? [],
+                                onRecordingsChanged: () => ref.refresh(bookingsProvider),
+                              ),
 
                               // Only Send Invoice button
                               SizedBox(
