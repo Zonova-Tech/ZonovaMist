@@ -50,7 +50,7 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.todo == null ? 'Add Todo' : 'Edit Todo'),
+        title: Text(widget.todo == null ? 'Add Task' : 'Edit Task'),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -65,7 +65,7 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
                 controller: _titleController,
                 decoration: InputDecoration(
                   labelText: 'Title *',
-                  hintText: 'Enter todo title',
+                  hintText: 'Enter task title',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -86,7 +86,7 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
                 controller: _descriptionController,
                 decoration: InputDecoration(
                   labelText: 'Description',
-                  hintText: 'Enter todo description',
+                  hintText: 'Enter task description',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -297,7 +297,7 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
                   ),
                 )
                     : Text(
-                  widget.todo == null ? 'Create Todo' : 'Update Todo',
+                  widget.todo == null ? 'Create Task' : 'Update Task',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -378,8 +378,8 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
           SnackBar(
             content: Text(
               widget.todo == null
-                  ? 'Todo created successfully'
-                  : 'Todo updated successfully',
+                  ? 'Task created successfully'
+                  : 'Task updated successfully',
             ),
             backgroundColor: Colors.green,
           ),
@@ -387,7 +387,7 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
         Navigator.pop(context);
       } else {
         final errorMessage = ref.read(todoProvider).error ??
-            'Failed to save todo';
+            'Failed to save task';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
