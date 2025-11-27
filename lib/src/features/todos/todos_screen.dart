@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
-import '../../shared/widgets/app_drawer.dart';
 import 'providers/todo_provider.dart';
-import 'models/todo_model.dart';
-import 'add_todo_screen.dart';
-import 'my_todos_view.dart';
 import 'tasks_view.dart';
+import 'my_todos_view.dart';
+import 'add_todo_screen.dart';
 
 class TodosScreen extends ConsumerStatefulWidget {
   const TodosScreen({super.key});
@@ -42,6 +39,8 @@ class _TodosScreenState extends ConsumerState<TodosScreen> with SingleTickerProv
       appBar: AppBar(
         title: const Text('Todos'),
         elevation: 0,
+        // Remove drawer icon when in bottom nav
+        automaticallyImplyLeading: false,
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -55,8 +54,19 @@ class _TodosScreenState extends ConsumerState<TodosScreen> with SingleTickerProv
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              if (_tabController.index == 0) {
+                ref.read(todoProvider.notifier).fetchTodos();
+              } else {
+                ref.read(myTodoProvider.notifier).fetchMyTodos();
+              }
+            },
+          ),
+        ],
       ),
-      drawer: const AppDrawer(),
       body: TabBarView(
         controller: _tabController,
         children: const [
@@ -66,13 +76,18 @@ class _TodosScreenState extends ConsumerState<TodosScreen> with SingleTickerProv
       ),
       floatingActionButton: _tabController.index == 0
           ? FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
+        onPressed: () async {
+          final result = await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => const AddTodoScreen(),
             ),
           );
+
+          // Refresh if task was created
+          if (result == true) {
+            ref.read(todoProvider.notifier).fetchTodos();
+          }
         },
         child: const Icon(Icons.add),
       )

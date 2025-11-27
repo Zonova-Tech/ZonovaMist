@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'bookings/bookings_screen.dart';
 import 'reservations/reservations_screen.dart';
-import 'hotels/partner_hotels_screen.dart';
 import 'profile/settings_screen.dart';
 import 'bookings/add_booking_screen.dart';
 import 'dashboard/dashboard_screen.dart';
+import '../todos/todos_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,7 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
     DashboardScreen(),
     BookingsScreen(),
     ReservationsScreen(),
-    PartnerHotelsScreen(),
+    TodosScreen(), // Full todos screen with both tabs
     SettingsScreen(),
   ];
 
@@ -53,8 +53,8 @@ class _HomeScreenState extends State<HomeScreen> {
             label: "Reservations",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.hotel),
-            label: "Hotels",
+            icon: Icon(Icons.checklist),
+            label: "Todos",
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
@@ -62,7 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      floatingActionButton: _selectedIndex == 1 // Changed from 0 to 1 since Bookings is now at index 1
+      floatingActionButton: _selectedIndex == 1
           ? FloatingActionButton(
         onPressed: () async {
           await Navigator.push(

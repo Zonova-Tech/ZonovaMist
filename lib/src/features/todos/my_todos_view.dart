@@ -413,104 +413,158 @@ class _MyTodosViewState extends ConsumerState<MyTodosView> {
   }
 
   Future<void> _completeTodo(Todo todo) async {
-    // Open camera to take photos
     final ImagePicker picker = ImagePicker();
     List<String> imagePaths = [];
 
-    // Show dialog to take multiple photos
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Complete Task'),
-        content: const Text(
-          'Take photos to complete this task. You can take multiple photos.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
+    bool keepTakingPhotos = true;
 
-              // Take photos loop
-              bool takingPhotos = true;
-              while (takingPhotos) {
-                final XFile? photo = await picker.pickImage(
-                  source: ImageSource.camera,
-                  imageQuality: 80,
-                );
+    while (keepTakingPhotos) {
+      try {
+        // Take photo
+        final XFile? photo = await picker.pickImage(
+          source: ImageSource.camera,
+          imageQuality: 80,
+        );
 
-                if (photo != null) {
-                  imagePaths.add(photo.path);
+        if (photo != null) {
+          imagePaths.add(photo.path);
 
-                  if (mounted) {
-                    final takeMore = await showDialog<bool>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Photo Captured'),
-                        content: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Image.file(
-                              File(photo.path),
-                              height: 200,
-                              fit: BoxFit.cover,
-                            ),
-                            const SizedBox(height: 16),
-                            Text('${imagePaths.length} photo(s) captured'),
-                          ],
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, false),
-                            child: const Text('Done'),
-                          ),
-                          ElevatedButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            child: const Text('Take More'),
-                          ),
-                        ],
-                      ),
-                    );
+          if (!mounted) break;
 
-                    if (takeMore != true) {
-                      takingPhotos = false;
-                    }
-                  } else {
-                    takingPhotos = false;
-                  }
-                } else {
-                  takingPhotos = false;
-                }
-              }
-
-              // Upload and complete
-              if (imagePaths.isNotEmpty) {
-                final success = await ref
-                    .read(myTodoProvider.notifier)
-                    .completeTodo(todo.id, imagePaths);
-
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        success
-                            ? 'Task completed successfully'
-                            : 'Failed to complete task',
-                      ),
-                      backgroundColor: success ? Colors.green : Colors.red,
+          // Show preview and ask if user wants more photos
+          final result = await showDialog<String>(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              title: const Text('Photo Captured'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(
+                      File(photo.path),
+                      height: 200,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
                     ),
-                  );
-                }
-              }
-            },
-            child: const Text('Take Photo'),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    '${imagePaths.length} photo(s) captured',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, 'done'),
+                  child: const Text('Done'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, 'more'),
+                  child: const Text('Take More'),
+                ),
+              ],
+            ),
+          );
+
+          if (result != 'more') {
+            keepTakingPhotos = false;
+          }
+        } else {
+          // User cancelled camera
+          keepTakingPhotos = false;
+
+          // If no photos taken, just return
+          if (imagePaths.isEmpty) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('No photos captured. Task not completed.'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+            }
+            return;
+          }
+        }
+      } catch (e) {
+        print('Error taking photo: $e');
+        keepTakingPhotos = false;
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error taking photo: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+
+    // Upload photos if any were taken
+    if (imagePaths.isNotEmpty) {
+      if (!mounted) return;
+
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Uploading photos...'),
+            ],
           ),
-        ],
-      ),
-    );
+        ),
+      );
+
+      try {
+        final success = await ref
+            .read(myTodoProvider.notifier)
+            .completeTodo(todo.id, imagePaths);
+
+        if (mounted) {
+          Navigator.pop(context); // Close loading dialog
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                success
+                    ? 'Task completed successfully!'
+                    : 'Failed to complete task. Please try again.',
+              ),
+              backgroundColor: success ? Colors.green : Colors.red,
+            ),
+          );
+
+          if (success) {
+            // Refresh the list
+            ref.read(myTodoProvider.notifier).fetchMyTodos();
+          }
+        }
+      } catch (e) {
+        print('Error uploading: $e');
+
+        if (mounted) {
+          Navigator.pop(context); // Close loading dialog
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error uploading: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
 }

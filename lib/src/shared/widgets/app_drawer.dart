@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../features/home/staff/staff_screen.dart';
 import '../../features/home/rooms/rooms_screen.dart';
-import '../../features/todos/todos_screen.dart';
+import '../../features/home/hotels/partner_hotels_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -110,6 +110,29 @@ class AppDrawer extends StatelessWidget {
             ),
             const Divider(height: 1),
 
+            // Hotels Menu Item (MOVED FROM BOTTOM NAV)
+            ListTile(
+              leading: Icon(Icons.hotel, color: Colors.blue.shade700),
+              title: const Text(
+                'Partner Hotels',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              subtitle: const Text(
+                'Manage partner hotels',
+                style: TextStyle(fontSize: 12),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PartnerHotelsScreen(),
+                  ),
+                );
+              },
+            ),
+            const Divider(height: 1),
+
             // Staff Menu Item
             ListTile(
               leading: Icon(Icons.people, color: Colors.blue.shade700),
@@ -127,29 +150,6 @@ class AppDrawer extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (context) => const StaffScreen(),
-                  ),
-                );
-              },
-            ),
-            const Divider(height: 1),
-
-            // Todos Menu Item
-            ListTile(
-              leading: Icon(Icons.checklist, color: Colors.blue.shade700),
-              title: const Text(
-                'Todos',
-                style: TextStyle(fontWeight: FontWeight.w500),
-              ),
-              subtitle: const Text(
-                'Manage tasks',
-                style: TextStyle(fontSize: 12),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const TodosScreen(),
                   ),
                 );
               },

@@ -5,7 +5,7 @@ import 'models/todo_model.dart';
 import 'providers/todo_provider.dart';
 
 class AddTodoScreen extends ConsumerStatefulWidget {
-  final Todo? todo; // If provided, we're editing
+  final Todo? todo;
 
   const AddTodoScreen({super.key, this.todo});
 
@@ -27,7 +27,6 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
   void initState() {
     super.initState();
 
-    // If editing, populate fields
     if (widget.todo != null) {
       _titleController.text = widget.todo!.title;
       _descriptionController.text = widget.todo!.description;
@@ -124,19 +123,14 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
                 decoration: BoxDecoration(
                   color: Colors.orange.shade50,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.orange.shade200,
-                  ),
+                  border: Border.all(color: Colors.orange.shade200),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Icon(
-                          Icons.flag,
-                          color: Colors.orange.shade700,
-                        ),
+                        Icon(Icons.flag, color: Colors.orange.shade700),
                         const SizedBox(width: 8),
                         Text(
                           'Priority',
@@ -172,7 +166,7 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
                               _selectedPriority = priority;
                             });
                           },
-                          selectedColor: chipColor.withAlpha(77),
+                          selectedColor: chipColor.withOpacity(0.3),
                           labelStyle: TextStyle(
                             color: _selectedPriority == priority
                                 ? chipColor.shade900
@@ -195,19 +189,14 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
                 decoration: BoxDecoration(
                   color: Colors.purple.shade50,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.purple.shade200,
-                  ),
+                  border: Border.all(color: Colors.purple.shade200),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Icon(
-                          Icons.person,
-                          color: Colors.purple.shade700,
-                        ),
+                        Icon(Icons.person, color: Colors.purple.shade700),
                         const SizedBox(width: 8),
                         Text(
                           'Assigned To *',
@@ -231,6 +220,7 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
 
                         return DropdownButtonFormField<String>(
                           value: _selectedUserId,
+                          isExpanded: true,
                           decoration: InputDecoration(
                             hintText: 'Select user',
                             border: OutlineInputBorder(
@@ -249,6 +239,7 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
                               child: Text(
                                 '${user.fullName} (${user.email})',
                                 style: const TextStyle(fontSize: 14),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             );
                           }).toList(),
@@ -348,7 +339,6 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
     bool success;
 
     if (widget.todo == null) {
-      // Creating new todo
       success = await ref.read(todoProvider.notifier).createTodo(
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
@@ -357,7 +347,6 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
         assignedTo: _selectedUserId!,
       );
     } else {
-      // Updating existing todo
       success = await ref.read(todoProvider.notifier).updateTodo(
         id: widget.todo!.id,
         title: _titleController.text.trim(),
