@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../features/home/staff/staff_screen.dart';
 import '../../features/home/rooms/rooms_screen.dart';
-import '../../features/todos/todos_screen.dart';
+import '../../features/home/hotels/partner_hotels_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -36,7 +36,7 @@ class AppDrawer extends StatelessWidget {
                         BoxShadow(
                           color: Colors.black.withOpacity(0.1),
                           blurRadius: 8,
-                          offset: Offset(0, 2),
+                          offset: const Offset(0, 2),
                         ),
                       ],
                     ),
@@ -62,7 +62,7 @@ class AppDrawer extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           'Zonova Mist',
                           style: TextStyle(
                             color: Colors.white,
@@ -86,19 +86,20 @@ class AppDrawer extends StatelessWidget {
                 ],
               ),
             ),
+
             // Rooms Menu Item
             ListTile(
               leading: Icon(Icons.meeting_room, color: Colors.blue.shade700),
-              title: Text(
+              title: const Text(
                 'Rooms',
                 style: TextStyle(fontWeight: FontWeight.w500),
               ),
-              subtitle: Text(
+              subtitle: const Text(
                 'Manage rooms',
                 style: TextStyle(fontSize: 12),
               ),
               onTap: () {
-                Navigator.pop(context); // Close the drawer
+                Navigator.pop(context);
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -107,20 +108,44 @@ class AppDrawer extends StatelessWidget {
                 );
               },
             ),
-            Divider(height: 1),
+            const Divider(height: 1),
+
+            // Hotels Menu Item (MOVED FROM BOTTOM NAV)
+            ListTile(
+              leading: Icon(Icons.hotel, color: Colors.blue.shade700),
+              title: const Text(
+                'Partner Hotels',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              subtitle: const Text(
+                'Manage partner hotels',
+                style: TextStyle(fontSize: 12),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PartnerHotelsScreen(),
+                  ),
+                );
+              },
+            ),
+            const Divider(height: 1),
+
             // Staff Menu Item
             ListTile(
               leading: Icon(Icons.people, color: Colors.blue.shade700),
-              title: Text(
+              title: const Text(
                 'Guest Staff',
                 style: TextStyle(fontWeight: FontWeight.w500),
               ),
-              subtitle: Text(
+              subtitle: const Text(
                 'Manage staff members',
                 style: TextStyle(fontSize: 12),
               ),
               onTap: () {
-                Navigator.pop(context); // Close the drawer
+                Navigator.pop(context);
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -129,24 +154,12 @@ class AppDrawer extends StatelessWidget {
                 );
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.checklist),
-              title: const Text('Todos'),
-              onTap: () {
-                Navigator.pop(context); // Close drawer
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const TodosScreen(),
-                  ),
-                );
-              },
-            ),
-            Divider(height: 1),
+            const Divider(height: 1),
+
             // About Menu Item
             ListTile(
               leading: Icon(Icons.info_outline, color: Colors.grey.shade600),
-              title: Text(
+              title: const Text(
                 'About',
                 style: TextStyle(fontWeight: FontWeight.w500),
               ),
@@ -173,7 +186,7 @@ class AppDrawer extends StatelessWidget {
                       },
                     ),
                   ),
-                  children: [
+                  children: const [
                     SizedBox(height: 10),
                     Text('Guest House Management System'),
                     Text('© 2024 Zonova Mist'),

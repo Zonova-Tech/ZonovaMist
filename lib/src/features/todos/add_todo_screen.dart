@@ -5,7 +5,7 @@ import 'models/todo_model.dart';
 import 'providers/todo_provider.dart';
 
 class AddTodoScreen extends ConsumerStatefulWidget {
-  final Todo? todo; // If provided, we're editing
+  final Todo? todo;
 
   const AddTodoScreen({super.key, this.todo});
 
@@ -27,7 +27,6 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
   void initState() {
     super.initState();
 
-    // If editing, populate fields
     if (widget.todo != null) {
       _titleController.text = widget.todo!.title;
       _descriptionController.text = widget.todo!.description;
@@ -50,7 +49,7 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.todo == null ? 'Add Todo' : 'Edit Todo'),
+        title: Text(widget.todo == null ? 'Add Task' : 'Edit Task'),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -65,7 +64,7 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
                 controller: _titleController,
                 decoration: InputDecoration(
                   labelText: 'Title *',
-                  hintText: 'Enter todo title',
+                  hintText: 'Enter task title',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -86,7 +85,7 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
                 controller: _descriptionController,
                 decoration: InputDecoration(
                   labelText: 'Description',
-                  hintText: 'Enter todo description',
+                  hintText: 'Enter task description',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -124,19 +123,14 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
                 decoration: BoxDecoration(
                   color: Colors.orange.shade50,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.orange.shade200,
-                  ),
+                  border: Border.all(color: Colors.orange.shade200),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Icon(
-                          Icons.flag,
-                          color: Colors.orange.shade700,
-                        ),
+                        Icon(Icons.flag, color: Colors.orange.shade700),
                         const SizedBox(width: 8),
                         Text(
                           'Priority',
@@ -172,7 +166,7 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
                               _selectedPriority = priority;
                             });
                           },
-                          selectedColor: chipColor.withAlpha(77),
+                          selectedColor: chipColor.withOpacity(0.3),
                           labelStyle: TextStyle(
                             color: _selectedPriority == priority
                                 ? chipColor.shade900
@@ -195,19 +189,14 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
                 decoration: BoxDecoration(
                   color: Colors.purple.shade50,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.purple.shade200,
-                  ),
+                  border: Border.all(color: Colors.purple.shade200),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Icon(
-                          Icons.person,
-                          color: Colors.purple.shade700,
-                        ),
+                        Icon(Icons.person, color: Colors.purple.shade700),
                         const SizedBox(width: 8),
                         Text(
                           'Assigned To *',
@@ -231,6 +220,7 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
 
                         return DropdownButtonFormField<String>(
                           value: _selectedUserId,
+                          isExpanded: true,
                           decoration: InputDecoration(
                             hintText: 'Select user',
                             border: OutlineInputBorder(
@@ -249,6 +239,7 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
                               child: Text(
                                 '${user.fullName} (${user.email})',
                                 style: const TextStyle(fontSize: 14),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             );
                           }).toList(),
@@ -297,7 +288,7 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
                   ),
                 )
                     : Text(
-                  widget.todo == null ? 'Create Todo' : 'Update Todo',
+                  widget.todo == null ? 'Create Task' : 'Update Task',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -348,7 +339,6 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
     bool success;
 
     if (widget.todo == null) {
-      // Creating new todo
       success = await ref.read(todoProvider.notifier).createTodo(
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
@@ -357,7 +347,6 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
         assignedTo: _selectedUserId!,
       );
     } else {
-      // Updating existing todo
       success = await ref.read(todoProvider.notifier).updateTodo(
         id: widget.todo!.id,
         title: _titleController.text.trim(),
@@ -378,8 +367,8 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
           SnackBar(
             content: Text(
               widget.todo == null
-                  ? 'Todo created successfully'
-                  : 'Todo updated successfully',
+                  ? 'Task created successfully'
+                  : 'Task updated successfully',
             ),
             backgroundColor: Colors.green,
           ),
@@ -387,7 +376,7 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
         Navigator.pop(context);
       } else {
         final errorMessage = ref.read(todoProvider).error ??
-            'Failed to save todo';
+            'Failed to save task';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),

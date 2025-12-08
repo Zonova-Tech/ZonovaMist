@@ -11,8 +11,10 @@ class Todo {
   final String? createdByName;
   final String? createdByEmail;
   final DateTime createdDate;
-  final bool completed;
+  final String status; // "New", "Completed", "Approved"
+  final List<TodoImage> images;
   final DateTime? completedAt;
+  final DateTime? approvedAt;
   final bool deleted;
 
   Todo({
@@ -28,8 +30,10 @@ class Todo {
     this.createdByName,
     this.createdByEmail,
     required this.createdDate,
-    this.completed = false,
+    this.status = 'New',
+    this.images = const [],
     this.completedAt,
+    this.approvedAt,
     this.deleted = false,
   });
 
@@ -59,9 +63,15 @@ class Todo {
           ? json['createdBy']['email']
           : null,
       createdDate: DateTime.parse(json['createdDate'] ?? json['createdAt']),
-      completed: json['completed'] ?? false,
+      status: json['status'] ?? 'New',
+      images: (json['images'] as List<dynamic>?)
+          ?.map((img) => TodoImage.fromJson(img))
+          .toList() ?? [],
       completedAt: json['completedAt'] != null
           ? DateTime.parse(json['completedAt'])
+          : null,
+      approvedAt: json['approvedAt'] != null
+          ? DateTime.parse(json['approvedAt'])
           : null,
       deleted: json['deleted'] ?? false,
     );
@@ -77,6 +87,8 @@ class Todo {
     };
   }
 
+  bool get isOverdue => dueDate.isBefore(DateTime.now()) && status == 'New';
+
   Todo copyWith({
     String? id,
     String? title,
@@ -90,8 +102,10 @@ class Todo {
     String? createdByName,
     String? createdByEmail,
     DateTime? createdDate,
-    bool? completed,
+    String? status,
+    List<TodoImage>? images,
     DateTime? completedAt,
+    DateTime? approvedAt,
     bool? deleted,
   }) {
     return Todo(
@@ -107,10 +121,36 @@ class Todo {
       createdByName: createdByName ?? this.createdByName,
       createdByEmail: createdByEmail ?? this.createdByEmail,
       createdDate: createdDate ?? this.createdDate,
-      completed: completed ?? this.completed,
+      status: status ?? this.status,
+      images: images ?? this.images,
       completedAt: completedAt ?? this.completedAt,
+      approvedAt: approvedAt ?? this.approvedAt,
       deleted: deleted ?? this.deleted,
     );
+  }
+}
+
+class TodoImage {
+  final String url;
+  final String publicId;
+
+  TodoImage({
+    required this.url,
+    required this.publicId,
+  });
+
+  factory TodoImage.fromJson(Map<String, dynamic> json) {
+    return TodoImage(
+      url: json['url'] ?? '',
+      publicId: json['public_id'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'url': url,
+      'public_id': publicId,
+    };
   }
 }
 

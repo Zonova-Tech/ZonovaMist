@@ -38,6 +38,7 @@ dependencies:
   photo_view: ^0.15.0
   file_picker: ^10.3.6
   just_audio: ^0.9.36
+  flutter_image_compress: ^2.4.0
 
   # Core
   cupertino_icons: ^1.0.6

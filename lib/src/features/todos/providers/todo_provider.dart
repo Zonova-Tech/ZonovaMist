@@ -1,5 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
+import 'package:http_parser/http_parser.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'dart:io';
 import '../models/todo_model.dart';
 import '../../../core/api/api_service.dart';
 
@@ -28,49 +31,18 @@ class TodoState {
   }
 }
 
-// Todo Provider
+// Todo Provider (for tasks I created)
 class TodoNotifier extends StateNotifier<TodoState> {
   final Dio dio;
 
   TodoNotifier(this.dio) : super(TodoState(todos: []));
 
-  // Fetch all todos
+  // Fetch todos created by me
   Future<void> fetchTodos() async {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
       final response = await dio.get('/todos');
-
-      if (response.statusCode == 200 && response.data['success']) {
-        final List<dynamic> todosJson = response.data['todos'];
-        final todos = todosJson.map((json) => Todo.fromJson(json)).toList();
-
-        state = state.copyWith(todos: todos, isLoading: false);
-      } else {
-        state = state.copyWith(
-          isLoading: false,
-          error: response.data['message'] ?? 'Failed to fetch todos',
-        );
-      }
-    } on DioException catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.response?.data['message'] ?? 'Network error',
-      );
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: 'An unexpected error occurred',
-      );
-    }
-  }
-
-  // Fetch todos by user
-  Future<void> fetchTodosByUser(String userId) async {
-    state = state.copyWith(isLoading: true, error: null);
-
-    try {
-      final response = await dio.get('/todos/user/$userId');
 
       if (response.statusCode == 200 && response.data['success']) {
         final List<dynamic> todosJson = response.data['todos'];
@@ -114,7 +86,7 @@ class TodoNotifier extends StateNotifier<TodoState> {
       });
 
       if (response.statusCode == 201 && response.data['success']) {
-        await fetchTodos(); // Refresh list
+        await fetchTodos();
         return true;
       }
 
@@ -154,7 +126,7 @@ class TodoNotifier extends StateNotifier<TodoState> {
       final response = await dio.put('/todos/$id', data: data);
 
       if (response.statusCode == 200 && response.data['success']) {
-        await fetchTodos(); // Refresh list
+        await fetchTodos();
         return true;
       }
 
@@ -173,18 +145,43 @@ class TodoNotifier extends StateNotifier<TodoState> {
     }
   }
 
-  // Toggle todo completion
-  Future<bool> toggleTodoComplete(String id) async {
+  // Approve todo
+  Future<bool> approveTodo(String id) async {
     try {
-      final response = await dio.patch('/todos/$id/toggle');
+      final response = await dio.patch('/todos/$id/approve');
 
       if (response.statusCode == 200 && response.data['success']) {
-        await fetchTodos(); // Refresh list
+        await fetchTodos();
         return true;
       }
 
       state = state.copyWith(
-        error: response.data['message'] ?? 'Failed to update todo',
+        error: response.data['message'] ?? 'Failed to approve todo',
+      );
+      return false;
+    } on DioException catch (e) {
+      state = state.copyWith(
+        error: e.response?.data['message'] ?? 'Network error',
+      );
+      return false;
+    } catch (e) {
+      state = state.copyWith(error: 'An unexpected error occurred');
+      return false;
+    }
+  }
+
+  // Reject todo
+  Future<bool> rejectTodo(String id) async {
+    try {
+      final response = await dio.patch('/todos/$id/reject');
+
+      if (response.statusCode == 200 && response.data['success']) {
+        await fetchTodos();
+        return true;
+      }
+
+      state = state.copyWith(
+        error: response.data['message'] ?? 'Failed to reject todo',
       );
       return false;
     } on DioException catch (e) {
@@ -204,7 +201,7 @@ class TodoNotifier extends StateNotifier<TodoState> {
       final response = await dio.delete('/todos/$id');
 
       if (response.statusCode == 200 && response.data['success']) {
-        await fetchTodos(); // Refresh list
+        await fetchTodos();
         return true;
       }
 
@@ -224,10 +221,159 @@ class TodoNotifier extends StateNotifier<TodoState> {
   }
 }
 
-// Provider definition
+// My Todos Provider (for tasks assigned to me)
+class MyTodoNotifier extends StateNotifier<TodoState> {
+  final Dio dio;
+
+  MyTodoNotifier(this.dio) : super(TodoState(todos: []));
+
+  // Fetch todos assigned to me
+  Future<void> fetchMyTodos() async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      final response = await dio.get('/todos/my');
+
+      if (response.statusCode == 200 && response.data['success']) {
+        final List<dynamic> todosJson = response.data['todos'];
+        final todos = todosJson.map((json) => Todo.fromJson(json)).toList();
+
+        state = state.copyWith(todos: todos, isLoading: false);
+      } else {
+        state = state.copyWith(
+          isLoading: false,
+          error: response.data['message'] ?? 'Failed to fetch todos',
+        );
+      }
+    } on DioException catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.response?.data['message'] ?? 'Network error',
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'An unexpected error occurred',
+      );
+    }
+  }
+
+  // Complete todo with images (with compression)
+  Future<bool> completeTodo(String id, List<String> imagePaths) async {
+    try {
+      print('🔵 Starting completeTodo');
+      print('Todo ID: $id');
+      print('Images: ${imagePaths.length}');
+
+      FormData formData = FormData();
+
+      for (var i = 0; i < imagePaths.length; i++) {
+        final path = imagePaths[i];
+        print('Processing image $i: $path');
+
+        // Get original file size
+        final originalFile = File(path);
+        final originalSize = await originalFile.length();
+        print('Original size: ${(originalSize / 1024).toStringAsFixed(2)} KB');
+
+        // Compress image
+        final compressedPath = path.replaceAll('.jpg', '_compressed.jpg');
+
+        final compressedFile = await FlutterImageCompress.compressAndGetFile(
+          path,
+          compressedPath,
+          quality: 70,
+          minWidth: 1920,
+          minHeight: 1080,
+        );
+
+        if (compressedFile == null) {
+          print('❌ Compression failed for image $i');
+          continue;
+        }
+
+        final compressedSize = await compressedFile.length();
+        print('Compressed size: ${(compressedSize / 1024).toStringAsFixed(2)} KB');
+        print('Saved: ${((originalSize - compressedSize) / originalSize * 100).toStringAsFixed(1)}%');
+
+        final fileName = compressedFile.path.split('/').last;
+
+        formData.files.add(
+          MapEntry(
+            'images',
+            await MultipartFile.fromFile(
+              compressedFile.path,
+              filename: fileName,
+              contentType: MediaType('image', 'jpeg'),
+            ),
+          ),
+        );
+      }
+
+      if (formData.files.isEmpty) {
+        state = state.copyWith(error: 'No images to upload');
+        return false;
+      }
+
+      print('📤 Uploading ${formData.files.length} compressed images...');
+
+      final response = await dio.post(
+        '/todos/$id/complete',
+        data: formData,
+        options: Options(
+          headers: {'Content-Type': 'multipart/form-data'},
+          receiveTimeout: const Duration(minutes: 2),
+          sendTimeout: const Duration(minutes: 2),
+        ),
+        onSendProgress: (sent, total) {
+          final progress = (sent / total * 100).toStringAsFixed(1);
+          print('Upload progress: $progress%');
+        },
+      );
+
+      print('✅ Upload complete: ${response.statusCode}');
+
+      if (response.statusCode == 200 && response.data['success']) {
+        await fetchMyTodos();
+        return true;
+      }
+
+      state = state.copyWith(
+        error: response.data['message'] ?? 'Failed to complete todo',
+      );
+      return false;
+    } on DioException catch (e) {
+      print('❌ Dio error: ${e.message}');
+      print('Error type: ${e.type}');
+
+      String errorMessage = 'Network error';
+      if (e.type == DioExceptionType.receiveTimeout) {
+        errorMessage = 'Upload timed out. Please check your internet connection.';
+      } else if (e.type == DioExceptionType.connectionTimeout) {
+        errorMessage = 'Connection timeout. Please try again.';
+      } else if (e.response?.data != null) {
+        errorMessage = e.response!.data['message'] ?? 'Upload failed';
+      }
+
+      state = state.copyWith(error: errorMessage);
+      return false;
+    } catch (e) {
+      print('❌ Error: $e');
+      state = state.copyWith(error: 'Error: $e');
+      return false;
+    }
+  }
+}
+
+// Provider definitions
 final todoProvider = StateNotifierProvider<TodoNotifier, TodoState>((ref) {
   final dio = ref.watch(dioProvider);
   return TodoNotifier(dio);
+});
+
+final myTodoProvider = StateNotifierProvider<MyTodoNotifier, TodoState>((ref) {
+  final dio = ref.watch(dioProvider);
+  return MyTodoNotifier(dio);
 });
 
 // Users provider (for assignee selection)
