@@ -17,7 +17,6 @@ class _EditHotelScreenState extends ConsumerState<EditHotelScreen> {
   late TextEditingController nameController;
   late TextEditingController descriptionController;
   late TextEditingController phoneController;
-  late String status;
 
   @override
   void initState() {
@@ -31,7 +30,6 @@ class _EditHotelScreenState extends ConsumerState<EditHotelScreen> {
     phoneController = TextEditingController(
       text: widget.hotel['phone'] ?? '',
     );
-    status = (widget.hotel['status'] as String?) ?? 'available';
   }
 
   @override
@@ -58,7 +56,6 @@ class _EditHotelScreenState extends ConsumerState<EditHotelScreen> {
       final dio = ref.read(dioProvider);
       final resp = await dio.patch('/hotels/${widget.hotel['_id']}', data: {
         'name': name,
-        'status': status,
         'description': description,
         'phone': phone,
       });
@@ -97,18 +94,13 @@ class _EditHotelScreenState extends ConsumerState<EditHotelScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            DropdownButtonFormField<String>(
-              value: status,
+            TextField(
+              controller: phoneController,
+              keyboardType: TextInputType.phone,
               decoration: const InputDecoration(
-                labelText: 'Availability',
+                labelText: 'Phone Number',
                 border: OutlineInputBorder(),
               ),
-              items: const [
-                DropdownMenuItem(value: 'available', child: Text('Available')),
-                DropdownMenuItem(value: 'booked', child: Text('Booked')),
-                DropdownMenuItem(value: 'maintenance', child: Text('Maintenance')),
-              ],
-              onChanged: (val) => setState(() => status = val ?? status),
             ),
             const SizedBox(height: 20),
             TextField(
@@ -116,15 +108,6 @@ class _EditHotelScreenState extends ConsumerState<EditHotelScreen> {
               maxLines: 3,
               decoration: const InputDecoration(
                 labelText: 'Description',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: phoneController,
-              keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: 'Phone Number',
                 border: OutlineInputBorder(),
               ),
             ),

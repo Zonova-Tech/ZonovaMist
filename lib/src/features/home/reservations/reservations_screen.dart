@@ -7,7 +7,6 @@ import 'package:Zonova_Mist/src/core/api/api_service.dart';
 import '../../../shared/widgets/app_drawer.dart';
 import '../../../shared/widgets/audio_recordings_widget.dart';
 
-
 class ReservationsScreen extends ConsumerWidget {
   const ReservationsScreen({super.key});
 
@@ -149,6 +148,17 @@ class ReservationsScreen extends ConsumerWidget {
     );
   }
 
+  int _calculateNumberOfDays(String? checkinDate, String? checkoutDate) {
+    if (checkinDate == null || checkoutDate == null) return 0;
+    try {
+      final checkin = DateTime.parse(checkinDate);
+      final checkout = DateTime.parse(checkoutDate);
+      return checkout.difference(checkin).inDays;
+    } catch (e) {
+      return 0;
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final reservationsAsync = ref.watch(reservationsProvider);
@@ -259,6 +269,11 @@ class ReservationsScreen extends ConsumerWidget {
                   itemCount: reservations.length,
                   itemBuilder: (context, index) {
                     final booking = reservations[index];
+                    final numberOfDays = _calculateNumberOfDays(
+                      booking['checkin_date'],
+                      booking['checkout_date'],
+                    );
+
                     return Slidable(
                       key: ValueKey(booking['_id']),
                       endActionPane: ActionPane(
@@ -296,6 +311,7 @@ class ReservationsScreen extends ConsumerWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // Guest Name and Status
                               Row(
                                 children: [
                                   Icon(Icons.person, color: Colors.blue.shade700),
@@ -315,67 +331,83 @@ class ReservationsScreen extends ConsumerWidget {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 12),
+
+                              // Main content with two columns
                               Row(
-                                children: [
-                                  const Icon(Icons.meeting_room, size: 18, color: Colors.grey),
-                                  const SizedBox(width: 6),
-                                  Text("Room(s): ${booking['booked_room_no'] ?? 'N/A'}"),
-                                ],
-                              ),
-                              const SizedBox(height: 6),
-                              Row(
-                                children: [
-                                  const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Check-in: ${booking['checkin_date'] != null ? DateFormat('MMM dd, yyyy').format(DateTime.parse(booking['checkin_date'])) : 'N/A'}',
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 6),
-                              Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Phone number row
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.phone, size: 18, color: Colors.grey),
-                                      const SizedBox(width: 6),
-                                      Expanded(
-                                        child: Text('Phone: ${booking['phone_no'] ?? 'N/A'}'),
-                                      ),
-                                    ],
+                                  // Left Column
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.meeting_room, size: 18, color: Colors.grey),
+                                            const SizedBox(width: 6),
+                                            Text("Room(s): ${booking['booked_room_no'] ?? 'N/A'}"),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
+                                            const SizedBox(width: 6),
+                                            Expanded(
+                                              child: Text(
+                                                'Check-in: ${booking['checkin_date'] != null ? DateFormat('yyyy-MM-dd').format(DateTime.parse(booking['checkin_date'])) : 'N/A'} (${numberOfDays}d)',
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.phone, size: 18, color: Colors.grey),
+                                            const SizedBox(width: 6),
+                                            Expanded(
+                                              child: Text('Phone: ${booking['phone_no'] ?? 'N/A'}'),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
-
-                                  const SizedBox(height: 12),
-                                  const Divider(height: 1),
-                                  const SizedBox(height: 12),
-
-                                  // Recordings section
-                                  Row(
+                                  const SizedBox(width: 16),
+                                  // Right Column
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
-                                      Icon(Icons.mic, size: 18, color: Colors.grey.shade700),
-                                      const SizedBox(width: 6),
                                       Text(
-                                        'Recordings',
+                                        'Total: ${booking['total_price'] ?? 0}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Adults: ${booking['adult_count'] ?? 0}, Kids: ${booking['child_count'] ?? 0}',
                                         style: TextStyle(
-                                          fontWeight: FontWeight.w600,
                                           color: Colors.grey.shade700,
-                                          fontSize: 14,
+                                          fontSize: 13,
                                         ),
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 8),
-
-                                  // Recordings widget
-                                  AudioRecordingsWidget(
-                                    bookingId: booking['_id'] ?? '',
-                                    recordings: booking['recordings'] ?? [],
-                                    onRecordingsChanged: () => ref.refresh(reservationsProvider),
-                                  ),
                                 ],
+                              ),
+
+                              const SizedBox(height: 12),
+                              const Divider(height: 1),
+                              const SizedBox(height: 12),
+
+                              // Recordings (without label)
+                              AudioRecordingsWidget(
+                                bookingId: booking['_id'] ?? '',
+                                recordings: booking['recordings'] ?? [],
+                                onRecordingsChanged: () => ref.refresh(reservationsProvider),
                               ),
                             ],
                           ),
@@ -478,8 +510,6 @@ class ReservationsScreen extends ConsumerWidget {
         return 'Upcoming & Today';
       case 'recent':
         return 'Last 7 Days';
-      case 'today':
-        return 'Today Only';
       case 'week':
         return 'This Week';
       case 'month':
@@ -535,7 +565,6 @@ class ReservationFilterBottomSheet extends ConsumerWidget {
             runSpacing: 8,
             children: [
               _buildFilterChip(context, ref, 'upcoming', 'Upcoming & Today', Icons.arrow_forward, currentFilter),
-              _buildFilterChip(context, ref, 'today', 'Today Only', Icons.today, currentFilter),
               _buildFilterChip(context, ref, 'recent', 'Last 7 Days', Icons.calendar_today, currentFilter),
               _buildFilterChip(context, ref, 'week', 'This Week', Icons.date_range, currentFilter),
               _buildFilterChip(context, ref, 'month', 'This Month', Icons.calendar_month, currentFilter),

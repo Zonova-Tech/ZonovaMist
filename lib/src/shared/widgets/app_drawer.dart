@@ -1,11 +1,7 @@
-// app_drawer.dart
 import 'package:flutter/material.dart';
 import '../../features/home/staff/staff_screen.dart';
-import '../../features/home/rooms/room_rate_page.dart';
-
-// IMPORT EXPENSE PAGES YOU CREATED
-import '../../features/home/expenses/expenses_list_page.dart';
 import '../../features/home/rooms/rooms_screen.dart';
+import '../../features/home/hotels/partner_hotels_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -18,7 +14,6 @@ class AppDrawer extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            // ---------- Drawer Header ----------
             DrawerHeader(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -30,7 +25,7 @@ class AppDrawer extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Logo
+                  // Logo on the left
                   Container(
                     width: 65,
                     height: 65,
@@ -41,7 +36,7 @@ class AppDrawer extends StatelessWidget {
                         BoxShadow(
                           color: Colors.black.withOpacity(0.1),
                           blurRadius: 8,
-                          offset: Offset(0, 2),
+                          offset: const Offset(0, 2),
                         ),
                       ],
                     ),
@@ -61,14 +56,13 @@ class AppDrawer extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 16),
-
-                  // Text
+                  // Text on the right
                   Expanded(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           'Zonova Mist',
                           style: TextStyle(
                             color: Colors.white,
@@ -92,19 +86,20 @@ class AppDrawer extends StatelessWidget {
                 ],
               ),
             ),
+
             // Rooms Menu Item
             ListTile(
               leading: Icon(Icons.meeting_room, color: Colors.blue.shade700),
-              title: Text(
+              title: const Text(
                 'Rooms',
                 style: TextStyle(fontWeight: FontWeight.w500),
               ),
-              subtitle: Text(
+              subtitle: const Text(
                 'Manage rooms',
                 style: TextStyle(fontSize: 12),
               ),
               onTap: () {
-                Navigator.pop(context); // Close the drawer
+                Navigator.pop(context);
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -113,60 +108,61 @@ class AppDrawer extends StatelessWidget {
                 );
               },
             ),
-            Divider(height: 1),
+            const Divider(height: 1),
+
+            // Hotels Menu Item (MOVED FROM BOTTOM NAV)
+            ListTile(
+              leading: Icon(Icons.hotel, color: Colors.blue.shade700),
+              title: const Text(
+                'Partner Hotels',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              subtitle: const Text(
+                'Manage partner hotels',
+                style: TextStyle(fontSize: 12),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PartnerHotelsScreen(),
+                  ),
+                );
+              },
+            ),
+            const Divider(height: 1),
+
             // Staff Menu Item
             ListTile(
               leading: Icon(Icons.people, color: Colors.blue.shade700),
-              title: Text('Guest Staff', style: TextStyle(fontWeight: FontWeight.w500)),
-              subtitle: Text('Manage staff members', style: TextStyle(fontSize: 12)),
+              title: const Text(
+                'Guest Staff',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              subtitle: const Text(
+                'Manage staff members',
+                style: TextStyle(fontSize: 12),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const StaffScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const StaffScreen(),
+                  ),
                 );
               },
             ),
+            const Divider(height: 1),
 
-            Divider(height: 1),
-
-            // ---------- Room Rate ----------
-            ListTile(
-              leading: Icon(Icons.attach_money, color: Colors.blue.shade700),
-              title: Text('Room Rate', style: TextStyle(fontWeight: FontWeight.w500)),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const RoomRatePage()),
-                );
-              },
-            ),
-
-            Divider(height: 1),
-
-            // ---------- Expenses (UPDATED) ----------
-            ListTile(
-              leading: Icon(Icons.receipt_long, color: Colors.blue.shade700),
-              title: Text('Expenses', style: TextStyle(fontWeight: FontWeight.w500)),
-              subtitle: Text('Manage bills & purchases', style: TextStyle(fontSize: 12)),
-              onTap: () {
-                Navigator.pop(context);
-
-                // 🟢 UPDATED ROUTE – Main Expenses Dashboard
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ExpensesListPage()),
-                );
-              },
-            ),
-
-            Divider(height: 1),
-
-            // ---------- About ----------
+            // About Menu Item
             ListTile(
               leading: Icon(Icons.info_outline, color: Colors.grey.shade600),
-              title: Text('About', style: TextStyle(fontWeight: FontWeight.w500)),
+              title: const Text(
+                'About',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 showAboutDialog(
@@ -176,15 +172,21 @@ class AppDrawer extends StatelessWidget {
                   applicationIcon: Container(
                     width: 60,
                     height: 60,
-                    decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: Image.asset(
                       'assets/icons/logo.png',
                       errorBuilder: (context, error, stackTrace) {
-                        return Icon(Icons.hotel, size: 50, color: Colors.blue.shade700);
+                        return Icon(
+                          Icons.hotel,
+                          size: 50,
+                          color: Colors.blue.shade700,
+                        );
                       },
                     ),
                   ),
-                  children: [
+                  children: const [
                     SizedBox(height: 10),
                     Text('Guest House Management System'),
                     Text('© 2024 Zonova Mist'),
@@ -192,8 +194,6 @@ class AppDrawer extends StatelessWidget {
                 );
               },
             ),
-
-            SizedBox(height: 12),
           ],
         ),
       ),
