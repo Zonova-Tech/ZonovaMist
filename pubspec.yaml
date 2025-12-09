@@ -9,18 +9,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_slidable: ^3.0.1
-  flutter_dotenv: ^6.0.0
-  universal_html: ^2.2.4
-  photo_view: ^0.15.0
-  file_picker: ^10.3.6
-  just_audio: ^0.9.36
+
+  flutter_localizations:
+    sdk: flutter
 
   # Core packages
   cupertino_icons: ^1.0.6
   intl: ^0.20.2
-  flutter_localizations:
-    sdk: flutter
 
   # Networking
   http: ^1.2.1
@@ -41,6 +36,8 @@ dependencies:
   universal_html: ^2.2.4
   flutter_dotenv: ^6.0.0
   image_picker: ^1.1.2
+  file_picker: ^10.3.6
+  just_audio: ^0.9.36
 
   # Forms
   flutter_form_builder: ^10.0.1
@@ -54,6 +51,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_launcher_icons: ^0.14.4
+  flutter_lints: ^5.0.0
 
 flutter_launcher_icons:
   android: true
@@ -61,17 +59,8 @@ flutter_launcher_icons:
   image_path: "assets/icons/logo.png"
   min_sdk_android: 21
   remove_alpha_ios: true
-
-  # Optional: Adaptive icon for Android (recommended)
-  adaptive_icon_background: "#ffffff"  # White background
+  adaptive_icon_background: "#ffffff"
   adaptive_icon_foreground: "assets/icons/logo.png"
-
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
-  flutter_lints: ^5.0.0
 
 flutter:
   uses-material-design: true

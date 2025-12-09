@@ -5,7 +5,7 @@ import '../../../core/auth/rooms_provider.dart';
 import '../../../core/api/api_service.dart';
 import '../../../shared/widgets/common_image_manager.dart';
 import 'add_room_screen.dart';
-import '../edit_room_screen.dart';
+import 'edit_room_screen.dart';   // ✅ FIXED IMPORT
 
 class RoomsScreen extends ConsumerStatefulWidget {
   final bool showBackButton;
@@ -77,20 +77,6 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Rooms'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.attach_money),
-            tooltip: 'Room Rates',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const RoomRatePage()),
-              );
-            },
-          ),
-        ],
-      ),
-      drawer: const AppDrawer(),
         leading: widget.showBackButton
             ? IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -98,6 +84,35 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
         )
             : null,
         automaticallyImplyLeading: widget.showBackButton,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.attach_money),
+            tooltip: 'Room Rates',
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Room Rates feature coming soon')),
+              );
+            },
+          ),
+        ],
+      ),
+      drawer: widget.showBackButton
+          ? null
+          : Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(color: Colors.blue),
+              child: Text('Menu', style: TextStyle(color: Colors.white, fontSize: 24)),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home),
+              title: const Text('Home'),
+              onTap: () => Navigator.pop(context),
+            ),
+          ],
+        ),
       ),
       body: roomsAsync.when(
         data: (rooms) {
@@ -224,4 +239,3 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
     );
   }
 }
-
