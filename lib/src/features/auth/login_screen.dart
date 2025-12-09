@@ -12,6 +12,7 @@ import 'package:Zonova_Mist/src/core/auth/auth_state.dart';
 import 'package:Zonova_Mist/src/features/auth/register_screen.dart';
 import 'package:Zonova_Mist/src/core/routing/app_router.dart';
 import '../../core/i18n/arb/app_localizations.dart';
+import '../home/home_screen.dart'; // import HomeScreen
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -79,8 +80,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         // Auth state notifier call
         ref.read(authProvider.notifier).login(email, password);
 
-        // Navigate to dashboard
-        Navigator.pushReplacementNamed(context, '/dashboard');
+        // ✅ Navigate to HomeScreen directly
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+
       } else {
         final error = jsonDecode(response.body)['error'];
         ScaffoldMessenger.of(context).showSnackBar(

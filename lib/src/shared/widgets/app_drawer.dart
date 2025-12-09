@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../features/home/staff/staff_screen.dart';
 import '../../features/home/rooms/rooms_screen.dart';
+import '../../features/home/rooms/room_rate_page.dart';
 import '../../features/home/hotels/partner_hotels_screen.dart';
+import '../../features/home/expenses/expenses_list_page.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -110,7 +112,53 @@ class AppDrawer extends StatelessWidget {
             ),
             const Divider(height: 1),
 
-            // Hotels Menu Item (MOVED FROM BOTTOM NAV)
+            // Room Rate Menu Item
+            ListTile(
+              leading: Icon(Icons.attach_money, color: Colors.blue.shade700),
+              title: const Text(
+                'Room Rates',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              subtitle: const Text(
+                'Manage room rates',
+                style: TextStyle(fontSize: 12),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const RoomRatePage(),
+                  ),
+                );
+              },
+            ),
+            const Divider(height: 1),
+
+            // Expenses Menu Item
+            ListTile(
+              leading: Icon(Icons.receipt_long, color: Colors.blue.shade700),
+              title: const Text(
+                'Expenses',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              subtitle: const Text(
+                'View expenses',
+                style: TextStyle(fontSize: 12),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ExpensesListPage(),
+                  ),
+                );
+              },
+            ),
+            const Divider(height: 1),
+
+            // Hotels Menu Item
             ListTile(
               leading: Icon(Icons.hotel, color: Colors.blue.shade700),
               title: const Text(
