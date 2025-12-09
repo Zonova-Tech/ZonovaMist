@@ -1,21 +1,11 @@
-// lib/src/features/home/rooms/rooms_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../../core/auth/rooms_provider.dart';
 import '../../../core/api/api_service.dart';
 import '../../../shared/widgets/common_image_manager.dart';
-
-// files in the same folder
 import 'add_room_screen.dart';
-import 'edit_room_screen.dart';
-import 'room_rate_page.dart';
-import 'room_details_screen.dart';
-
-// adjust this path only if AppDrawer is in a different folder
-import '../../../shared/widgets/app_drawer.dart';
-
+import '../edit_room_screen.dart';
 
 class RoomsScreen extends ConsumerStatefulWidget {
   final bool showBackButton;
@@ -37,7 +27,7 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
   }
 
   Future<void> _onDelete(Map<String, dynamic> room) async {
-    final roomId = room['_id'] as String? ?? '';
+    final roomId = room['_id'] as String;
     final roomNumber = room['roomNumber'];
 
     final confirm = await showDialog<bool>(
@@ -99,6 +89,8 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
             },
           ),
         ],
+      ),
+      drawer: const AppDrawer(),
         leading: widget.showBackButton
             ? IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -107,7 +99,6 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
             : null,
         automaticallyImplyLeading: widget.showBackButton,
       ),
-      drawer: const AppDrawer(),
       body: roomsAsync.when(
         data: (rooms) {
           if (rooms.isEmpty) {
@@ -117,11 +108,9 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
             padding: const EdgeInsets.all(12),
             itemCount: rooms.length,
             itemBuilder: (context, index) {
-              final room = rooms[index] as Map<String, dynamic>;
-              final roomId = (room['_id'] as String?) ?? '';
+              final room = rooms[index];
+              final roomId = room['_id'] as String? ?? '';
               if (roomId.isEmpty) {
-                // debug print left intentionally
-                // ignore: avoid_print
                 print('Warning: roomId is empty for room ${room['roomNumber']}');
               }
               return Slidable(
@@ -159,11 +148,9 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
                           children: [
                             Icon(Icons.meeting_room, color: Colors.blue.shade700),
                             const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Room ${room['roomNumber'] ?? 'N/A'} - ${room['type'] ?? 'Unknown'}',
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                              ),
+                            Text(
+                              'Room ${room['roomNumber'] ?? 'N/A'} - ${room['type'] ?? 'Unknown'}',
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -237,3 +224,4 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
     );
   }
 }
+
