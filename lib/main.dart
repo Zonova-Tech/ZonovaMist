@@ -33,7 +33,6 @@ class MyApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
 
 
-
       home: authState.when(
         loading: () => const SplashScreen(),
         authenticated: (_) => const HomeScreen(),
