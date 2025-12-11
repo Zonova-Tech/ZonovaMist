@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:Zonova_Mist/enums/expense_category.dart';
 
 class AddExpensePage extends StatefulWidget {
   const AddExpensePage({super.key});
@@ -29,7 +30,6 @@ class _AddExpensePageState extends State<AddExpensePage> {
     super.dispose();
   }
 
-  // Gallery multi-image picker
   Future<void> _pickImages() async {
     try {
       final List<XFile>? images = await _picker.pickMultiImage();
@@ -97,15 +97,9 @@ class _AddExpensePageState extends State<AddExpensePage> {
 
   @override
   Widget build(BuildContext context) {
-    final categories = [
-      'Light Bill',
-      'Water Bill',
-      'Internet Bill',
-      'Salary',
-      'Cleaning',
-      'Rent',
-      'Purchases'
-    ];
+    final categories = ExpenseCategory.values
+        .map((e) => e.displayName)
+        .toList();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Add Expense')),
@@ -116,7 +110,6 @@ class _AddExpensePageState extends State<AddExpensePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Category Dropdown
               DropdownButtonFormField<String>(
                 value: _category,
                 decoration: const InputDecoration(
@@ -129,7 +122,6 @@ class _AddExpensePageState extends State<AddExpensePage> {
                 validator: (v) => v == null ? 'Select category' : null,
               ),
               const SizedBox(height: 16),
-
 
               TextFormField(
                 controller: _titleCtrl,
@@ -158,7 +150,6 @@ class _AddExpensePageState extends State<AddExpensePage> {
               ),
               const SizedBox(height: 16),
 
-
               InkWell(
                 onTap: _selectDate,
                 child: InputDecorator(
@@ -172,7 +163,6 @@ class _AddExpensePageState extends State<AddExpensePage> {
               ),
               const SizedBox(height: 16),
 
-
               TextFormField(
                 controller: _noteCtrl,
                 decoration: const InputDecoration(
@@ -184,7 +174,6 @@ class _AddExpensePageState extends State<AddExpensePage> {
               ),
               const SizedBox(height: 24),
 
-              // ===== Image Upload Section =====
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -228,7 +217,6 @@ class _AddExpensePageState extends State<AddExpensePage> {
                 ),
               ),
 
-              // ===== Image Preview Grid =====
               if (_picked.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 GridView.builder(
@@ -317,7 +305,6 @@ class _AddExpensePageState extends State<AddExpensePage> {
               ],
               const SizedBox(height: 32),
 
-              // Save Button
               ElevatedButton(
                 onPressed: _isSaving ? null : _save,
                 style: ElevatedButton.styleFrom(

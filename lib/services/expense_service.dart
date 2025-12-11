@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloudinary_public/cloudinary_public.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../config.dart'; // ✅ relative import for AppConfig
+import '../config.dart';
 import 'package:http/http.dart' as http;
 
 class ExpenseService {

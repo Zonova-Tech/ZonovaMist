@@ -1,14 +1,14 @@
-// lib/src/features/auth/login_screen.dart
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-// ✅ Correct imports based on your structure
-import '../../../config.dart'; // AppConfig
-import '../../core/auth/auth_provider.dart'; // authProvider
-import '../home/home_screen.dart'; // HomeScreen
+
+import '../../../config.dart';
+import '../../core/auth/auth_provider.dart';
+import '../home/home_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
