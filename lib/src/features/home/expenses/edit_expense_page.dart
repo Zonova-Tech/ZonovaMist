@@ -94,7 +94,7 @@ class _EditExpensePageState extends State<EditExpensePage> {
     if (d != null) setState(() => _date = d);
   }
 
-  // ✅ Delete image with confirmation dialog
+
   Future<void> _deleteImage(Map<String, dynamic> imgObj) async {
     final cloudinaryId = imgObj['cloudinary_id']?.toString() ?? '';
 
@@ -288,7 +288,7 @@ class _EditExpensePageState extends State<EditExpensePage> {
               ),
               const SizedBox(height: 24),
 
-              // Document Upload Section (Staff style layout)
+
               if (expenseId.isNotEmpty)
                 Card(
                   child: Padding(
@@ -296,7 +296,7 @@ class _EditExpensePageState extends State<EditExpensePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Add Photos Button
+
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
@@ -310,11 +310,11 @@ class _EditExpensePageState extends State<EditExpensePage> {
                           ),
                         ),
 
-                        // Images Display
+
                         if (hasImages) ...[
                           const SizedBox(height: 16),
 
-                          // Existing Images
+
                           if (_existing.isNotEmpty) ...[
                             Wrap(
                               spacing: 8,
@@ -340,7 +340,7 @@ class _EditExpensePageState extends State<EditExpensePage> {
                                           _buildImageWidget(
                                             imgObj['url']!,
                                           ),
-                                          // Tap to zoom overlay
+
                                           Positioned(
                                             bottom: 0,
                                             left: 0,
@@ -389,7 +389,7 @@ class _EditExpensePageState extends State<EditExpensePage> {
                             ),
                           ],
 
-                          // New Images
+
                           if (_newPicked.isNotEmpty) ...[
                             if (_existing.isNotEmpty) const SizedBox(height: 8),
                             Wrap(
@@ -413,7 +413,7 @@ class _EditExpensePageState extends State<EditExpensePage> {
                                             fit: StackFit.expand,
                                             children: [
                                               _buildImageWidget(file.path),
-                                              // Tap to zoom overlay
+
                                               Positioned(
                                                 bottom: 0,
                                                 left: 0,
@@ -457,7 +457,7 @@ class _EditExpensePageState extends State<EditExpensePage> {
                                           ),
                                         ),
                                       ),
-                                      // Close button for new images
+
                                       Positioned(
                                         top: 4,
                                         right: 4,
@@ -490,7 +490,7 @@ class _EditExpensePageState extends State<EditExpensePage> {
                 ),
               const SizedBox(height: 24),
 
-              // Update Button
+
               ElevatedButton(
                 onPressed: _save,
                 style: ElevatedButton.styleFrom(

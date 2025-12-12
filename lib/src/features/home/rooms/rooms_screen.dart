@@ -5,7 +5,7 @@ import '../../../core/auth/rooms_provider.dart';
 import '../../../core/api/api_service.dart';
 import '../../../shared/widgets/common_image_manager.dart';
 import 'add_room_screen.dart';
-import 'edit_room_screen.dart';   // ✅ FIXED IMPORT
+import 'edit_room_screen.dart';
 
 class RoomsScreen extends ConsumerStatefulWidget {
   final bool showBackButton;

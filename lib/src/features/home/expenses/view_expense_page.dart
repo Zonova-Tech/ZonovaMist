@@ -219,7 +219,7 @@ class ViewExpensePage extends StatelessWidget {
 
                     const Divider(height: 32),
 
-                    // Description Section - Left: "Description" icon + text, Right: actual description
+
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

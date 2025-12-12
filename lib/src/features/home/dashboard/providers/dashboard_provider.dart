@@ -3,18 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/dashboard_models.dart';
 import '../../../../core/api/dashboard_service.dart';
 
-/// Provider for dashboard service
+
 final dashboardServiceProvider = Provider<DashboardService>((ref) {
   return DashboardService();
 });
 
-/// Provider for dashboard state
 final dashboardProvider = StateNotifierProvider<DashboardNotifier, DashboardState>((ref) {
   final service = ref.watch(dashboardServiceProvider);
   return DashboardNotifier(service);
 });
 
-/// Dashboard state
 class DashboardState {
   final TimePeriod timePeriod;
   final Set<ComparisonPeriod> selectedComparisons;
@@ -22,7 +20,6 @@ class DashboardState {
   final bool isLoading;
   final String? error;
 
-  // Cached data
   final Map<String, StatData>? stats;
   final ComparisonChartData? revenueData;
   final ComparisonChartData? expenseData;
@@ -65,16 +62,16 @@ class DashboardState {
   }
 }
 
-/// Dashboard notifier with real API integration
+
 class DashboardNotifier extends StateNotifier<DashboardState> {
   final DashboardService _service;
 
   DashboardNotifier(this._service) : super(DashboardState()) {
-    // Load initial data
+
     loadAllData();
   }
 
-  /// Load all dashboard data
+
   Future<void> loadAllData() async {
     state = state.copyWith(isLoading: true, error: null);
 
@@ -95,7 +92,7 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     }
   }
 
-  /// Load statistics
+
   Future<void> loadStats() async {
     try {
       final stats = await _service.fetchStats(
@@ -107,12 +104,12 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
       state = state.copyWith(stats: stats);
     } catch (e) {
       print('❌ Error loading stats: $e');
-      // Use dummy data as fallback
+
       state = state.copyWith(stats: _getDummyStats());
     }
   }
 
-  /// Load revenue comparison data
+
   Future<void> loadRevenueData() async {
     try {
       final revenueData = await _service.fetchRevenueComparison(
@@ -136,7 +133,6 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     }
   }
 
-  /// Load expense comparison data
   Future<void> loadExpenseData() async {
     try {
       final expenseData = await _service.fetchExpenseComparison(
@@ -149,7 +145,7 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
       state = state.copyWith(expenseData: expenseData);
     } catch (e) {
       print('❌ Error loading expense data: $e');
-      // Set empty data if API fails
+
       state = state.copyWith(
         expenseData: ComparisonChartData(
           prevData: [],
@@ -160,7 +156,6 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     }
   }
 
-  /// Load expense category data
   Future<void> loadCategoryData() async {
     try {
       final categoryData = await _service.fetchExpenseCategories(
@@ -172,18 +167,16 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
       state = state.copyWith(categoryData: categoryData);
     } catch (e) {
       print('❌ Error loading category data: $e');
-      // Set empty data if API fails
+
       state = state.copyWith(categoryData: []);
     }
   }
-
-  /// Set time period and reload data
   void setTimePeriod(TimePeriod period) {
     state = state.copyWith(timePeriod: period);
     loadAllData();
   }
 
-  /// Toggle comparison period and reload data
+
   void toggleComparison(ComparisonPeriod period) {
     final newComparisons = Set<ComparisonPeriod>.from(state.selectedComparisons);
     if (newComparisons.contains(period)) {
@@ -197,7 +190,7 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     loadAllData();
   }
 
-  /// Set custom date range and reload data
+
   void setCustomDateRange(DateRangeFilter dateRange) {
     state = state.copyWith(
       timePeriod: TimePeriod.custom,
@@ -206,7 +199,7 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     loadAllData();
   }
 
-  /// Get stat panel data (from cached state)
+
   List<StatData> getStatPanelData() {
     if (state.stats == null) return _getDummyStatsList();
 
@@ -218,7 +211,7 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     ];
   }
 
-  /// Get revenue comparison data (from cached state)
+
   ComparisonChartData getRevenueComparisonData() {
     return state.revenueData ?? ComparisonChartData(
       prevData: [],
@@ -227,7 +220,7 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     );
   }
 
-  /// Get expense comparison data (from cached state)
+
   ComparisonChartData getExpenseComparisonData() {
     return state.expenseData ?? ComparisonChartData(
       prevData: [],
@@ -236,12 +229,12 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     );
   }
 
-  /// Get expense category data (from cached state)
+
   List<ExpenseCategoryData> getExpenseCategoryData() {
     return state.categoryData ?? [];
   }
 
-  // Dummy data fallbacks
+
 
   Map<String, StatData> _getDummyStats() {
     return {

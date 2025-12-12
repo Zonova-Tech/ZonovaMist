@@ -263,7 +263,7 @@ class _RoomRatePageState extends ConsumerState<RoomRatePage> {
   }
 }
 
-/// ADD RoomRateDisplay widget HERE ↓↓↓
+
 
 class RoomRateDisplay extends StatefulWidget {
   final double basePrice;
