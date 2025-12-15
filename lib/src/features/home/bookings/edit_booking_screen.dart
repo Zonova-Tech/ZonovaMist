@@ -15,7 +15,6 @@ class EditBookingScreen extends ConsumerStatefulWidget {
 
 class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
   late TextEditingController guestNameController;
-  late TextEditingController roomNoController;
   late TextEditingController phoneNoController;
   late TextEditingController notesController;
   late TextEditingController guestAddressController;
@@ -29,21 +28,25 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
   DateTime? birthday;
   late String status;
 
+  // Room selection
+  final List<String> _allRooms = ['101', '102', '103', '201', '202', '203', '204'];
+  Set<String> _selectedRooms = {};
+  Set<String> _unavailableRooms = {};
+  bool _isCheckingAvailability = false;
+  String _originalBookingId = '';
+
   /// Helper to extract decimal value from MongoDB Decimal128 format
   String _extractDecimalValue(dynamic value) {
     if (value == null) return '';
 
-    // Handle Decimal128 format: {$numberDecimal: "5000"}
     if (value is Map && value.containsKey('\$numberDecimal')) {
       return value['\$numberDecimal'].toString();
     }
 
-    // Handle regular numbers
     if (value is num) {
       return value.toString();
     }
 
-    // Handle strings
     if (value is String) {
       return value;
     }
@@ -54,8 +57,9 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
   @override
   void initState() {
     super.initState();
+    _originalBookingId = widget.booking['_id'];
+
     guestNameController = TextEditingController(text: widget.booking['guest_name']);
-    roomNoController = TextEditingController(text: widget.booking['booked_room_no']?.toString());
     phoneNoController = TextEditingController(text: widget.booking['phone_no']);
     notesController = TextEditingController(text: widget.booking['special_notes'] ?? '');
     guestAddressController = TextEditingController(text: widget.booking['guest_address'] ?? '');
@@ -63,13 +67,18 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
     adultCountController = TextEditingController(text: widget.booking['adult_count']?.toString() ?? '');
     childCountController = TextEditingController(text: widget.booking['child_count']?.toString() ?? '');
 
-    // ✅ Fixed: Extract decimal values properly
     totalPriceController = TextEditingController(
         text: _extractDecimalValue(widget.booking['total_price'])
     );
     advanceAmountController = TextEditingController(
         text: _extractDecimalValue(widget.booking['advance_amount'])
     );
+
+    // Parse selected rooms
+    final roomsStr = widget.booking['booked_room_no'] as String? ?? '';
+    if (roomsStr.isNotEmpty) {
+      _selectedRooms = roomsStr.split(',').map((r) => r.trim()).toSet();
+    }
 
     // Parse dates
     if (widget.booking['checkin_date'] != null) {
@@ -95,12 +104,70 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
     }
 
     status = widget.booking['status'] ?? 'pending';
+
+    // Check initial availability
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkRoomAvailability();
+    });
+  }
+
+  Future<void> _checkRoomAvailability() async {
+    if (checkinDate == null || checkoutDate == null) {
+      setState(() {
+        _unavailableRooms.clear();
+      });
+      return;
+    }
+
+    setState(() {
+      _isCheckingAvailability = true;
+    });
+
+    try {
+      final dio = ref.read(dioProvider);
+
+      final response = await dio.get('/bookings', queryParameters: {
+        'filter': 'all',
+        'includeDeleted': 'false'
+      });
+
+      final bookings = response.data as List;
+      final unavailable = <String>{};
+
+      for (var booking in bookings) {
+        // Skip this booking itself and cancelled bookings
+        if (booking['_id'] == _originalBookingId) continue;
+        if (booking['status'] == 'cancelled') continue;
+
+        final bookingCheckin = DateTime.parse(booking['checkin_date']);
+        final bookingCheckout = DateTime.parse(booking['checkout_date']);
+
+        // Check if dates overlap
+        final hasOverlap = checkinDate!.isBefore(bookingCheckout) &&
+            checkoutDate!.isAfter(bookingCheckin);
+
+        if (hasOverlap) {
+          final roomsStr = booking['booked_room_no'] as String;
+          final rooms = roomsStr.split(',').map((r) => r.trim()).toList();
+          unavailable.addAll(rooms);
+        }
+      }
+
+      setState(() {
+        _unavailableRooms = unavailable;
+        _isCheckingAvailability = false;
+      });
+    } catch (e) {
+      print('❌ Error checking room availability: $e');
+      setState(() {
+        _isCheckingAvailability = false;
+      });
+    }
   }
 
   @override
   void dispose() {
     guestNameController.dispose();
-    roomNoController.dispose();
     phoneNoController.dispose();
     notesController.dispose();
     guestAddressController.dispose();
@@ -139,15 +206,29 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
           birthday = selected;
         }
       });
+
+      // Check availability when dates change
+      if (type == 'checkin' || type == 'checkout') {
+        await _checkRoomAvailability();
+      }
     }
   }
 
   Future<void> _saveBooking() async {
+    if (_selectedRooms.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select at least one room')),
+      );
+      return;
+    }
+
     final dio = ref.read(dioProvider);
     try {
+      final roomsString = _selectedRooms.join(', ');
+
       final data = {
         'guest_name': guestNameController.text,
-        'booked_room_no': roomNoController.text,
+        'booked_room_no': roomsString,
         'phone_no': phoneNoController.text,
         'status': status,
         if (checkinDate != null) 'checkin_date': checkinDate!.toIso8601String(),
@@ -195,7 +276,6 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
     int? maxLines = 1,
     int? minLines,
   }) {
-    // Determine if this is a multi-line field
     final isMultiline = maxLines == null || (maxLines > 1);
 
     return Padding(
@@ -325,6 +405,168 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
     );
   }
 
+  Widget _buildRoomSelector() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Select Room(s) *',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              if (_isCheckingAvailability) ...[
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.blue.shade400,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _allRooms.map((room) {
+              final isSelected = _selectedRooms.contains(room);
+              final isUnavailable = _unavailableRooms.contains(room);
+              final canSelect = checkinDate != null && checkoutDate != null && !isUnavailable;
+
+              return FilterChip(
+                label: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      room,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: isSelected
+                            ? Colors.white
+                            : isUnavailable
+                            ? Colors.grey.shade400
+                            : Colors.grey.shade700,
+                      ),
+                    ),
+                    if (isUnavailable) ...[
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.block,
+                        size: 14,
+                        color: Colors.grey.shade400,
+                      ),
+                    ],
+                  ],
+                ),
+                selected: isSelected,
+                onSelected: canSelect
+                    ? (selected) {
+                  setState(() {
+                    if (selected) {
+                      _selectedRooms.add(room);
+                    } else {
+                      _selectedRooms.remove(room);
+                    }
+                  });
+                }
+                    : null,
+                backgroundColor: isUnavailable
+                    ? Colors.grey.shade100
+                    : Colors.grey[50],
+                selectedColor: Colors.blue.shade600,
+                checkmarkColor: Colors.white,
+                side: BorderSide(
+                  color: isSelected
+                      ? Colors.blue.shade600
+                      : isUnavailable
+                      ? Colors.grey.shade300
+                      : Colors.grey.shade300,
+                  width: isSelected ? 2 : 1,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+              );
+            }).toList(),
+          ),
+          if (checkinDate == null || checkoutDate == null) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Please select check-in and check-out dates first',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.orange.shade700,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+          if (_selectedRooms.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.meeting_room, size: 16, color: Colors.blue.shade700),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Selected: ${_selectedRooms.join(', ')}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.blue.shade900,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          if (_unavailableRooms.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, size: 16, color: Colors.red.shade700),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Unavailable: ${_unavailableRooms.join(', ')}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.red.shade900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -363,10 +605,6 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
           _buildCard(
             title: "Booking Details",
             children: [
-              _buildTextField(
-                label: 'Room Number(s)',
-                controller: roomNoController,
-              ),
               _buildDateSelector(
                 label: 'Check-in Date',
                 selectedDate: checkinDate,
@@ -379,6 +617,7 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
                 onTap: () => _pickDate(context, 'checkout'),
                 icon: Icons.logout,
               ),
+              _buildRoomSelector(),
               _buildDateSelector(
                 label: 'Birthday',
                 selectedDate: birthday,
