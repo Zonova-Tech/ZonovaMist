@@ -51,14 +51,16 @@ class _CommonImageManagerState extends ConsumerState<CommonImageManager> {
           curve: Curves.easeInOut,
         );
       } else {
+        // Reached the end, pause then change direction
         Future.delayed(const Duration(seconds: 2), () {
-          if (!mounted) return;
-          _movingForward = false;
-          _currentIndex--;
-          _carouselController?.previousPage(
-            duration: const Duration(milliseconds: 800),
-            curve: Curves.easeInOut,
-          );
+          if (mounted) {
+            _movingForward = false;
+            _currentIndex--;
+            _carouselController?.previousPage(
+              duration: const Duration(milliseconds: 800),
+              curve: Curves.easeInOut,
+            );
+          }
         });
       }
     } else {
@@ -69,14 +71,16 @@ class _CommonImageManagerState extends ConsumerState<CommonImageManager> {
           curve: Curves.easeInOut,
         );
       } else {
+        // Reached the start, pause then change direction
         Future.delayed(const Duration(seconds: 2), () {
-          if (!mounted) return;
-          _movingForward = true;
-          _currentIndex++;
-          _carouselController?.nextPage(
-            duration: const Duration(milliseconds: 800),
-            curve: Curves.easeInOut,
-          );
+          if (mounted) {
+            _movingForward = true;
+            _currentIndex++;
+            _carouselController?.nextPage(
+              duration: const Duration(milliseconds: 800),
+              curve: Curves.easeInOut,
+            );
+          }
         });
       }
     }
@@ -84,23 +88,18 @@ class _CommonImageManagerState extends ConsumerState<CommonImageManager> {
 
   Future<void> _fetchImages() async {
     if (widget.entityId.isEmpty) return;
-    if (!mounted) return;
-
     setState(() => _isLoading = true);
     try {
       final dio = ref.read(dioProvider);
       final response = await dio.get('/images/${widget.entityType}/${widget.entityId}');
       if (response.statusCode == 200) {
-        if (!mounted) return;
         setState(() {
           _images = List<Map<String, dynamic>>.from(response.data);
         });
       } else {
-        if (!mounted) return;
         setState(() => _images = []);
       }
     } catch (e) {
-      if (!mounted) return;
       setState(() => _images = []);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -108,7 +107,6 @@ class _CommonImageManagerState extends ConsumerState<CommonImageManager> {
         );
       }
     } finally {
-      if (!mounted) return;
       setState(() => _isLoading = false);
     }
   }
@@ -125,8 +123,6 @@ class _CommonImageManagerState extends ConsumerState<CommonImageManager> {
       }
     }
 
-    if (!mounted) return;
-
     setState(() {
       _selectedFiles.addAll(images);
       if (kIsWeb) _selectedFileBytes.addAll(bytesList);
@@ -137,16 +133,13 @@ class _CommonImageManagerState extends ConsumerState<CommonImageManager> {
 
   Future<void> _uploadImages() async {
     if (widget.entityId.isEmpty) {
-      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Booking must be saved first to upload images')),
       );
       return;
     }
 
-    if (!mounted) return;
     setState(() => _isUploading = true);
-
     try {
       final dio = ref.read(dioProvider);
       FormData formData = FormData();
@@ -169,8 +162,6 @@ class _CommonImageManagerState extends ConsumerState<CommonImageManager> {
         ..add(MapEntry('moduleType', widget.entityType));
 
       final response = await dio.post('/images/upload', data: formData);
-
-      if (!mounted) return;
 
       if (response.statusCode == 200) {
         setState(() {
@@ -197,7 +188,6 @@ class _CommonImageManagerState extends ConsumerState<CommonImageManager> {
         );
       }
     } finally {
-      if (!mounted) return;
       setState(() => _isUploading = false);
     }
   }
@@ -237,6 +227,7 @@ class _CommonImageManagerState extends ConsumerState<CommonImageManager> {
   }
 
   void _openImageViewer(int initialIndex) {
+    // Only show uploaded images in the viewer, not pending ones
     final imageUrls = _images.map((img) => img['url'] as String).toList();
 
     Navigator.push(
@@ -246,6 +237,7 @@ class _CommonImageManagerState extends ConsumerState<CommonImageManager> {
           imageUrls: imageUrls,
           initialIndex: initialIndex,
           onDelete: (url) {
+            // Find the public_id for this URL
             final image = _images.firstWhere((img) => img['url'] == url);
             _deleteImage(image['public_id']);
           },
@@ -261,6 +253,7 @@ class _CommonImageManagerState extends ConsumerState<CommonImageManager> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const Text('Photos', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         const SizedBox(height: 8),
         ElevatedButton(
           onPressed: _pickImages,
@@ -289,7 +282,6 @@ class _CommonImageManagerState extends ConsumerState<CommonImageManager> {
             aspectRatio: 16 / 9,
             viewportFraction: 0.8,
             onPageChanged: (index, reason) {
-              if (!mounted) return;
               setState(() {
                 _currentIndex = index;
               });
@@ -299,6 +291,7 @@ class _CommonImageManagerState extends ConsumerState<CommonImageManager> {
             },
           ),
           items: [
+            // Uploaded images (clickable to zoom)
             ..._images.asMap().entries.map((entry) {
               final index = entry.key;
               final img = entry.value;
@@ -312,6 +305,7 @@ class _CommonImageManagerState extends ConsumerState<CommonImageManager> {
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) => const Icon(Icons.error, color: Colors.red),
                     ),
+                    // Zoom indicator
                     Positioned(
                       bottom: 8,
                       left: 8,
@@ -334,6 +328,7 @@ class _CommonImageManagerState extends ConsumerState<CommonImageManager> {
                         ),
                       ),
                     ),
+                    // Delete button
                     Positioned(
                       top: 8,
                       right: 8,
@@ -364,6 +359,7 @@ class _CommonImageManagerState extends ConsumerState<CommonImageManager> {
                 ),
               );
             }),
+            // Pending images (not clickable)
             ..._selectedFiles.asMap().entries.map((entry) {
               final index = entry.key;
               final file = entry.value;
