@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:Zonova_Mist/enums/expense_category.dart';
 
 class AddExpensePage extends StatefulWidget {
@@ -15,6 +18,8 @@ class _AddExpensePageState extends State<AddExpensePage> {
   final _amountCtrl = TextEditingController();
   DateTime _date = DateTime.now();
   final _noteCtrl = TextEditingController();
+  final List<XFile> _picked = [];
+  final ImagePicker _picker = ImagePicker();
   bool _isSaving = false;
 
   @override
@@ -23,6 +28,39 @@ class _AddExpensePageState extends State<AddExpensePage> {
     _amountCtrl.dispose();
     _noteCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImages() async {
+    try {
+      final List<XFile>? images = await _picker.pickMultiImage();
+      if (images != null && images.isNotEmpty) {
+        setState(() => _picked.addAll(images));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${images.length} image(s) selected')),
+        );
+      } else {
+        final XFile? single = await _picker.pickImage(source: ImageSource.gallery);
+        if (single != null) {
+          setState(() => _picked.add(single));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('1 image selected')),
+          );
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Image pick failed: $e')),
+      );
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _picked.removeAt(index);
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Image removed')),
+    );
   }
 
   Future<void> _selectDate() async {
@@ -51,6 +89,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
       'amount': _amountCtrl.text.trim(),
       'date': _date.toIso8601String().split('T').first,
       'note': _noteCtrl.text.trim(),
+      'imageFiles': _picked,
     };
 
     Navigator.pop(context, newExpense);
@@ -136,26 +175,134 @@ class _AddExpensePageState extends State<AddExpensePage> {
               const SizedBox(height: 24),
 
               Card(
-                color: Colors.blue.shade50,
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.info_outline, color: Colors.blue.shade700, size: 32),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Bills and receipts can be uploaded after creating the expense',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.blue.shade900,
-                          fontStyle: FontStyle.italic,
+                      Row(
+                        children: [
+                          Icon(Icons.receipt_long, color: Colors.blue.shade700),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Bills and Receipts',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      ElevatedButton.icon(
+                        onPressed: _pickImages,
+                        icon: const Icon(Icons.add_photo_alternate),
+                        label: const Text('Upload Images'),
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 48),
                         ),
                       ),
+                      if (_picked.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          '${_picked.length} image(s) selected',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
               ),
+
+              if (_picked.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                    childAspectRatio: 1,
+                  ),
+                  itemCount: _picked.length,
+                  itemBuilder: (context, index) {
+                    return Stack(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.grey.shade300,
+                              width: 2,
+                            ),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: kIsWeb
+                                ? Image.network(
+                              _picked[index].path,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                            )
+                                : Image.file(
+                              File(_picked[index].path),
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: GestureDetector(
+                            onTap: () => _removeImage(index),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.close,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 4,
+                          left: 4,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.7),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              '${index + 1}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
               const SizedBox(height: 32),
 
               ElevatedButton(
