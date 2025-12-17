@@ -10,10 +10,9 @@ import 'package:http/http.dart' as http;
 import 'package:Zonova_Mist/src/core/auth/auth_provider.dart';
 import 'package:Zonova_Mist/src/core/auth/auth_state.dart';
 import 'package:Zonova_Mist/src/features/auth/register_screen.dart';
-import 'package:Zonova_Mist/src/features/home/home_screen.dart';
+import 'package:Zonova_Mist/src/features/home/home_screen.dart'; // 🔥 මේක add කරලා තියෙනවා
 import 'package:Zonova_Mist/src/core/routing/app_router.dart';
 import '../../core/i18n/arb/app_localizations.dart';
-import 'package:Zonova_Mist/config.dart'; // ✅ Config import කරලා
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -61,19 +60,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  // ✅ FIXED - AppConfig.apiBaseUrl use කරලා
+  // 🔥 Token save කරන්න login function - FIXED
   Future<void> _loginAndSaveToken(String email, String password) async {
     try {
-      print('🌐 Login URL: ${AppConfig.apiBaseUrl}/auth/login'); // Debug log
-
       final response = await http.post(
-        Uri.parse('${AppConfig.apiBaseUrl}/auth/login'), // ✅ FIXED
+        Uri.parse('http://localhost:5000/api/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
       );
-
-      print('📡 Response status: ${response.statusCode}'); // Debug log
-      print('📦 Response body: ${response.body}'); // Debug log
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -82,33 +76,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         // Token save
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('auth_token', token);
-        print('✅ Token saved successfully');
 
         // Auth state notifier call
         ref.read(authProvider.notifier).login(email, password);
 
-        // Navigate to dashboard
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-          );
-        }
+        // 🔥 Navigate to dashboard - FIXED (Direct navigation භාවිතා කරලා තියෙනවා)
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
       } else {
         final error = jsonDecode(response.body)['error'];
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(error ?? 'Login failed')),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error ?? 'Login failed')),
+        );
       }
     } catch (e) {
       print('❌ Login error: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed: $e')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Login failed: $e')),
+      );
     }
   }
 
