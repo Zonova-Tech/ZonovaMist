@@ -6,8 +6,7 @@ import '../config.dart';
 import 'package:http/http.dart' as http;
 
 class ExpenseService {
-  // ✅ FIXED: expense → expenses (ONLY CHANGE)
-  static String get baseUrl => '${AppConfig.apiBaseUrl}/expenses';
+  static String get baseUrl => '${AppConfig.apiBaseUrl}/expense';
 
   static final cloudinary = CloudinaryPublic(
     'dqi0bndrs',
@@ -17,9 +16,7 @@ class ExpenseService {
 
   static Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token');
-    print('🔑 Token: ${token?.substring(0, 20)}...');
-    return token;
+    return prefs.getString('auth_token');
   }
 
   static Future<Map<String, dynamic>> createExpense(Map<String, dynamic> data) async {
@@ -54,10 +51,7 @@ class ExpenseService {
 
     final response = await http.post(
       Uri.parse(baseUrl),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token'
-      },
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
       body: jsonEncode(payload),
     );
 
@@ -70,48 +64,19 @@ class ExpenseService {
   }
 
   static Future<List<dynamic>> fetchExpenses() async {
-    try {
-      final token = await _getToken();
-      if (token == null || token.isEmpty) {
-        throw Exception('Not authenticated. Please login again.');
-      }
+    final token = await _getToken();
+    if (token == null || token.isEmpty) throw Exception('Not authenticated.');
 
-      final url = Uri.parse(baseUrl);
-      print('🌐 Fetching from: $url');
+    final response = await http.get(
+      Uri.parse(baseUrl),
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+    );
 
-      final response = await http.get(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token'
-        },
-      );
-
-      print('📡 Response status: ${response.statusCode}');
-      print('📦 Response body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data is List) return data;
-        if (data is Map && data['expenses'] != null) {
-          return data['expenses'];
-        }
-        return [];
-      } else if (response.statusCode == 401) {
-        throw Exception('Unauthorized. Please login again.');
-      } else if (response.statusCode == 404) {
-        throw Exception('API endpoint not found.');
-      } else {
-        throw Exception('Server error: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('❌ Fetch expenses error: $e');
-      rethrow;
-    }
+    if (response.statusCode == 200) return json.decode(response.body);
+    throw Exception('Failed to fetch expenses');
   }
 
-  static Future<Map<String, dynamic>> updateExpense(
-      String id, Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> updateExpense(String id, Map<String, dynamic> data) async {
     final token = await _getToken();
     if (token == null || token.isEmpty) throw Exception('Not authenticated.');
 
@@ -126,11 +91,7 @@ class ExpenseService {
             'filename': imgObj['filename']?.toString() ?? '',
           });
         } else if (imgObj is String && imgObj.isNotEmpty) {
-          allImages.add({
-            'url': imgObj,
-            'cloudinary_id': '',
-            'filename': ''
-          });
+          allImages.add({'url': imgObj, 'cloudinary_id': '', 'filename': ''});
         }
       }
     }
@@ -161,17 +122,11 @@ class ExpenseService {
 
     final response = await http.put(
       Uri.parse('$baseUrl/$id'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token'
-      },
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
       body: jsonEncode(payload),
     );
 
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    }
-
+    if (response.statusCode == 200) return json.decode(response.body);
     final err = json.decode(response.body);
     throw Exception(err['error'] ?? 'Failed to update expense');
   }
@@ -182,14 +137,9 @@ class ExpenseService {
 
     final response = await http.delete(
       Uri.parse('$baseUrl/$id'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token'
-      },
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
     );
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to delete expense');
-    }
+    if (response.statusCode != 200) throw Exception('Failed to delete expense');
   }
 }
