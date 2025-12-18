@@ -36,7 +36,7 @@ class MyApp extends ConsumerWidget {
       home: authState.when(
         // While checking for a stored token, show a splash screen
         loading: () => const SplashScreen(),
-        // If authenticated, show the home screen.
+        // If authenticated, show the home screen
         authenticated: (_) => const HomeScreen(),
         // If not, show the login screen
         unauthenticated: () => const LoginScreen(),
