@@ -55,7 +55,7 @@ dependencies:
   form_builder_validators: ^11.1.2
 
   # Secure Storage
-  flutter_secure_storage: ^9.2.4
+  flutter_secure_storage: ^10.0.0
 
   # UI & UX
   google_fonts: ^6.2.1

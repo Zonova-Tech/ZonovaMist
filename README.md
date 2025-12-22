@@ -53,7 +53,7 @@ const String baseUrl = "https://zonova-mist.onrender.com/";
 
 4️⃣ Run the app
 🖥️ For Web:
-flutter run -d chrome
+`flutter run -d chrome`
 
 📱 For Android:
 flutter run -d android
