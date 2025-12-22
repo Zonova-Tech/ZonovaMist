@@ -7,6 +7,10 @@ class AppConfig {
   );
 
   static const String _renderBaseUrl = "https://zonovamistapiweb.onrender.com/api";
+<<<<<<< HEAD
+=======
+
+>>>>>>> 481865f2301f5d98203976bb155c871ff3ff7e37
   static String get apiBaseUrl {
     // ✅ Always use Render for Web
     if (kIsWeb) {
