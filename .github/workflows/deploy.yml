@@ -32,7 +32,7 @@ jobs:
     # 5. Analyze code (optional but recommended)
     - name: Analyze Code
       run: flutter analyze --no-fatal-infos
-      continue-on-error: true
+      continue-on-error: false
 
     # 6. Build the Web App
     - name: Build Web
