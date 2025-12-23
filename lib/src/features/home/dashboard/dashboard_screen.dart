@@ -10,6 +10,9 @@ import 'widgets/filter_chips_row.dart';
 import 'widgets/revenue_comparison_chart.dart';
 import 'widgets/expense_comparison_chart.dart';
 import 'widgets/expense_category_chart.dart';
+import 'widgets/profit_comparison_chart.dart';
+
+
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -83,6 +86,17 @@ class DashboardScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             ExpenseCategoryChart(
               data: notifier.getExpenseCategoryData(),
+            ),
+            const SizedBox(height: 24),
+
+            //New profit chart
+            _buildSectionTitle('Profit Comparison'),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 250,
+              child: ProfitComparisonChart(
+                data: notifier.getProfitComparisonData(),
+              ),
             ),
             const SizedBox(height: 24),
           ],

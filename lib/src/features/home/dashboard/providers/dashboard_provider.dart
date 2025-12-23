@@ -236,6 +236,38 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     );
   }
 
+  /// Get profit comparison data for the chart (from cached state).
+  ///
+  /// This computes the profit by subtracting expenses from revenues for the 'now' period.
+  /// It expects that the labels on `ChartDataPoint` can be parsed as integers.
+  Map<int, double> getProfitComparisonData() {
+    final revenueData = state.revenueData?.nowData ?? [];
+    final expenseData = state.expenseData?.nowData ?? [];
+
+    if (revenueData.isEmpty) {
+      return {};
+    }
+
+    final Map<int, double> expenseMap = {};
+    for (final point in expenseData) {
+      final key = int.tryParse(point.label);
+      if (key != null) {
+        expenseMap[key] = point.value;
+      }
+    }
+
+    final Map<int, double> profitData = {};
+    for (final point in revenueData) {
+      final key = int.tryParse(point.label);
+      if (key != null) {
+        final expense = expenseMap[key] ?? 0.0;
+        profitData[key] = point.value - expense;
+      }
+    }
+
+    return profitData;
+  }
+
   /// Get expense category data (from cached state)
   List<ExpenseCategoryData> getExpenseCategoryData() {
     return state.categoryData ?? [];

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show BuildContext, MaterialApp, Widget, runApp;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:Zonova_Mist/src/core/auth/auth_provider.dart';
 import 'package:Zonova_Mist/src/core/auth/auth_state.dart';
