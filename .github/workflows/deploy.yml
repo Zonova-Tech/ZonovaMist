@@ -52,7 +52,9 @@ jobs:
         protocol: sftp
         local-dir: ./build/web/
         server-dir: ./public_html/roomshub/
+        # Keep dangerous-clean-slate disabled to avoid deleting unexpected files on the server.
         dangerous-clean-slate: false
+        log-level: verbose
         exclude: |
           **/.git*
           **/.git*/**
