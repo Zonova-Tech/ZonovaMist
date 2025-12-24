@@ -11,7 +11,7 @@ class AppConfig {
   static String get apiBaseUrl {
     // ✅ Always use Render for Web
     if (kIsWeb) {
-      return _renderBaseUrl;
+      return "http://localhost:5000/api";
     }
 
     // ✅ Always use Render for Production (release builds)
@@ -19,25 +19,18 @@ class AppConfig {
       return _renderBaseUrl;
     }
 
-    // ✅ For debug builds, also use Render by default
-    return _renderBaseUrl;
-
-    /*
-    // 🔹 for test locally again,
-    // just uncomment this block and set your LAN IP.
-
+    // 🔹 for test locally again
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        return "http://192.168.1.10:3000/api"; // device on LAN
+        return "http://192.168.1.10:5000/api"; // device on LAN
       case TargetPlatform.iOS:
-        return "http://localhost:3000/api"; // iOS simulator
+        return "http://localhost:5000/api"; // iOS simulator
       case TargetPlatform.windows:
       case TargetPlatform.linux:
       case TargetPlatform.macOS:
-        return "http://localhost:3000/api"; // desktop
+        return "http://localhost:5000/api"; // desktop
       default:
-        return "http://localhost:3000/api";
+        return "http://localhost:5000/api";
     }
-    */
   }
 }
