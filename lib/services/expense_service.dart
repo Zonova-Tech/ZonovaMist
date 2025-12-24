@@ -6,7 +6,7 @@ import '../config.dart';
 import 'package:http/http.dart' as http;
 
 class ExpenseService {
-  static String get baseUrl => '${AppConfig.apiBaseUrl}/expense';
+  static String get baseUrl => '${AppConfig.apiBaseUrl}/expenses';
 
   static final cloudinary = CloudinaryPublic(
     'dqi0bndrs',
