@@ -135,7 +135,8 @@ class _AddStaffScreenState extends ConsumerState<AddStaffScreen> {
                           child: CircleAvatar(
                             radius: 18,
                             backgroundColor: Colors.blue,
-                            child: Icon(Icons.camera_alt, size: 18, color: Colors.white),
+                            child: Icon(Icons.camera_alt, size: 18,
+                                color: Colors.white),
                           ),
                         ),
                       ],
@@ -260,29 +261,30 @@ class _AddStaffScreenState extends ConsumerState<AddStaffScreen> {
 
               // Role Dropdown
               rolesAsync.when(
-                data: (roles) => DropdownButtonFormField<String>(
-                  value: _selectedRole,
-                  decoration: const InputDecoration(
-                    labelText: 'Role *',
-                    prefixIcon: Icon(Icons.work),
-                    border: OutlineInputBorder(),
-                  ),
-                  items: roles.map((role) {
-                    return DropdownMenuItem(
-                      value: role,
-                      child: Text(role),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() => _selectedRole = value);
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please select a role';
-                    }
-                    return null;
-                  },
-                ),
+                data: (roles) =>
+                    DropdownButtonFormField<String>(
+                      value: _selectedRole,
+                      decoration: const InputDecoration(
+                        labelText: 'Role *',
+                        prefixIcon: Icon(Icons.work),
+                        border: OutlineInputBorder(),
+                      ),
+                      items: roles.map((role) {
+                        return DropdownMenuItem(
+                          value: role,
+                          child: Text(role),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() => _selectedRole = value);
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please select a role';
+                        }
+                        return null;
+                      },
+                    ),
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (err, stack) => Text('Error loading roles: $err'),
               ),
@@ -313,7 +315,8 @@ class _AddStaffScreenState extends ConsumerState<AddStaffScreen> {
                         onPressed: () {
                           // TODO: Implement document upload
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Document upload will be available after staff is created')),
+                            const SnackBar(content: Text(
+                                'Document upload will be available after staff is created')),
                           );
                         },
                         icon: const Icon(Icons.add_photo_alternate),
