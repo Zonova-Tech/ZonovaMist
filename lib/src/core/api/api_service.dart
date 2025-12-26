@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../config.dart';
+import '../routing/app_router.dart';
+import '../../features/auth/login_screen.dart';
 
 final dioProvider = Provider<Dio>((ref) {
   final dio = Dio(BaseOptions(
@@ -27,9 +29,19 @@ final dioProvider = Provider<Dio>((ref) {
         print('⬅️ Response: ${response.statusCode} ${response.data}');
         handler.next(response);
       },
-      onError: (DioException e, handler) {
+      onError: (DioException e, handler) async {
         print('‼️ Dio error: ${e.message}');
         print('   Response: ${e.response?.statusCode} - ${e.response?.data}');
+
+        // If the error is 401 Unauthorized, the token might be expired/invalid.
+        if (e.response?.statusCode == 401) {
+          print('🚨 Unauthorized access. Deleting token and redirecting to login.');
+          await storage.delete(key: 'jwt_token');
+          AppRouter.off(const LoginScreen());
+          // We don't call handler.next(e) because we are navigating away.
+          return; 
+        }
+
         handler.next(e);
       },
     ),
