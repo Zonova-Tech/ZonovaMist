@@ -2,7 +2,7 @@ name: Build and Deploy to ServerByt
 
 on:
   push:
-    branches: [ "dev" ]
+    branches: [ "dev", "ci-cd" ]
 
 jobs:
   build-and-deploy:
