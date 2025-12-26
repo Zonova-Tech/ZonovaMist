@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 class DashboardService {
   static const String baseUrl = 'https://zonova-mist.onrender.com';
 
-
+  /// Fetch dashboard statistics
   Future<Map<String, StatData>> fetchStats({
     required TimePeriod timePeriod,
     DateTime? customStartDate,
@@ -80,7 +80,7 @@ class DashboardService {
     }
   }
 
-
+  /// Fetch expense comparison data
   Future<ComparisonChartData> fetchRevenueComparison({
     required TimePeriod timePeriod,
     required Set<ComparisonPeriod> comparisons,
@@ -167,6 +167,7 @@ class DashboardService {
   }
 
 
+  /// Fetch expense categories data
   Future<List<ExpenseCategoryData>> fetchExpenseCategories({
     required TimePeriod timePeriod,
     DateTime? customStartDate,
@@ -211,7 +212,7 @@ class DashboardService {
   }
 
 
-
+  // Helper methods
   String _timePeriodToString(TimePeriod period) {
     switch (period) {
       case TimePeriod.month:
@@ -244,7 +245,7 @@ class DashboardService {
     }).toList();
   }
 
-
+  /// Helper method to safely parse numeric values
   double _parseValue(dynamic value) {
     if (value == null) return 0.0;
     if (value is double) return value;
@@ -256,12 +257,12 @@ class DashboardService {
         final decimalStr = value['\$numberDecimal'];
         return double.tryParse(decimalStr.toString()) ?? 0.0;
       }
-
+      // Handle MongoDB NumberLong format: {"$numberLong": "123"}
       if (value.containsKey('\$numberLong')) {
         final longStr = value['\$numberLong'];
         return double.tryParse(longStr.toString()) ?? 0.0;
       }
-
+// If it's a nested object, try to find a numeric field
       if (value.containsKey('value')) return _parseValue(value['value']);
       if (value.containsKey('amount')) return _parseValue(value['amount']);
       if (value.containsKey('total')) return _parseValue(value['total']);
@@ -270,7 +271,7 @@ class DashboardService {
   }
 
   Color _parseColor(String colorString) {
-
+    // Convert hex color string to Color
     final hexColor = colorString.replaceAll('#', '');
     return Color(int.parse('FF$hexColor', radix: 16));
   }
