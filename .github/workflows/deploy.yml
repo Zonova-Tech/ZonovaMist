@@ -32,7 +32,7 @@ jobs:
     # 5. Analyze code (optional but recommended)
     - name: Analyze Code
       run: flutter analyze --no-fatal-infos
-      continue-on-error: true
+      continue-on-error: false
 
     # 6. Build the Web App
     - name: Build Web
@@ -42,16 +42,19 @@ jobs:
     - name: Verify Build
       run: ls -la ./build/web/
 
-    # 8. Deploy to ServerByt via FTP
-    - name: FTP Deploy
+    # 8. Deploy to ServerByt via SFTP
+    - name: SFTP Deploy
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
         server: ${{ secrets.FTP_SERVER }}
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
+        protocol: sftp
         local-dir: ./build/web/
         server-dir: ./public_html/roomshub/
+        # Keep dangerous-clean-slate disabled to avoid deleting unexpected files on the server.
         dangerous-clean-slate: false
+        log-level: verbose
         exclude: |
           **/.git*
           **/.git*/**
