@@ -50,7 +50,7 @@ jobs:
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
         local-dir: ./build/web/
-        server-dir: ./roomshub/
+        server-dir: .
         dangerous-clean-slate: false
         exclude: |
           **/.git*
