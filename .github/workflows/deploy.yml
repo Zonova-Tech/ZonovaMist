@@ -17,7 +17,7 @@ jobs:
     - name: Setup Flutter
       uses: subosito/flutter-action@v2
       with:
-        flutter-version: '3.24.5'  # Pin a specific version
+        flutter-version: '3.35.1'  # Pin a specific version
         channel: 'stable'
         cache: true
 
@@ -36,7 +36,7 @@ jobs:
 
     # 6. Build the Web App
     - name: Build Web
-      run: flutter build web --release --base-href /roomshub/
+      run: flutter build web --release --base-href /
 
     # 7. Verify build output exists
     - name: Verify Build
@@ -51,8 +51,7 @@ jobs:
         password: ${{ secrets.FTP_PASSWORD }}
         protocol: sftp
         local-dir: ./build/web/
-        server-dir: ./public_html/roomshub/
-        # Keep dangerous-clean-slate disabled to avoid deleting unexpected files on the server.
+        server-dir: ./
         dangerous-clean-slate: false
         log-level: verbose
         exclude: |
