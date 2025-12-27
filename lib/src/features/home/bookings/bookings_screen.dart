@@ -10,6 +10,7 @@ import 'edit_booking_screen.dart';
 import 'invoice_form_screen.dart';
 import '../../../shared/widgets/app_drawer.dart';
 import '../../../shared/widgets/audio_recordings_widget.dart';
+import '../../../shared/widgets/whatsapp_button.dart';
 
 class BookingsScreen extends ConsumerWidget {
   const BookingsScreen({super.key});
@@ -518,19 +519,37 @@ class BookingsScreen extends ConsumerWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'add_booking_fab',
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AddBookingScreen()),
-          );
-          if (result == true) {
-            ref.refresh(bookingsProvider);
-          }
-        },
-        child: const Icon(Icons.add),
-      ),
+      // 1. IMPORTANT: This moves the "slot" to the center so we can span the full width
+  floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+
+  // 2. We put a Row in the slot
+  floatingActionButton: Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16.0), // Keeps buttons off the very edge
+    child: Row(
+      // This pushes the children to opposite ends (Left <--> Right)
+      mainAxisAlignment: MainAxisAlignment.spaceBetween, 
+      children: [
+        
+        // --- Button 1: Your WhatsApp Button (Left) ---
+        WhatsAppButton(phoneNumber: "94778848933",), 
+
+        // --- Button 2: Your Existing Add Button (Right) ---
+        FloatingActionButton(
+          heroTag: 'add_booking_fab', // Unique tag is required when you have 2 buttons
+          onPressed: () async {
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const AddBookingScreen()),
+            );
+            if (result == true) {
+              ref.refresh(bookingsProvider);
+            }
+          },
+          child: const Icon(Icons.add),
+        ),
+      ],
+    ),
+  ),
     );
   }
 
