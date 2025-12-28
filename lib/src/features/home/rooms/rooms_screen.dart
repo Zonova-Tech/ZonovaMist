@@ -6,7 +6,7 @@ import '../../../core/api/api_service.dart';
 import '../../../shared/widgets/common_image_manager.dart';
 import 'add_room_screen.dart';
 import 'edit_room_screen.dart';
-import 'room_rate_page.dart'; // ⭐ ADD THIS LINE
+import 'room_rate_page.dart';
 
 class RoomsScreen extends ConsumerStatefulWidget {
   final bool showBackButton;
@@ -90,7 +90,6 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
             icon: const Icon(Icons.attach_money),
             tooltip: 'Room Rates',
             onPressed: () {
-              // ⭐ FIXED - Navigate to Room Rate page
               Navigator.push(
                 context,
                 MaterialPageRoute(
