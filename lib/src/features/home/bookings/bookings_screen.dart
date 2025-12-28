@@ -388,49 +388,49 @@ class BookingsScreen extends ConsumerWidget {
                             children: [
                               // Guest Name and Status
                               Row(
-  mainAxisAlignment: MainAxisAlignment.spaceBetween, // Forces items to edges
-  crossAxisAlignment: CrossAxisAlignment.center,
-  children: [
-    
-    // --- GROUP 1: LEFT SIDE (Takes all available space) ---
-    Expanded(
-      child: Row(
-        mainAxisSize: MainAxisSize.min, // Keeps these items close together
-        children: [
-          Icon(Icons.person, color: Colors.blue.shade700),
-          const SizedBox(width: 8),
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween, // Forces items to edges
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  
+                                  // --- GROUP 1: LEFT SIDE (Takes all available space) ---
+                                  Expanded(
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min, // Keeps these items close together
+                                      children: [
+                                        Icon(Icons.person, color: Colors.blue.shade700),
+                                        const SizedBox(width: 8),
 
-          // Name (Flexible prevents overflow)
-          Flexible(
-            child: Text(
-              booking['guest_name'] ?? 'Unknown Guest',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
+                                        // Name (Flexible prevents overflow)
+                                        Flexible(
+                                          child: Text(
+                                            booking['guest_name'] ?? 'Unknown Guest',
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
 
-          const SizedBox(width: 8),
+                                        const SizedBox(width: 8),
 
-          // WhatsApp Button
-          WhatsAppButton(
-                phoneNumber: booking['phone_no'] ?? "94778848933",)
-        ],
-      ),
-    ),
+                                        // WhatsApp Button
+                                        WhatsAppButton(
+                                              phoneNumber: booking['phone_no'] ?? "94778848933",)
+                                      ],
+                                    ),
+                                  ),
 
-    // --- GROUP 2: RIGHT SIDE (Pinned to the edge) ---
-    Padding(
-      padding: const EdgeInsets.only(left: 8.0), // Safety gap
-      child: GestureDetector(
-        onTap: () => _showStatusMenu(context, ref, booking),
-        child: _buildStatusChip(booking['status']),
-      ),
-    ),
-  ],
-),
+                                  // --- GROUP 2: RIGHT SIDE (Pinned to the edge) ---
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 8.0), // Safety gap
+                                    child: GestureDetector(
+                                      onTap: () => _showStatusMenu(context, ref, booking),
+                                      child: _buildStatusChip(booking['status']),
+                                    ),
+                                  ),
+                                ],
+                              ),
                               const SizedBox(height: 12),
 
                               // Main content with two columns
