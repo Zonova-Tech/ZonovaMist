@@ -4,11 +4,7 @@ import java.io.FileInputStream
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-<<<<<<< HEAD
-    // Flutter plugin must be applied *after* Android and Kotlin
-=======
     // Flutter plugin must be applied after Android and Kotlin
->>>>>>> fe9af72 (room rate feature)
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -38,11 +34,7 @@ android {
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = 11 // 🔹 Increase this each Play Store upload
-<<<<<<< HEAD
         versionName = "1.0.1"
-=======
-        versionName = flutter.versionName
->>>>>>> fe9af72 (room rate feature)
     }
 
     signingConfigs {
