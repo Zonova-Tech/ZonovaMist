@@ -6,7 +6,6 @@ class WhatsAppButton extends StatelessWidget {
   final String phoneNumber;
   final String message;
 
-  // We require the phoneNumber to be passed in when this button is created
   const WhatsAppButton({
     super.key,
     required this.phoneNumber,
@@ -15,7 +14,8 @@ class WhatsAppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton.icon(
+    // 1. Use standard ElevatedButton (not .icon)
+    return ElevatedButton(
       onPressed: () async {
         if (phoneNumber.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -24,16 +24,17 @@ class WhatsAppButton extends StatelessWidget {
           return;
         }
 
-        // 1. Clean the number (remove generic characters)
-        // Ensure your DB provides the country code (e.g. 94...)
+        // number sanitisation
         String cleanNumber = phoneNumber.replaceAll(RegExp(r'[^0-9]'), '');
 
-        // 2. Create the URL
+        if (cleanNumber.length >= 9) {
+          cleanNumber = '94${cleanNumber.substring(cleanNumber.length - 9)}';
+        }
+
         final Uri whatsappUrl = Uri.parse(
           'https://wa.me/$cleanNumber?text=${Uri.encodeComponent(message)}',
         );
 
-        // 3. Launch
         try {
           await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
         } catch (e) {
@@ -48,26 +49,24 @@ class WhatsAppButton extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFF25D366),
         foregroundColor: Colors.white,
-        elevation: 8, 
+        elevation: 8,
         shadowColor: Colors.black45,
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-        shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(10),
-          topRight: Radius.circular(10),
-          bottomRight: Radius.circular(10),
-          bottomLeft: Radius.circular(0), 
-        ),
-    ),
+        
+        // 2. This forces the button into a perfect circle
+        shape: const CircleBorder(), 
+        
+        // 3. Adjust padding to increase/decrease the circle size
+        padding: const EdgeInsets.all(15), 
         minimumSize: Size.zero, 
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
-      icon: const FaIcon(
-        FontAwesomeIcons.whatsapp, 
-        size: 22, // 22-24 is a good balance for buttons
-      ),
       
-      label: const Text('Reach Us!'),
+      // 4. Place the Icon directly as the child
+      child: const FaIcon(
+        FontAwesomeIcons.whatsapp, 
+        size: 20, // Increased size slightly for better visibility
+      ),
     );
   }
 }
+

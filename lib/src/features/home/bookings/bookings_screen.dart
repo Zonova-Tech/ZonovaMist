@@ -1,3 +1,4 @@
+import 'package:Zonova_Mist/src/shared/widgets/whatsapp_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -387,24 +388,49 @@ class BookingsScreen extends ConsumerWidget {
                             children: [
                               // Guest Name and Status
                               Row(
-                                children: [
-                                  Icon(Icons.person, color: Colors.blue.shade700),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      booking['guest_name'] ?? 'Unknown Guest',
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  GestureDetector(
-                                    onTap: () => _showStatusMenu(context, ref, booking),
-                                    child: _buildStatusChip(booking['status']),
-                                  ),
-                                ],
-                              ),
+  mainAxisAlignment: MainAxisAlignment.spaceBetween, // Forces items to edges
+  crossAxisAlignment: CrossAxisAlignment.center,
+  children: [
+    
+    // --- GROUP 1: LEFT SIDE (Takes all available space) ---
+    Expanded(
+      child: Row(
+        mainAxisSize: MainAxisSize.min, // Keeps these items close together
+        children: [
+          Icon(Icons.person, color: Colors.blue.shade700),
+          const SizedBox(width: 8),
+
+          // Name (Flexible prevents overflow)
+          Flexible(
+            child: Text(
+              booking['guest_name'] ?? 'Unknown Guest',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+
+          const SizedBox(width: 8),
+
+          // WhatsApp Button
+          WhatsAppButton(
+                phoneNumber: booking['phone_no'] ?? "94778848933",)
+        ],
+      ),
+    ),
+
+    // --- GROUP 2: RIGHT SIDE (Pinned to the edge) ---
+    Padding(
+      padding: const EdgeInsets.only(left: 8.0), // Safety gap
+      child: GestureDetector(
+        onTap: () => _showStatusMenu(context, ref, booking),
+        child: _buildStatusChip(booking['status']),
+      ),
+    ),
+  ],
+),
                               const SizedBox(height: 12),
 
                               // Main content with two columns
@@ -519,37 +545,19 @@ class BookingsScreen extends ConsumerWidget {
           ),
         ],
       ),
-      // 1. IMPORTANT: This moves the "slot" to the center so we can span the full width
-  floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-
-  // 2. We put a Row in the slot
-  floatingActionButton: Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16.0), // Keeps buttons off the very edge
-    child: Row(
-      // This pushes the children to opposite ends (Left <--> Right)
-      mainAxisAlignment: MainAxisAlignment.spaceBetween, 
-      children: [
-        
-        // --- Button 1: Your WhatsApp Button (Left) ---
-        WhatsAppButton(phoneNumber: "94778848933",), 
-
-        // --- Button 2: Your Existing Add Button (Right) ---
-        FloatingActionButton(
-          heroTag: 'add_booking_fab', // Unique tag is required when you have 2 buttons
-          onPressed: () async {
-            final result = await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const AddBookingScreen()),
-            );
-            if (result == true) {
-              ref.refresh(bookingsProvider);
-            }
-          },
-          child: const Icon(Icons.add),
-        ),
-      ],
-    ),
-  ),
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'add_booking_fab',
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AddBookingScreen()),
+          );
+          if (result == true) {
+            ref.refresh(bookingsProvider);
+          }
+        },
+        child: const Icon(Icons.add),
+      ),
     );
   }
 
