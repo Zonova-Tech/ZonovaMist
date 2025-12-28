@@ -58,7 +58,7 @@ class AppDrawer extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 16),
-
+                  // Text on the right
                   Expanded(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -89,7 +89,7 @@ class AppDrawer extends StatelessWidget {
               ),
             ),
 
-
+            // Rooms Menu Item
             ListTile(
               leading: Icon(Icons.meeting_room, color: Colors.blue.shade700),
               title: const Text(
@@ -134,7 +134,7 @@ class AppDrawer extends StatelessWidget {
             ),
             const Divider(height: 1),
 
-
+            // Staff Menu Item
             ListTile(
               leading: Icon(Icons.receipt_long, color: Colors.blue.shade700),
               title: const Text(
@@ -156,6 +156,7 @@ class AppDrawer extends StatelessWidget {
               },
             ),
             const Divider(height: 1),
+          // About Menu Item
 
             ListTile(
               leading: Icon(Icons.hotel, color: Colors.blue.shade700),
@@ -178,7 +179,7 @@ class AppDrawer extends StatelessWidget {
               },
             ),
             const Divider(height: 1),
-
+            // Staff Menu Item
             ListTile(
               leading: Icon(Icons.people, color: Colors.blue.shade700),
               title: const Text(
