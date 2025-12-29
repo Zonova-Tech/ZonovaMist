@@ -253,7 +253,7 @@ class _CommonImageManagerState extends ConsumerState<CommonImageManager> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Photos', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        //const Text('Photos', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         const SizedBox(height: 8),
         ElevatedButton(
           onPressed: _pickImages,
