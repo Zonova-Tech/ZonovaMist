@@ -244,7 +244,6 @@ class DashboardService {
       );
     }).toList();
   }
-
   /// Helper method to safely parse numeric values
   double _parseValue(dynamic value) {
     if (value == null) return 0.0;
