@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/api_service.dart';
+import '../../../shared/widgets/room_selector_widget.dart';
 import 'bookings_provider.dart';
 import 'package:intl/intl.dart';
 
@@ -214,6 +215,16 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
     }
   }
 
+  void _handleRoomToggle(String room, bool selected) {
+    setState(() {
+      if (selected) {
+        _selectedRooms.add(room);
+      } else {
+        _selectedRooms.remove(room);
+      }
+    });
+  }
+
   Future<void> _saveBooking() async {
     if (_selectedRooms.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -405,168 +416,6 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
     );
   }
 
-  Widget _buildRoomSelector() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                'Select Room(s) *',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              if (_isCheckingAvailability) ...[
-                const SizedBox(width: 8),
-                SizedBox(
-                  width: 12,
-                  height: 12,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.blue.shade400,
-                  ),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _allRooms.map((room) {
-              final isSelected = _selectedRooms.contains(room);
-              final isUnavailable = _unavailableRooms.contains(room);
-              final canSelect = checkinDate != null && checkoutDate != null && !isUnavailable;
-
-              return FilterChip(
-                label: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      room,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: isSelected
-                            ? Colors.white
-                            : isUnavailable
-                            ? Colors.grey.shade400
-                            : Colors.grey.shade700,
-                      ),
-                    ),
-                    if (isUnavailable) ...[
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.block,
-                        size: 14,
-                        color: Colors.grey.shade400,
-                      ),
-                    ],
-                  ],
-                ),
-                selected: isSelected,
-                onSelected: canSelect
-                    ? (selected) {
-                  setState(() {
-                    if (selected) {
-                      _selectedRooms.add(room);
-                    } else {
-                      _selectedRooms.remove(room);
-                    }
-                  });
-                }
-                    : null,
-                backgroundColor: isUnavailable
-                    ? Colors.grey.shade100
-                    : Colors.grey[50],
-                selectedColor: Colors.blue.shade600,
-                checkmarkColor: Colors.white,
-                side: BorderSide(
-                  color: isSelected
-                      ? Colors.blue.shade600
-                      : isUnavailable
-                      ? Colors.grey.shade300
-                      : Colors.grey.shade300,
-                  width: isSelected ? 2 : 1,
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                labelPadding: const EdgeInsets.symmetric(horizontal: 4),
-              );
-            }).toList(),
-          ),
-          if (checkinDate == null || checkoutDate == null) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Please select check-in and check-out dates first',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.orange.shade700,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ],
-          if (_selectedRooms.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.shade200),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.meeting_room, size: 16, color: Colors.blue.shade700),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Selected: ${_selectedRooms.join(', ')}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.blue.shade900,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          if (_unavailableRooms.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.red.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red.shade200),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.info_outline, size: 16, color: Colors.red.shade700),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Unavailable: ${_unavailableRooms.join(', ')}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.red.shade900,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -617,7 +466,15 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
                 onTap: () => _pickDate(context, 'checkout'),
                 icon: Icons.logout,
               ),
-              _buildRoomSelector(),
+              RoomSelectorWidget(
+                allRooms: _allRooms,
+                selectedRooms: _selectedRooms,
+                unavailableRooms: _unavailableRooms,
+                isCheckingAvailability: _isCheckingAvailability,
+                checkinDate: checkinDate,
+                checkoutDate: checkoutDate,
+                onRoomToggle: _handleRoomToggle,
+              ),
               _buildDateSelector(
                 label: 'Birthday',
                 selectedDate: birthday,
