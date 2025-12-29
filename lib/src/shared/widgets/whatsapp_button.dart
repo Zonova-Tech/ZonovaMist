@@ -56,7 +56,7 @@ class WhatsAppButton extends StatelessWidget {
         shape: const CircleBorder(), 
         
         // 3. Adjust padding to increase/decrease the circle size
-        padding: const EdgeInsets.all(15), 
+        padding: const EdgeInsets.all(10), 
         minimumSize: Size.zero, 
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
