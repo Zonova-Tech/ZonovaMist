@@ -1,16 +1,14 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
 
 import 'package:Zonova_Mist/src/core/auth/auth_provider.dart';
 import 'package:Zonova_Mist/src/core/auth/auth_state.dart';
 import 'package:Zonova_Mist/src/features/auth/register_screen.dart';
 import 'package:Zonova_Mist/src/core/routing/app_router.dart';
+
 import '../../core/i18n/arb/app_localizations.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -59,42 +57,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  // 🔥 Token save කරන්න login function
-  Future<void> _loginAndSaveToken(String email, String password) async {
-    try {
-      final response = await http.post(
-        Uri.parse('http://localhost:5000/api/auth/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final token = data['token'];
-
-        // Token save
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('auth_token', token);
-
-        // Auth state notifier call
-        ref.read(authProvider.notifier).login(email, password);
-
-        // Navigate to dashboard
-        Navigator.pushReplacementNamed(context, '/dashboard');
-      } else {
-        final error = jsonDecode(response.body)['error'];
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error ?? 'Login failed')),
-        );
-      }
-    } catch (e) {
-      print('❌ Login error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login failed: $e')),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -135,9 +97,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 48),
 
+                // Email
                 FormBuilderTextField(
                   name: 'email',
-                  initialValue: _savedEmail ?? '',
+                  // initialValue: "shan21@gmail.com", //TODO: remove
+                  // initialValue: _savedEmail ?? '', // auto-fill
                   decoration: InputDecoration(
                     labelText: l10n.email,
                     hintText: l10n.emailHint,
@@ -149,9 +113,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 20),
 
+                // Password with eye button
                 FormBuilderTextField(
                   name: 'password',
-                  initialValue: _savedPassword ?? '',
+                  // initialValue: "123456", //TODO: remove
+                  // initialValue: _savedPassword ?? '', // auto-fill
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     labelText: l10n.password,
@@ -171,6 +137,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
 
+                // Remember Me
                 FormBuilderCheckbox(
                   name: 'remember_me',
                   initialValue: _rememberMe,
@@ -180,6 +147,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 const SizedBox(height: 32),
 
+                // Login Button
                 Consumer(
                   builder: (context, ref, child) {
                     final authState = ref.watch(authProvider);
@@ -203,7 +171,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                           await _saveCredentials(email, password, rememberMe);
 
-                          await _loginAndSaveToken(email, password);
+                          ref.read(authProvider.notifier).login(
+                            email,
+                            password,
+                          );
                         }
                       },
                       child: isLoading
@@ -214,6 +185,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
 
+                // Register
                 TextButton(
                   onPressed: () => AppRouter.to(const RegisterScreen()),
                   child: Text(
