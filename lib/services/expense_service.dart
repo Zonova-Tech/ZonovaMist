@@ -9,7 +9,7 @@ class ExpenseService {
   static String get baseUrl => '${AppConfig.apiBaseUrl}/expenses';
 
   static final cloudinary = CloudinaryPublic(
-    'dqi0bndrs',
+    AppConfig.cloudinaryCloudName,
     'expenses_upload',
     cache: false,
   );
