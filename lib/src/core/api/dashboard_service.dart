@@ -252,6 +252,7 @@ class DashboardService {
     if (value is String) return double.tryParse(value) ?? 0.0;
     if (value is Map) {
 
+// Handle MongoDB Decimal128 format: {"$numberDecimal": "123.45"}
       if (value.containsKey('\$numberDecimal')) {
         final decimalStr = value['\$numberDecimal'];
         return double.tryParse(decimalStr.toString()) ?? 0.0;
