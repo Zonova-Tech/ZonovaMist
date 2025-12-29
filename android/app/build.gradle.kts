@@ -4,7 +4,7 @@ import java.io.FileInputStream
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    // Flutter plugin must be applied after Android and Kotlin
+    // Flutter plugin must be applied *after* Android and Kotlin
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -33,8 +33,8 @@ android {
         applicationId = "com.Zonova.Zonova_Mist"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode = 11 // 🔹 Increase this each Play Store upload
-        versionName = "1.0.1"
+        versionCode = 10 // 🔹 Increase this each Play Store upload
+        versionName = flutter.versionName
     }
 
     signingConfigs {
