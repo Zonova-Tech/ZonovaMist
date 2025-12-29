@@ -6,7 +6,7 @@ class AppConfig {
     defaultValue: false,
   );
 
-  static const String _renderBaseUrl = "https://zonovamistapiweb.onrender.com/api";
+  static const String _renderBaseUrl = "https://zonova-mist.onrender.com/api";
 
   static String get apiBaseUrl {
     // ✅ Always use Render for Web
@@ -19,7 +19,13 @@ class AppConfig {
       return _renderBaseUrl;
     }
 
-    // 🔹 for test locally again
+    // ✅ For debug builds, also use Render by default
+    return _renderBaseUrl;
+
+    /*
+    // 🔹 for test locally again,
+    // just uncomment this block and set your LAN IP.
+
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return "http://192.168.1.10:3000/api"; // device on LAN
@@ -28,9 +34,10 @@ class AppConfig {
       case TargetPlatform.windows:
       case TargetPlatform.linux:
       case TargetPlatform.macOS:
-      return "http://localhost:3000/api"; // desktop
+        return "http://localhost:3000/api"; // desktop
       default:
         return "http://localhost:3000/api";
     }
+    */
   }
 }
