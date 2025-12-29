@@ -8,11 +8,13 @@ final dashboardServiceProvider = Provider<DashboardService>((ref) {
   return DashboardService();
 });
 
+/// Provider for dashboard state
 final dashboardProvider = StateNotifierProvider<DashboardNotifier, DashboardState>((ref) {
   final service = ref.watch(dashboardServiceProvider);
   return DashboardNotifier(service);
 });
 
+/// Dashboard state
 class DashboardState {
   final TimePeriod timePeriod;
   final Set<ComparisonPeriod> selectedComparisons;
@@ -20,6 +22,7 @@ class DashboardState {
   final bool isLoading;
   final String? error;
 
+  // Cached data
   final Map<String, StatData>? stats;
   final ComparisonChartData? revenueData;
   final ComparisonChartData? expenseData;
@@ -71,7 +74,7 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     loadAllData();
   }
 
-
+  /// Load all dashboard data
   Future<void> loadAllData() async {
     state = state.copyWith(isLoading: true, error: null);
 
@@ -109,7 +112,7 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     }
   }
 
-
+  /// Load revenue comparison data
   Future<void> loadRevenueData() async {
     try {
       final revenueData = await _service.fetchRevenueComparison(
@@ -133,6 +136,7 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     }
   }
 
+  /// Load expense comparison data
   Future<void> loadExpenseData() async {
     try {
       final expenseData = await _service.fetchExpenseComparison(
@@ -145,7 +149,7 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
       state = state.copyWith(expenseData: expenseData);
     } catch (e) {
       print('❌ Error loading expense data: $e');
-// Set empty data if API fails
+      // Set empty data if API fails
       state = state.copyWith(
         expenseData: ComparisonChartData(
           prevData: [],
@@ -156,6 +160,7 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     }
   }
 
+  /// Load expense category data
   Future<void> loadCategoryData() async {
     try {
       final categoryData = await _service.fetchExpenseCategories(
@@ -167,10 +172,12 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
       state = state.copyWith(categoryData: categoryData);
     } catch (e) {
       print('❌ Error loading category data: $e');
-
+      // Set empty data if API fails
       state = state.copyWith(categoryData: []);
     }
   }
+
+  /// Set time period and reload data
   void setTimePeriod(TimePeriod period) {
     state = state.copyWith(timePeriod: period);
     loadAllData();
@@ -235,6 +242,7 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
   }
 
   // Dummy data fallbacks
+
   Map<String, StatData> _getDummyStats() {
     return {
       'revenue': StatData(
