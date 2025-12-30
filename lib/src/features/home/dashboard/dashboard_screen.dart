@@ -1,3 +1,5 @@
+// lib/src/features/home/dashboard/dashboard_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/widgets/app_drawer.dart';
@@ -26,7 +28,7 @@ class DashboardScreen extends ConsumerWidget {
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh',
             onPressed: () {
-
+              // Trigger refresh
               ref.invalidate(dashboardProvider);
             },
           ),
@@ -38,11 +40,11 @@ class DashboardScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
+            // Welcome Card
             _buildWelcomeCard(),
             const SizedBox(height: 24),
 
-
+            // Filter Chips
             FilterChipsRow(
               timePeriod: dashboardState.timePeriod,
               selectedComparisons: dashboardState.selectedComparisons,
@@ -52,11 +54,11 @@ class DashboardScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
 
-
+            // Stat Panel
             StatPanel(stats: notifier.getStatPanelData()),
             const SizedBox(height: 24),
 
-
+            // Revenue Comparison Chart
             _buildSectionTitle('Revenue Comparison'),
             const SizedBox(height: 12),
             RevenueComparisonChart(
@@ -66,7 +68,7 @@ class DashboardScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
 
-
+            // Expense Comparison Chart
             _buildSectionTitle('Expense Comparison'),
             const SizedBox(height: 12),
             ExpenseComparisonChart(
@@ -76,7 +78,7 @@ class DashboardScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
 
-
+            // Expense Category Chart
             _buildSectionTitle('Expenses by Category'),
             const SizedBox(height: 12),
             ExpenseCategoryChart(
