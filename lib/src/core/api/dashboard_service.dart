@@ -30,11 +30,11 @@ class DashboardService {
       final response = await http.get(uri);
 
       if (response.statusCode == 200) {
-        print('📊 RAW Stats Response: ${response.body}'); // Debug log
+        print('📊 RAW Stats Response: ${response.body}');
 
         final data = json.decode(response.body) as Map<String, dynamic>;
 
-        print('📊 Parsed Stats Data: $data'); // Debug log
+        print('📊 Parsed Stats Data: $data');
 
         return {
           'revenue': StatData(
@@ -108,7 +108,7 @@ class DashboardService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as Map<String, dynamic>;
 
-        print('📊 Revenue response: $data'); // Debug log
+        print('📊 Revenue response: $data');
 
         return ComparisonChartData(
           prevData: _parseChartData(data['prevData'] as List<dynamic>),
