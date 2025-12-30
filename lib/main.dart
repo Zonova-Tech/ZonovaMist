@@ -27,7 +27,7 @@ class MyApp extends ConsumerWidget {
     final authState = ref.watch(authProvider);
 
     return MaterialApp(
-      title: 'MapMarket',
+      title: 'Zonova Mist',
       theme: AppTheme.lightTheme,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,

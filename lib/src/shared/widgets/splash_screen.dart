@@ -10,8 +10,11 @@ class SplashScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.shopping_cart_checkout,
-                size: 80, color: Theme.of(context).colorScheme.secondary),
+            Image.asset(''
+                'assets/icons/logo.png',
+            width: 80,
+            height: 80,
+            color: Theme.of(context).colorScheme.secondary,),
             const SizedBox(height: 20),
             const CircularProgressIndicator(),
           ],

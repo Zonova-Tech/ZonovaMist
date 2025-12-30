@@ -1,0 +1,60 @@
+name: Build and Deploy to ServerByt
+
+on:
+  push:
+    branches: [ "dev" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Check out the code
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    # 2. Install Flutter with caching
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.35.1'  # Pin a specific version
+        channel: 'stable'
+        cache: true
+
+    # 3. Verify Flutter installation
+    - name: Verify Flutter
+      run: flutter doctor -v
+
+    # 4. Install Dependencies
+    - name: Install Dependencies
+      run: flutter pub get
+
+    # 5. Analyze code (optional but recommended)
+    - name: Analyze Code
+      run: flutter analyze --no-fatal-infos
+      continue-on-error: true
+
+    # 6. Build the Web App
+    - name: Build Web
+      run: flutter build web --release --base-href /
+
+    # 7. Verify build output exists
+    - name: Verify Build
+      run: ls -la ./build/web/
+
+    # 8. Deploy to ServerByt via SFTP
+    - name: SFTP Deploy
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        protocol: ftps
+        local-dir: ./build/web/
+        server-dir: ./
+        dangerous-clean-slate: false
+        log-level: verbose
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/.DS_Store
