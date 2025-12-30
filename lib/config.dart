@@ -5,8 +5,8 @@ class AppConfig {
     'dart.vm.product',
     defaultValue: false,
   );
+  static const String _renderBaseUrl = 'https://zonovamistapi-uke8.onrender.com/api';
 
-  static const String _renderBaseUrl = "https://zonova-mist.onrender.com/api";
 
   static String get apiBaseUrl {
     // ✅ Always use Render for Web
