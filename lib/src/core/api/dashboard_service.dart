@@ -4,7 +4,7 @@ import '../../features/home/dashboard/models/dashboard_models.dart';
 import 'package:flutter/material.dart';
 
 class DashboardService {
-  static const String baseUrl = 'https://zonova-mist.onrender.com';
+  static const String baseUrl = 'https://zonovamistapi-uke8.onrender.com';
 
   /// Fetch dashboard statistics
   Future<Map<String, StatData>> fetchStats({
@@ -30,11 +30,11 @@ class DashboardService {
       final response = await http.get(uri);
 
       if (response.statusCode == 200) {
-        print('📊 RAW Stats Response: ${response.body}');
+        print('📊 RAW Stats Response: ${response.body}'); // Debug log
 
         final data = json.decode(response.body) as Map<String, dynamic>;
 
-        print('📊 Parsed Stats Data: $data');
+        print('📊 Parsed Stats Data: $data'); // Debug log
 
         return {
           'revenue': StatData(
@@ -80,7 +80,7 @@ class DashboardService {
     }
   }
 
-  /// Fetch expense comparison data
+  /// Fetch revenue comparison data
   Future<ComparisonChartData> fetchRevenueComparison({
     required TimePeriod timePeriod,
     required Set<ComparisonPeriod> comparisons,
@@ -124,7 +124,7 @@ class DashboardService {
     }
   }
 
-
+  /// Fetch expense comparison data
   Future<ComparisonChartData> fetchExpenseComparison({
     required TimePeriod timePeriod,
     required Set<ComparisonPeriod> comparisons,
@@ -166,7 +166,6 @@ class DashboardService {
     }
   }
 
-
   /// Fetch expense categories data
   Future<List<ExpenseCategoryData>> fetchExpenseCategories({
     required TimePeriod timePeriod,
@@ -193,7 +192,7 @@ class DashboardService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as List<dynamic>;
 
-        print('📊 Expense categories response: $data');
+        print('📊 Expense categories response: $data'); // Debug log
 
         return data.map((item) {
           return ExpenseCategoryData(
@@ -211,8 +210,8 @@ class DashboardService {
     }
   }
 
-
   // Helper methods
+
   String _timePeriodToString(TimePeriod period) {
     switch (period) {
       case TimePeriod.month:
@@ -244,6 +243,7 @@ class DashboardService {
       );
     }).toList();
   }
+
   /// Helper method to safely parse numeric values
   double _parseValue(dynamic value) {
     if (value == null) return 0.0;
@@ -251,8 +251,7 @@ class DashboardService {
     if (value is int) return value.toDouble();
     if (value is String) return double.tryParse(value) ?? 0.0;
     if (value is Map) {
-
-// Handle MongoDB Decimal128 format: {"$numberDecimal": "123.45"}
+      // Handle MongoDB Decimal128 format: {"$numberDecimal": "123.45"}
       if (value.containsKey('\$numberDecimal')) {
         final decimalStr = value['\$numberDecimal'];
         return double.tryParse(decimalStr.toString()) ?? 0.0;
@@ -262,7 +261,7 @@ class DashboardService {
         final longStr = value['\$numberLong'];
         return double.tryParse(longStr.toString()) ?? 0.0;
       }
-// If it's a nested object, try to find a numeric field
+      // If it's a nested object, try to find a numeric field
       if (value.containsKey('value')) return _parseValue(value['value']);
       if (value.containsKey('amount')) return _parseValue(value['amount']);
       if (value.containsKey('total')) return _parseValue(value['total']);
