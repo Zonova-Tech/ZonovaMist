@@ -30,6 +30,7 @@ class TodoState {
     );
   }
 }
+
 // Todo Provider (for tasks I created)
 class TodoNotifier extends StateNotifier<TodoState> {
   final Dio dio;
