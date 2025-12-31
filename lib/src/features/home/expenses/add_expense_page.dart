@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:Zonova_Mist/enums/expense_category.dart';
 
+
 class AddExpensePage extends StatefulWidget {
   const AddExpensePage({super.key});
 
@@ -12,18 +13,32 @@ class AddExpensePage extends StatefulWidget {
 }
 
 class _AddExpensePageState extends State<AddExpensePage> {
+  // Form key for validation
   final _formKey = GlobalKey<FormState>();
+
+  // Selected expense category
   String? _category;
+
+  // Text controllers for form fields
   final _titleCtrl = TextEditingController();
   final _amountCtrl = TextEditingController();
-  DateTime _date = DateTime.now();
   final _noteCtrl = TextEditingController();
+
+  // Selected date for the expense (defaults to today)
+  DateTime _date = DateTime.now();
+
+  // List of picked images (bills/receipts)
   final List<XFile> _picked = [];
+
+  // Image picker instance
   final ImagePicker _picker = ImagePicker();
+
+  // Saving state indicator
   bool _isSaving = false;
 
   @override
   void dispose() {
+    // Clean up controllers when widget is disposed
     _titleCtrl.dispose();
     _amountCtrl.dispose();
     _noteCtrl.dispose();
@@ -32,6 +47,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
 
   Future<void> _pickImages() async {
     try {
+      // Try to pick multiple images first
       final List<XFile>? images = await _picker.pickMultiImage();
       if (images != null && images.isNotEmpty) {
         setState(() => _picked.addAll(images));
@@ -39,6 +55,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
           SnackBar(content: Text('${images.length} image(s) selected')),
         );
       } else {
+        // Fallback to single image picker if multi-select not available
         final XFile? single = await _picker.pickImage(source: ImageSource.gallery);
         if (single != null) {
           setState(() => _picked.add(single));
@@ -48,12 +65,15 @@ class _AddExpensePageState extends State<AddExpensePage> {
         }
       }
     } catch (e) {
+      // Handle image picker errors
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Image pick failed: $e')),
       );
     }
   }
 
+  /// Remove an image from the selected images list
+  /// Shows confirmation message after removal
   void _removeImage(int index) {
     setState(() {
       _picked.removeAt(index);
@@ -63,6 +83,8 @@ class _AddExpensePageState extends State<AddExpensePage> {
     );
   }
 
+  /// Show date picker dialog and update selected date
+  /// Date range: 2000 to today
   Future<void> _selectDate() async {
     final d = await showDatePicker(
       context: context,
@@ -73,16 +95,23 @@ class _AddExpensePageState extends State<AddExpensePage> {
     if (d != null) setState(() => _date = d);
   }
 
+  /// Validate form and save expense
+  /// Returns expense data to previous screen
   void _save() {
+    // Validate form fields
     if (!_formKey.currentState!.validate()) return;
+
+    // Check if category is selected
     if (_category == null) {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Please select a category')));
       return;
     }
 
+    // Set saving state
     setState(() => _isSaving = true);
 
+    // Prepare expense data
     final newExpense = {
       'category': _category!,
       'title': _titleCtrl.text.trim(),
@@ -92,11 +121,13 @@ class _AddExpensePageState extends State<AddExpensePage> {
       'imageFiles': _picked,
     };
 
+    // Return expense data to previous screen
     Navigator.pop(context, newExpense);
   }
 
   @override
   Widget build(BuildContext context) {
+    // Get list of expense categories for dropdown
     final categories = ExpenseCategory.values
         .map((e) => e.displayName)
         .toList();
@@ -110,6 +141,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Category dropdown field
               DropdownButtonFormField<String>(
                 value: _category,
                 decoration: const InputDecoration(
@@ -123,6 +155,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
               ),
               const SizedBox(height: 16),
 
+              // Title text field
               TextFormField(
                 controller: _titleCtrl,
                 decoration: const InputDecoration(
@@ -134,6 +167,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
               ),
               const SizedBox(height: 16),
 
+              // Amount text field with number keyboard
               TextFormField(
                 controller: _amountCtrl,
                 decoration: const InputDecoration(
@@ -150,6 +184,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
               ),
               const SizedBox(height: 16),
 
+              // Date picker field
               InkWell(
                 onTap: _selectDate,
                 child: InputDecorator(
@@ -163,6 +198,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
               ),
               const SizedBox(height: 16),
 
+              // Note text field (optional, multi-line)
               TextFormField(
                 controller: _noteCtrl,
                 decoration: const InputDecoration(
@@ -174,12 +210,14 @@ class _AddExpensePageState extends State<AddExpensePage> {
               ),
               const SizedBox(height: 24),
 
+              // Bills and receipts section
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Section header
                       Row(
                         children: [
                           Icon(Icons.receipt_long, color: Colors.blue.shade700),
@@ -194,6 +232,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                         ],
                       ),
                       const SizedBox(height: 12),
+                      // Upload images button
                       ElevatedButton.icon(
                         onPressed: _pickImages,
                         icon: const Icon(Icons.add_photo_alternate),
@@ -202,6 +241,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                           minimumSize: const Size(double.infinity, 48),
                         ),
                       ),
+                      // Show count of selected images
                       if (_picked.isNotEmpty) ...[
                         const SizedBox(height: 12),
                         Text(
@@ -217,6 +257,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                 ),
               ),
 
+              // Display selected images in a grid
               if (_picked.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 GridView.builder(
@@ -232,6 +273,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                   itemBuilder: (context, index) {
                     return Stack(
                       children: [
+                        // Image container
                         Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12),
@@ -242,6 +284,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(10),
+                            // Display image based on platform (web or mobile)
                             child: kIsWeb
                                 ? Image.network(
                               _picked[index].path,
@@ -257,6 +300,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                             ),
                           ),
                         ),
+                        // Remove button (top-right corner)
                         Positioned(
                           top: 4,
                           right: 4,
@@ -276,6 +320,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                             ),
                           ),
                         ),
+                        // Image number indicator (bottom-left corner)
                         Positioned(
                           bottom: 4,
                           left: 4,
@@ -305,6 +350,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
               ],
               const SizedBox(height: 32),
 
+              // Save button
               ElevatedButton(
                 onPressed: _isSaving ? null : _save,
                 style: ElevatedButton.styleFrom(
