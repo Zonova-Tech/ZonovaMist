@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../config.dart';
 import '../auth/auth_provider.dart';
 
@@ -10,8 +9,6 @@ final dioProvider = Provider<Dio>((ref) {
     connectTimeout: const Duration(seconds: 30),
     receiveTimeout: const Duration(seconds: 30),
   ));
-
-  final storage = const FlutterSecureStorage();
 
   dio.interceptors.add(
     InterceptorsWrapper(

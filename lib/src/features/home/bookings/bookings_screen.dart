@@ -11,7 +11,6 @@ import 'edit_booking_screen.dart';
 import 'invoice_form_screen.dart';
 import '../../../shared/widgets/app_drawer.dart';
 import '../../../shared/widgets/audio_recordings_widget.dart';
-import '../../../shared/widgets/whatsapp_button.dart';
 
 class BookingsScreen extends ConsumerWidget {
   const BookingsScreen({super.key});
