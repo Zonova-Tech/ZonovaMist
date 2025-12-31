@@ -9,6 +9,7 @@ import 'package:Zonova_Mist/src/features/auth/login_screen.dart';
 import 'package:Zonova_Mist/src/features/home/home_screen.dart';
 import 'package:Zonova_Mist/src/shared/widgets/splash_screen.dart';
 
+
 void main() {
   runApp(
     const ProviderScope(
@@ -22,6 +23,7 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Watch the auth state to decide which screen to show
     final authState = ref.watch(authProvider);
 
     return MaterialApp(
