@@ -31,12 +31,14 @@ class MyApp extends ConsumerWidget {
       supportedLocales: AppLocalizations.supportedLocales,
       navigatorKey: AppRouter.navigatorKey,
       debugShowCheckedModeBanner: false,
-
-
       home: authState.when(
+        // While checking for a stored token, show a splash screen
         loading: () => const SplashScreen(),
+        // If authenticated, show the home screen
         authenticated: (_) => const HomeScreen(),
+        // If not, show the login screen
         unauthenticated: () => const LoginScreen(),
+        // On error, also default to login screen
         error: (_) => const LoginScreen(),
       ),
     );
