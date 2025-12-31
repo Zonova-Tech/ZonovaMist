@@ -3,7 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image_picker/image_picker.dart';
 
+/// Edit Expense Page - Allows users to modify existing expense entries
+/// Users can update expense details and manage attached images
+/// Supports adding new images and deleting existing images
 class EditExpensePage extends StatefulWidget {
+  // Existing expense data to be edited
   final Map<String, dynamic> expense;
 
   const EditExpensePage({super.key, required this.expense});
@@ -13,32 +17,52 @@ class EditExpensePage extends StatefulWidget {
 }
 
 class _EditExpensePageState extends State<EditExpensePage> {
+  // Form key for validation
   final _formKey = GlobalKey<FormState>();
+
+  // Selected expense category
   String? _category;
+
+  // Text controllers for form fields
   final _titleCtrl = TextEditingController();
-  DateTime _date = DateTime.now();
   final _noteCtrl = TextEditingController();
+
+  // Selected date for the expense
+  DateTime _date = DateTime.now();
+
+  // List of newly picked images to upload
   final List<XFile> _newPicked = [];
+
+  // List of existing images from the server
   late List<Map<String, dynamic>> _existing;
+
+  // Image picker instance
   final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
 
+    // Load category from expense data
     _category = widget.expense['category']?.toString();
+
+    // Load title from expense data
     _titleCtrl.text = widget.expense['title']?.toString() ?? '';
 
+    // Parse and load date from expense data
     final dateStr = widget.expense['date']?.toString();
     if (dateStr != null && dateStr.isNotEmpty) {
       _date = DateTime.tryParse(dateStr) ?? DateTime.now();
     }
 
+    // Load description/note from expense data
     _noteCtrl.text = widget.expense['description']?.toString() ?? '';
 
+    // Parse and load existing images from expense data
     final images = widget.expense['images'];
     if (images != null && images is List && images.isNotEmpty) {
       _existing = images.map((img) {
+        // Handle image data as Map
         if (img is Map) {
           return {
             'url': img['url']?.toString() ?? '',
@@ -48,6 +72,7 @@ class _EditExpensePageState extends State<EditExpensePage> {
             'mimeType': img['mimeType']?.toString() ?? 'image/jpeg',
           };
         }
+        // Handle image data as String (URL only)
         if (img is String) {
           return {
             'url': img,
@@ -57,6 +82,7 @@ class _EditExpensePageState extends State<EditExpensePage> {
             'mimeType': 'image/jpeg',
           };
         }
+        // Handle invalid image data
         return {
           'url': '',
           'cloudinary_id': '',
@@ -72,11 +98,14 @@ class _EditExpensePageState extends State<EditExpensePage> {
 
   @override
   void dispose() {
+    // Clean up controllers when widget is disposed
     _titleCtrl.dispose();
     _noteCtrl.dispose();
     super.dispose();
   }
 
+  /// Pick new images to add to the expense
+  /// Supports multi-image selection from gallery
   Future<void> _pickImages() async {
     final List<XFile>? images = await _picker.pickMultiImage();
     if (images != null && images.isNotEmpty) {
@@ -84,6 +113,8 @@ class _EditExpensePageState extends State<EditExpensePage> {
     }
   }
 
+  /// Show date picker dialog and update selected date
+  /// Date range: 2000 to today
   Future<void> _selectDate() async {
     final d = await showDatePicker(
       context: context,
@@ -94,15 +125,19 @@ class _EditExpensePageState extends State<EditExpensePage> {
     if (d != null) setState(() => _date = d);
   }
 
-
+  /// Delete an existing image from the expense
+  /// Shows confirmation dialog before deletion
+  /// Marks image for deletion (actual deletion happens on save)
   Future<void> _deleteImage(Map<String, dynamic> imgObj) async {
     final cloudinaryId = imgObj['cloudinary_id']?.toString() ?? '';
 
+    // If no cloudinary ID, just remove from list
     if (cloudinaryId.isEmpty) {
       setState(() => _existing.remove(imgObj));
       return;
     }
 
+    // Show confirmation dialog
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -122,6 +157,7 @@ class _EditExpensePageState extends State<EditExpensePage> {
       ),
     );
 
+    // Remove image if confirmed
     if (confirmed == true) {
       setState(() => _existing.remove(imgObj));
 
@@ -133,8 +169,13 @@ class _EditExpensePageState extends State<EditExpensePage> {
     }
   }
 
+  /// Validate form and save updated expense
+  /// Returns updated expense data to previous screen
   void _save() {
+    // Validate form fields
     if (!_formKey.currentState!.validate()) return;
+
+    // Check if category is selected
     if (_category == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select category')),
@@ -142,22 +183,28 @@ class _EditExpensePageState extends State<EditExpensePage> {
       return;
     }
 
+    // Prepare updated expense data
     final updated = {
       'id': widget.expense['id'] ?? widget.expense['_id'],
       'category': _category,
       'title': _titleCtrl.text.trim(),
       'date': _date.toIso8601String().split('T').first,
       'description': _noteCtrl.text.trim(),
-      'existingImages': _existing,
-      'imageFiles': _newPicked,
+      'existingImages': _existing,  // Images to keep
+      'imageFiles': _newPicked,     // New images to upload
     };
 
+    // Return updated data to previous screen
     Navigator.pop(context, updated);
   }
 
+  /// Build image widget for display
+  /// Handles both network URLs and local file paths
+  /// Shows error placeholder if image fails to load
   Widget _buildImageWidget(String path, {double? width, double? height}) {
     final isUrl = path.startsWith('http://') || path.startsWith('https://');
 
+    // Display network image for URLs or web platform
     if (isUrl || kIsWeb) {
       return Image.network(
         path,
@@ -172,6 +219,7 @@ class _EditExpensePageState extends State<EditExpensePage> {
         ),
       );
     } else {
+      // Display local file image for mobile platforms
       return Image.file(
         File(path),
         width: width,
@@ -187,7 +235,9 @@ class _EditExpensePageState extends State<EditExpensePage> {
     }
   }
 
-
+  /// Show image preview dialog with zoom capability
+  /// Allows viewing full-size image with pinch-to-zoom
+  /// Provides delete option for existing images
   void _showImagePreview(String imagePath, {Map<String, dynamic>? imgObj}) {
     showDialog(
       context: context,
@@ -195,10 +245,12 @@ class _EditExpensePageState extends State<EditExpensePage> {
         backgroundColor: Colors.black,
         child: Stack(
           children: [
+            // Image with interactive zoom
             InteractiveViewer(
               child: _buildImageWidget(imagePath),
             ),
 
+            // Close button (top-right)
             Positioned(
               top: 10,
               right: 10,
@@ -211,6 +263,7 @@ class _EditExpensePageState extends State<EditExpensePage> {
               ),
             ),
 
+            // Delete button for existing images (top-left)
             if (imgObj != null)
               Positioned(
                 top: 10,
@@ -234,6 +287,7 @@ class _EditExpensePageState extends State<EditExpensePage> {
 
   @override
   Widget build(BuildContext context) {
+    // Available expense categories
     final categories = [
       'Light Bill',
       'Water Bill',
@@ -256,6 +310,7 @@ class _EditExpensePageState extends State<EditExpensePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Category dropdown field
               DropdownButtonFormField<String>(
                 value: categories.contains(_category) ? _category : null,
                 decoration: const InputDecoration(labelText: 'Category'),
@@ -266,12 +321,16 @@ class _EditExpensePageState extends State<EditExpensePage> {
                 validator: (v) => v == null ? 'Select category' : null,
               ),
               const SizedBox(height: 12),
+
+              // Title text field
               TextFormField(
                 controller: _titleCtrl,
                 decoration: const InputDecoration(labelText: 'Title'),
                 validator: (v) => v == null || v.isEmpty ? 'Enter title' : null,
               ),
               const SizedBox(height: 12),
+
+              // Date picker field
               InkWell(
                 onTap: _selectDate,
                 child: InputDecorator(
@@ -280,6 +339,8 @@ class _EditExpensePageState extends State<EditExpensePage> {
                 ),
               ),
               const SizedBox(height: 12),
+
+              // Description text field (optional, multi-line)
               TextFormField(
                 controller: _noteCtrl,
                 decoration: const InputDecoration(
@@ -288,7 +349,7 @@ class _EditExpensePageState extends State<EditExpensePage> {
               ),
               const SizedBox(height: 24),
 
-
+              // Image management section (only for expenses with ID)
               if (expenseId.isNotEmpty)
                 Card(
                   child: Padding(
@@ -296,7 +357,7 @@ class _EditExpensePageState extends State<EditExpensePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-
+                        // Add photos button
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
@@ -310,11 +371,11 @@ class _EditExpensePageState extends State<EditExpensePage> {
                           ),
                         ),
 
-
+                        // Display images if any exist
                         if (hasImages) ...[
                           const SizedBox(height: 16),
 
-
+                          // Display existing images from server
                           if (_existing.isNotEmpty) ...[
                             Wrap(
                               spacing: 8,
@@ -337,10 +398,12 @@ class _EditExpensePageState extends State<EditExpensePage> {
                                       child: Stack(
                                         fit: StackFit.expand,
                                         children: [
+                                          // Image display
                                           _buildImageWidget(
                                             imgObj['url']!,
                                           ),
 
+                                          // "Tap to zoom" overlay at bottom
                                           Positioned(
                                             bottom: 0,
                                             left: 0,
@@ -389,7 +452,7 @@ class _EditExpensePageState extends State<EditExpensePage> {
                             ),
                           ],
 
-
+                          // Display newly picked images (not yet uploaded)
                           if (_newPicked.isNotEmpty) ...[
                             if (_existing.isNotEmpty) const SizedBox(height: 8),
                             Wrap(
@@ -412,8 +475,10 @@ class _EditExpensePageState extends State<EditExpensePage> {
                                           child: Stack(
                                             fit: StackFit.expand,
                                             children: [
+                                              // Image display
                                               _buildImageWidget(file.path),
 
+                                              // "Tap to zoom" overlay at bottom
                                               Positioned(
                                                 bottom: 0,
                                                 left: 0,
@@ -458,6 +523,7 @@ class _EditExpensePageState extends State<EditExpensePage> {
                                         ),
                                       ),
 
+                                      // Remove button for newly picked images (top-right)
                                       Positioned(
                                         top: 4,
                                         right: 4,
@@ -490,7 +556,7 @@ class _EditExpensePageState extends State<EditExpensePage> {
                 ),
               const SizedBox(height: 24),
 
-
+              // Update button
               ElevatedButton(
                 onPressed: _save,
                 style: ElevatedButton.styleFrom(
