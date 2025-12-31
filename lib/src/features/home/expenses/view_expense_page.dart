@@ -4,8 +4,11 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'edit_expense_page.dart';
 
 class ViewExpensePage extends StatelessWidget {
+  // Expense data to display
   final Map<String, dynamic> expense;
+
   const ViewExpensePage({super.key, required this.expense});
+
 
   Color _getCategoryColor(String? category) {
     switch (category?.toLowerCase()) {
@@ -28,34 +31,41 @@ class ViewExpensePage extends StatelessWidget {
     }
   }
 
+  /// Returns date in YYYY-MM-DD format
   String _formatDate(dynamic dateField) {
     if (dateField == null) return '';
     try {
+      // Handle String dates
       if (dateField is String) {
         if (dateField.contains('T')) {
           return dateField.split('T')[0];
         }
         return dateField;
       }
+      // Handle timestamp as int
       if (dateField is int) {
         final dt = DateTime.fromMillisecondsSinceEpoch(dateField);
         return dt.toIso8601String().split('T')[0];
       }
+      // Handle timestamp as double
       if (dateField is double) {
         final dt = DateTime.fromMillisecondsSinceEpoch(dateField.toInt());
         return dt.toIso8601String().split('T')[0];
       }
+      // Handle DateTime object
       if (dateField is DateTime) {
         return dateField.toIso8601String().split('T')[0];
       }
       return dateField.toString();
     } catch (e) {
+      // Fallback to string representation if parsing fails
       return dateField.toString();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Extract expense data fields
     final title = expense['title']?.toString() ?? 'No Title';
     final category = expense['category']?.toString() ?? 'No Category';
     final rawDate = expense['date'];
@@ -64,12 +74,15 @@ class ViewExpensePage extends StatelessWidget {
         expense['note']?.toString() ??
         '';
 
+    // Extract image data from various possible fields
     final images = expense['images'] ?? expense['imagePaths'] ?? [];
     final imageFiles = expense['imageFiles'] ?? [];
     final existingImages = expense['existingImages'] ?? [];
 
+    // Build list of image URLs from all possible sources
     List<String> imageUrls = [];
 
+    // Process images array
     if (images is List) {
       imageUrls.addAll(images.map((img) {
         if (img is String) return img;
@@ -78,6 +91,7 @@ class ViewExpensePage extends StatelessWidget {
       }).where((s) => s.isNotEmpty));
     }
 
+    // Process existing images
     if (existingImages is List && existingImages.isNotEmpty) {
       for (var url in existingImages) {
         if (url is String && url.isNotEmpty && !imageUrls.contains(url)) {
@@ -86,6 +100,7 @@ class ViewExpensePage extends StatelessWidget {
       }
     }
 
+    // Process image files (local files)
     if (imageFiles is List && imageFiles.isNotEmpty) {
       for (var file in imageFiles) {
         try {
@@ -100,6 +115,7 @@ class ViewExpensePage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Expense Details'),
         actions: [
+          // Edit button - opens edit page
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () async {
@@ -107,6 +123,7 @@ class ViewExpensePage extends StatelessWidget {
                 context,
                 MaterialPageRoute(builder: (_) => EditExpensePage(expense: expense)),
               );
+              // Return updated data to previous screen if edited
               if (res != null && context.mounted) {
                 Navigator.pop(context, res);
               }
@@ -119,7 +136,7 @@ class ViewExpensePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header Section
+            // Header Section - Shows expense title and category with visual styling
             Card(
               elevation: 4,
               shape: RoundedRectangleBorder(
@@ -129,6 +146,7 @@ class ViewExpensePage extends StatelessWidget {
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
+                    // Category icon with colored background
                     CircleAvatar(
                       radius: 60,
                       backgroundColor: _getCategoryColor(category).withOpacity(0.2),
@@ -139,6 +157,7 @@ class ViewExpensePage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
+                    // Expense title
                     Text(
                       title,
                       style: const TextStyle(
@@ -148,6 +167,7 @@ class ViewExpensePage extends StatelessWidget {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
+                    // Category badge with colored border
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -176,7 +196,7 @@ class ViewExpensePage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-
+            // Details Section - Shows date and description
             Card(
               elevation: 2,
               shape: RoundedRectangleBorder(
@@ -187,7 +207,7 @@ class ViewExpensePage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Date Section - Left: "Date" icon + text, Right: actual date
+                    // Date Section - Icon, label and value
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -201,6 +221,7 @@ class ViewExpensePage extends StatelessWidget {
                           ),
                         ),
                         const Spacer(),
+                        // Display date or fallback message
                         Flexible(
                           child: displayDate.isNotEmpty
                               ? Text(
@@ -219,7 +240,7 @@ class ViewExpensePage extends StatelessWidget {
 
                     const Divider(height: 32),
 
-
+                    // Description Section - Icon, label and value
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -233,6 +254,7 @@ class ViewExpensePage extends StatelessWidget {
                           ),
                         ),
                         const Spacer(),
+                        // Display description or fallback message
                         Flexible(
                           child: description.isNotEmpty
                               ? Text(
@@ -254,7 +276,8 @@ class ViewExpensePage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Bill & Receipt Section
+            // Bill & Receipt Images Section - Shows grid of attached images
+            // Only displayed if images are available
             if (imageUrls.isNotEmpty)
               Card(
                 elevation: 2,
@@ -266,6 +289,7 @@ class ViewExpensePage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Section header
                       Row(
                         children: [
                           Icon(Icons.receipt_long, color: Colors.blue.shade700),
@@ -280,6 +304,7 @@ class ViewExpensePage extends StatelessWidget {
                         ],
                       ),
                       const Divider(height: 24),
+                      // Image grid - 3 columns, displays all attached images
                       GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
@@ -294,8 +319,10 @@ class ViewExpensePage extends StatelessWidget {
                           final url = imageUrls[i];
                           final isUrl = url.startsWith('http://') || url.startsWith('https://');
 
+                          // Tappable image thumbnail - opens full size view on tap
                           return GestureDetector(
                             onTap: () {
+                              // Show full-size image in dialog
                               showDialog(
                                 context: context,
                                 builder: (_) => Dialog(
@@ -307,6 +334,7 @@ class ViewExpensePage extends StatelessWidget {
                             },
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(8),
+                              // Display image based on source type (network URL or local file)
                               child: (isUrl || kIsWeb)
                                   ? Image.network(
                                 url,
