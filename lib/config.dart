@@ -6,7 +6,7 @@ class AppConfig {
     defaultValue: false,
   );
 
-  static const String _renderBaseUrl = "https://zonovamistapi-uke8.onrender.com/api";
+  static const String _renderBaseUrl = "http://localhost:3000/api";
 
   static String get apiBaseUrl {
     // ✅ Always use Render for Web

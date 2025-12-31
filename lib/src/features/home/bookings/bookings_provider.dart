@@ -1,3 +1,4 @@
+import 'package:Zonova_Mist/src/core/auth/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/api_service.dart';
 
@@ -8,6 +9,7 @@ final bookingSearchProvider = StateProvider<String>((ref) => '');
 
 // Bookings provider with filtering
 final bookingsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  ref.watch(tokenProvider);
   final dio = ref.watch(dioProvider);
   final filter = ref.watch(bookingFilterProvider);
   final statusFilter = ref.watch(bookingStatusFilterProvider);
