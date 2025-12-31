@@ -4,7 +4,7 @@ import '../../features/home/dashboard/models/dashboard_models.dart';
 import 'package:flutter/material.dart';
 
 class DashboardService {
-  static const String baseUrl = 'https://zonovamistapi-uke8.onrender.com';
+  static const String baseUrl = 'https://zonova-mist.onrender.com';
 
   /// Fetch dashboard statistics
   Future<Map<String, StatData>> fetchStats({
@@ -30,11 +30,11 @@ class DashboardService {
       final response = await http.get(uri);
 
       if (response.statusCode == 200) {
-        print('📊 RAW Stats Response: ${response.body}');
+        print('📊 RAW Stats Response: ${response.body}'); // Debug log
 
         final data = json.decode(response.body) as Map<String, dynamic>;
 
-        print('📊 Parsed Stats Data: $data');
+        print('📊 Parsed Stats Data: $data'); // Debug log
 
         return {
           'revenue': StatData(
@@ -108,7 +108,7 @@ class DashboardService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as Map<String, dynamic>;
 
-        print('📊 Revenue response: $data');
+        print('📊 Revenue response: $data'); // Debug log
 
         return ComparisonChartData(
           prevData: _parseChartData(data['prevData'] as List<dynamic>),
