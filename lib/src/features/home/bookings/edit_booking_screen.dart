@@ -30,10 +30,7 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
   late String status;
 
   // Room selection
-  final List<String> _allRooms = ['101', '102', '103', '201', '202', '203', '204'];
   Set<String> _selectedRooms = {};
-  Set<String> _unavailableRooms = {};
-  bool _isCheckingAvailability = false;
   String _originalBookingId = '';
 
   /// Helper to extract decimal value from MongoDB Decimal128 format
@@ -105,65 +102,6 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
     }
 
     status = widget.booking['status'] ?? 'pending';
-
-    // Check initial availability
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkRoomAvailability();
-    });
-  }
-
-  Future<void> _checkRoomAvailability() async {
-    if (checkinDate == null || checkoutDate == null) {
-      setState(() {
-        _unavailableRooms.clear();
-      });
-      return;
-    }
-
-    setState(() {
-      _isCheckingAvailability = true;
-    });
-
-    try {
-      final dio = ref.read(dioProvider);
-
-      final response = await dio.get('/bookings', queryParameters: {
-        'filter': 'all',
-        'includeDeleted': 'false'
-      });
-
-      final bookings = response.data as List;
-      final unavailable = <String>{};
-
-      for (var booking in bookings) {
-        // Skip this booking itself and cancelled bookings
-        if (booking['_id'] == _originalBookingId) continue;
-        if (booking['status'] == 'cancelled') continue;
-
-        final bookingCheckin = DateTime.parse(booking['checkin_date']);
-        final bookingCheckout = DateTime.parse(booking['checkout_date']);
-
-        // Check if dates overlap
-        final hasOverlap = checkinDate!.isBefore(bookingCheckout) &&
-            checkoutDate!.isAfter(bookingCheckin);
-
-        if (hasOverlap) {
-          final roomsStr = booking['booked_room_no'] as String;
-          final rooms = roomsStr.split(',').map((r) => r.trim()).toList();
-          unavailable.addAll(rooms);
-        }
-      }
-
-      setState(() {
-        _unavailableRooms = unavailable;
-        _isCheckingAvailability = false;
-      });
-    } catch (e) {
-      print('❌ Error checking room availability: $e');
-      setState(() {
-        _isCheckingAvailability = false;
-      });
-    }
   }
 
   @override
@@ -207,11 +145,6 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
           birthday = selected;
         }
       });
-
-      // Check availability when dates change
-      if (type == 'checkin' || type == 'checkout') {
-        await _checkRoomAvailability();
-      }
     }
   }
 
@@ -467,12 +400,10 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
                 icon: Icons.logout,
               ),
               RoomSelectorWidget(
-                allRooms: _allRooms,
                 selectedRooms: _selectedRooms,
-                unavailableRooms: _unavailableRooms,
-                isCheckingAvailability: _isCheckingAvailability,
                 checkinDate: checkinDate,
                 checkoutDate: checkoutDate,
+                excludeBookingId: _originalBookingId,
                 onRoomToggle: _handleRoomToggle,
               ),
               _buildDateSelector(

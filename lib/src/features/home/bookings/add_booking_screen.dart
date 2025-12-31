@@ -28,73 +28,12 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
   final _advanceAmountController = TextEditingController();
   String _status = 'pending';
 
-  // Room selection
-  final List<String> _allRooms = ['101', '102', '103', '201', '202', '203', '204'];
+  // Room selection - now managed by widget but state kept here
   Set<String> _selectedRooms = {};
-  Set<String> _unavailableRooms = {};
-  bool _isCheckingAvailability = false;
 
   @override
   void initState() {
     super.initState();
-  }
-
-  Future<void> _checkRoomAvailability() async {
-    if (_checkinDate == null || _checkoutDate == null) {
-      setState(() {
-        _unavailableRooms.clear();
-      });
-      return;
-    }
-
-    setState(() {
-      _isCheckingAvailability = true;
-    });
-
-    try {
-      final dio = ref.read(dioProvider);
-
-      // Fetch all bookings that overlap with selected dates
-      final response = await dio.get('/bookings', queryParameters: {
-        'filter': 'all',
-        'includeDeleted': 'false'
-      });
-
-      final bookings = response.data as List;
-      final unavailable = <String>{};
-
-      for (var booking in bookings) {
-        // Skip cancelled bookings
-        if (booking['status'] == 'cancelled') continue;
-
-        final bookingCheckin = DateTime.parse(booking['checkin_date']);
-        final bookingCheckout = DateTime.parse(booking['checkout_date']);
-
-        // Check if dates overlap
-        final hasOverlap = _checkinDate!.isBefore(bookingCheckout) &&
-            _checkoutDate!.isAfter(bookingCheckin);
-
-        if (hasOverlap) {
-          // Extract room numbers from this booking
-          final roomsStr = booking['booked_room_no'] as String;
-          final rooms = roomsStr.split(',').map((r) => r.trim()).toList();
-          unavailable.addAll(rooms);
-        }
-      }
-
-      setState(() {
-        _unavailableRooms = unavailable;
-        _isCheckingAvailability = false;
-
-        // Remove unavailable rooms from selection
-        _selectedRooms.removeWhere((room) => _unavailableRooms.contains(room));
-      });
-    } catch (e) {
-      print('❌ Error checking room availability: $e');
-      setState(() {
-        _isCheckingAvailability = false;
-      });
-    }
   }
 
   Future<void> _pickDate(BuildContext context, bool isCheckin) async {
@@ -112,9 +51,6 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
           _checkoutDate = selected;
         }
       });
-
-      // Check availability when dates change
-      await _checkRoomAvailability();
     }
   }
 
@@ -399,10 +335,7 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
                   icon: Icons.logout,
                 ),
                 RoomSelectorWidget(
-                  allRooms: _allRooms,
                   selectedRooms: _selectedRooms,
-                  unavailableRooms: _unavailableRooms,
-                  isCheckingAvailability: _isCheckingAvailability,
                   checkinDate: _checkinDate,
                   checkoutDate: _checkoutDate,
                   onRoomToggle: _handleRoomToggle,
