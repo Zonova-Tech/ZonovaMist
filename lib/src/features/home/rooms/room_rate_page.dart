@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/api_service.dart';
 
+
 class RoomRatePage extends ConsumerStatefulWidget {
   const RoomRatePage({super.key});
 
@@ -11,41 +12,59 @@ class RoomRatePage extends ConsumerStatefulWidget {
 }
 
 class _RoomRatePageState extends ConsumerState<RoomRatePage> {
+  // List of rooms fetched from the API
   List<Map<String, dynamic>> rooms = [];
+
+  // Loading state indicator for API calls
   bool isLoading = true;
 
+  // Number of nights for pricing calculation
   int numberOfNights = 1;
+
+  // Number of rooms for pricing calculation
   int numberOfRooms = 1;
 
   @override
   void initState() {
     super.initState();
+    // Fetch rooms data when page loads
     fetchRooms();
   }
 
+  /// Fetch all rooms from the API
+  /// Updates the rooms list and manages loading state
   Future<void> fetchRooms() async {
     try {
       final dio = ref.read(dioProvider);
+
+      // Call API to get rooms data
       final resp = await dio.get('/rooms');
 
       if (resp.statusCode == 200) {
+        // Update state with fetched rooms
         setState(() {
           rooms = List<Map<String, dynamic>>.from(resp.data);
           isLoading = false;
         });
       } else {
+        // Handle non-200 responses
         setState(() => isLoading = false);
       }
     } catch (e) {
+      // Handle errors and stop loading
       setState(() => isLoading = false);
       debugPrint("Error: $e");
     }
   }
 
+  /// Duplicate room entries based on room count
+  /// Returns a list where each room appears 'roomCount' times in the table
+  /// This allows displaying multiple rows for rooms with count > 1
   List<Map<String, dynamic>> duplicateRooms() {
     final List<Map<String, dynamic>> tableRows = [];
     for (var room in rooms) {
       final int roomCount = room['roomCount'] ?? 1;
+      // Add room entry multiple times based on room count
       for (int i = 0; i < roomCount; i++) {
         tableRows.add(room);
       }
@@ -53,11 +72,16 @@ class _RoomRatePageState extends ConsumerState<RoomRatePage> {
     return tableRows;
   }
 
+  /// Open dialog to edit room price
+  /// Shows a dialog with text field for price input
+  /// Validates input and updates room price via API on save
   Future<void> _openEditDialog(Map<String, dynamic> room) async {
+    // Initialize controller with current price
     final controller = TextEditingController(
       text: (room['pricePerNight'] ?? 0).toString(),
     );
 
+    // Show edit dialog and wait for result
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) {
@@ -91,8 +115,11 @@ class _RoomRatePageState extends ConsumerState<RoomRatePage> {
       },
     );
 
+    // Process the result if user clicked Save
     if (result == true) {
       final text = controller.text.trim();
+
+      // Validate the input
       if (text.isEmpty || double.tryParse(text) == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -105,6 +132,7 @@ class _RoomRatePageState extends ConsumerState<RoomRatePage> {
 
       final newPrice = double.parse(text);
 
+      // Show loading indicator
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -113,18 +141,23 @@ class _RoomRatePageState extends ConsumerState<RoomRatePage> {
 
       try {
         final dio = ref.read(dioProvider);
+
+        // Update room price via API
         final resp = await dio.patch(
           '/rooms/${room['_id']}',
           data: {"pricePerNight": newPrice},
         );
 
+        // Close loading indicator
         Navigator.of(context).pop();
 
         if (resp.statusCode == 200) {
+          // Update local state with new price
           setState(() {
             room['pricePerNight'] = newPrice;
           });
 
+          // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Room updated successfully!'),
@@ -132,6 +165,7 @@ class _RoomRatePageState extends ConsumerState<RoomRatePage> {
             ),
           );
         } else {
+          // Show error message for failed update
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Update failed: ${resp.statusCode}'),
@@ -140,6 +174,7 @@ class _RoomRatePageState extends ConsumerState<RoomRatePage> {
           );
         }
       } catch (e) {
+        // Handle API errors
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -151,8 +186,11 @@ class _RoomRatePageState extends ConsumerState<RoomRatePage> {
     }
   }
 
+  /// Build price display box with tap-to-edit functionality
+  /// Calculates and displays total price based on nights and rooms
   Widget _buildPriceBox(Map<String, dynamic> room) {
     final price = room['pricePerNight'] ?? 0;
+    // Calculate total price: base price × nights × rooms
     final totalPrice = price * numberOfNights * numberOfRooms;
 
     return GestureDetector(
@@ -169,7 +207,10 @@ class _RoomRatePageState extends ConsumerState<RoomRatePage> {
     );
   }
 
+  /// Build the room rate table with all room entries
+  /// Table displays: Number of Pax, Number of Rooms, and Total Price
   Widget _buildTable(double minWidth) {
+    // Get duplicated room entries for table rows
     final tableRows = duplicateRooms();
 
     return SingleChildScrollView(
@@ -185,6 +226,7 @@ class _RoomRatePageState extends ConsumerState<RoomRatePage> {
           border: TableBorder.all(color: Colors.grey),
           defaultVerticalAlignment: TableCellVerticalAlignment.middle,
           children: [
+            // Table header row
             TableRow(
               decoration: BoxDecoration(color: Colors.yellow.shade600),
               children: const [
@@ -214,6 +256,7 @@ class _RoomRatePageState extends ConsumerState<RoomRatePage> {
                 ),
               ],
             ),
+            // Table data rows - one row per room entry
             ...tableRows.map((room) {
               return TableRow(
                 children: [
@@ -265,7 +308,11 @@ class _RoomRatePageState extends ConsumerState<RoomRatePage> {
 
 
 
+/// Room Rate Display Widget - Shows pricing calculator for a single room
+/// Allows users to select check-in date, nights, rooms, and number of people
+/// Calculates total rate including extra person charges
 class RoomRateDisplay extends StatefulWidget {
+  // Base price per night for the room
   final double basePrice;
 
   const RoomRateDisplay({super.key, required this.basePrice});
@@ -275,11 +322,21 @@ class RoomRateDisplay extends StatefulWidget {
 }
 
 class _RoomRateDisplayState extends State<RoomRateDisplay> {
+  // Selected check-in date
   DateTime? checkInDate;
+
+  // Number of nights to stay
   int nights = 1;
+
+  // Number of rooms to book
   int rooms = 1;
+
+  // Number of people staying
   int people = 1;
 
+  /// Calculate total room rate
+  /// Formula: (basePrice × nights × rooms) + (extra person charge × nights × rooms)
+  /// Extra person charge is LKR 20 per person per night
   double calculateRate() {
     double extraPersonRate = 20;
     return (widget.basePrice * nights * rooms) +
@@ -296,6 +353,7 @@ class _RoomRateDisplayState extends State<RoomRateDisplay> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Check-in date picker
             Row(
               children: [
                 const Text('Check-in: '),
@@ -320,6 +378,7 @@ class _RoomRateDisplayState extends State<RoomRateDisplay> {
               ],
             ),
 
+            // Number of nights selector
             Row(
               children: [
                 const Text('Nights: '),
@@ -333,6 +392,7 @@ class _RoomRateDisplayState extends State<RoomRateDisplay> {
               ],
             ),
 
+            // Number of rooms selector
             Row(
               children: [
                 const Text('Rooms: '),
@@ -346,6 +406,7 @@ class _RoomRateDisplayState extends State<RoomRateDisplay> {
               ],
             ),
 
+            // Number of people selector
             Row(
               children: [
                 const Text('People: '),
@@ -360,6 +421,7 @@ class _RoomRateDisplayState extends State<RoomRateDisplay> {
             ),
 
             const SizedBox(height: 12),
+            // Display calculated total price
             Text(
               'Total Price: LKR ${calculateRate().toStringAsFixed(2)}',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
