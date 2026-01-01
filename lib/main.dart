@@ -12,9 +12,9 @@ import 'package:Zonova_Mist/src/shared/widgets/splash_screen.dart';
 
 void main() {
   runApp(
-    const ProviderScope(
-      child: MyApp(),
-    ),
+      const ProviderScope(
+        child: MyApp(),
+      ),
   );
 }
 
