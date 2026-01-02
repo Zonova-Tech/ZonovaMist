@@ -4,6 +4,7 @@ import '../../features/home/rooms/rooms_screen.dart';
 import '../../features/home/rooms/room_rate_page.dart';
 import '../../features/home/hotels/partner_hotels_screen.dart';
 import '../../features/home/expenses/expenses_list_page.dart';
+import './logout_button.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -239,6 +240,9 @@ class AppDrawer extends StatelessWidget {
                 );
               },
             ),
+          const SizedBox(height: 270,),
+          //---------Logout Button----------
+          LogoutTile()
           ],
         ),
       ),
