@@ -12,6 +12,7 @@ final dashboardServiceProvider = Provider<DashboardService>((ref) {
 });
 
 class DashboardService {
+  static const String baseUrl = 'https://zonovamistapi-uke8.onrender.com';
   final Dio _dio;
 
   // 2. Accept Dio in the constructor
