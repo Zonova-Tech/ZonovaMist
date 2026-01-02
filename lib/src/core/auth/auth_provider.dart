@@ -5,6 +5,7 @@ import 'package:Zonova_Mist/src/core/auth/auth_state.dart';
 import 'package:Zonova_Mist/src/core/api/api_service.dart';
 
 
+final tokenProvider = StateProvider<String?>((ref) => null);
 
 class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier(this._ref) : super(const AuthLoading()) {
@@ -17,6 +18,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> _checkToken() async {
     final token = await _storage.read(key: 'jwt_token');
     if (token != null) {
+      // 2. LOAD TOKEN INTO RAM ON APP START
+      _ref.read(tokenProvider.notifier).state = token;
+      
       final userFullName = await _storage.read(key: 'user_full_name');
       state = Authenticated(userFullName ?? 'User');
     } else {
@@ -37,20 +41,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final token = response.data['token'];
       final userFullName = response.data['user']['fullName'];
 
+      // Write to Disk (Slow, Persistent)
       await _storage.write(key: 'jwt_token', value: token);
       await _storage.write(key: 'user_full_name', value: userFullName);
+
+      // 3. UPDATE RAM IMMEDIATELY (Fast, for immediate API calls)
+      _ref.read(tokenProvider.notifier).state = token;
 
       state = Authenticated(userFullName);
     } on DioException catch (e) {
       print("exception $e");
       final message = e.response?.data['message'] ?? 'An unknown error occurred';
       state = AuthError(message);
-      // Revert to unauthenticated after showing error
       Future.delayed(const Duration(seconds: 2), () => state = const Unauthenticated());
     }
   }
 
   Future<String> register({required String fullName, required String email, required String password}) async {
+
     state = const AuthLoading();
     try {
       await _ref.read(dioProvider).post(
@@ -69,6 +77,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> logout() async {
     await _storage.deleteAll();
+    
+    // 4. CLEAR RAM ON LOGOUT
+    _ref.read(tokenProvider.notifier).state = null;
+    
     state = const Unauthenticated();
   }
 }

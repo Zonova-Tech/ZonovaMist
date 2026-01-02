@@ -1,3 +1,4 @@
+import 'package:Zonova_Mist/src/shared/widgets/whatsapp_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -386,21 +387,46 @@ class BookingsScreen extends ConsumerWidget {
                             children: [
                               // Guest Name and Status
                               Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween, // Forces items to edges
+                                crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.person, color: Colors.blue.shade700),
-                                  const SizedBox(width: 8),
+                                  
+                                  // --- GROUP 1: LEFT SIDE (Takes all available space) ---
                                   Expanded(
-                                    child: Text(
-                                      booking['guest_name'] ?? 'Unknown Guest',
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min, // Keeps these items close together
+                                      children: [
+                                        Icon(Icons.person, color: Colors.blue.shade700),
+                                        const SizedBox(width: 8),
+
+                                        // Name (Flexible prevents overflow)
+                                        Flexible(
+                                          child: Text(
+                                            booking['guest_name'] ?? 'Unknown Guest',
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+
+                                        const SizedBox(width: 8),
+
+                                        // WhatsApp Button
+                                        WhatsAppButton(
+                                              phoneNumber: booking['phone_no'] ?? "94778848933",)
+                                      ],
                                     ),
                                   ),
-                                  GestureDetector(
-                                    onTap: () => _showStatusMenu(context, ref, booking),
-                                    child: _buildStatusChip(booking['status']),
+
+                                  // --- GROUP 2: RIGHT SIDE (Pinned to the edge) ---
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 8.0), // Safety gap
+                                    child: GestureDetector(
+                                      onTap: () => _showStatusMenu(context, ref, booking),
+                                      child: _buildStatusChip(booking['status']),
+                                    ),
                                   ),
                                 ],
                               ),

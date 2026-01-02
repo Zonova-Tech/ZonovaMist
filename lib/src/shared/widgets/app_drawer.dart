@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../features/home/staff/staff_screen.dart';
 import '../../features/home/rooms/rooms_screen.dart';
 import '../../features/home/hotels/partner_hotels_screen.dart';
+import './logout_button.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -194,6 +195,9 @@ class AppDrawer extends StatelessWidget {
                 );
               },
             ),
+          const SizedBox(height: 270,),
+          //---------Logout Button----------
+          LogoutTile()
           ],
         ),
       ),
