@@ -6,7 +6,7 @@ class AppConfig {
     defaultValue: false,
   );
 
-  static const String _renderBaseUrl = "https://zonovamistapiweb.onrender.com/api";
+  static const String _renderBaseUrl = "http://localhost:3000/api";
 
   static String get apiBaseUrl {
     // ✅ Always use Render for Web
@@ -23,11 +23,10 @@ class AppConfig {
     return _renderBaseUrl;
 
     /*
-    // 🔹 for test locally again,
-    // just uncomment this block and set your LAN IP.
-
+    // 🔹 Switched to local server for development to bypass Render issues.
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
+        //IMPORTANT: Replace with your computer's LAN IP address
         return "http://192.168.1.10:3000/api"; // device on LAN
       case TargetPlatform.iOS:
         return "http://localhost:3000/api"; // iOS simulator
