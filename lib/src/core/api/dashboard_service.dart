@@ -4,7 +4,7 @@ import '../../features/home/dashboard/models/dashboard_models.dart';
 import 'package:flutter/material.dart';
 
 class DashboardService {
-  static const String baseUrl = 'https://zonova-mist.onrender.com';
+  static const String baseUrl = 'https://zonova-mist-api-dev-487454014534.us-central1.run.app';
 
   /// Fetch dashboard statistics
   Future<Map<String, StatData>> fetchStats({
