@@ -8,6 +8,7 @@ class AppConfig {
 
   static const String _renderBaseUrl = "https://zonova-mist-api-dev-487454014534.us-central1.run.app/api";
 
+
   static String get apiBaseUrl {
     // ✅ Always use Render for Web
     if (kIsWeb) {
