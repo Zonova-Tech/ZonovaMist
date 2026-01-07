@@ -6,6 +6,8 @@ plugins {
     id("org.jetbrains.kotlin.android")
     // Flutter plugin must be applied *after* Android and Kotlin
     id("dev.flutter.flutter-gradle-plugin")
+    id("com.android.application")
+    id("com.google.gms.google-services")
 }
 
 // Load keystore properties (for release signing)
@@ -62,6 +64,7 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+    implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
 }
 
 flutter {

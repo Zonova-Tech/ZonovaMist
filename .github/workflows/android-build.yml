@@ -27,6 +27,11 @@ jobs:
           flutter-version: '3.35.1'
           channel: 'stable'
           cache: true
+            
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsecret-1-dev libjsoncpp-dev
 
       # 4. Install Dependencies
       - name: Install Dependencies
@@ -55,3 +60,12 @@ jobs:
         with:
           name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+      # 8. Upload to Firebase App Distribution (NEW STEP)
+      - name: Upload to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v5.0.0
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_CREDENTIAL_FILE_CONTENT }}
+          file: build/app/outputs/flutter-apk/app-release.apk
+          groups: testers
+          releaseNotes: "New build triggered by ${{ github.actor }}. Commit: ${{ github.event.head_commit.message }}"

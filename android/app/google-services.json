@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "127608674232",
+    "project_id": "zonova-mist",
+    "storage_bucket": "zonova-mist.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:127608674232:android:d897273abf0e435c5e214d",
+        "android_client_info": {
+          "package_name": "com.Zonova.Zonova_Mist"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD5CK0USZ_GVQ-_NHYtbwDFOhIwj_eQrAE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
