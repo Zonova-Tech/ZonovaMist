@@ -61,10 +61,10 @@ class _ProfilePictureUploaderState extends ConsumerState<ProfilePictureUploader>
     }
   }
 
-  Future<void> _pickAndUploadImage() async {
+  Future<void> _pickAndUploadImage(ImageSource source) async {
     final picker = ImagePicker();
     final XFile? image = await picker.pickImage(
-      source: ImageSource.gallery,
+      source: source,
       maxWidth: 1024,
       maxHeight: 1024,
       imageQuality: 85,
@@ -78,29 +78,6 @@ class _ProfilePictureUploaderState extends ConsumerState<ProfilePictureUploader>
     });
 
     // Load bytes for preview
-    if (kIsWeb) {
-      _selectedFileBytes = await image.readAsBytes();
-    }
-
-    await _uploadImage();
-  }
-
-  Future<void> _takePicture() async {
-    final picker = ImagePicker();
-    final XFile? image = await picker.pickImage(
-      source: ImageSource.camera,
-      maxWidth: 1024,
-      maxHeight: 1024,
-      imageQuality: 85,
-    );
-
-    if (image == null) return;
-
-    setState(() {
-      _selectedFile = image;
-      _isUploading = true;
-    });
-
     if (kIsWeb) {
       _selectedFileBytes = await image.readAsBytes();
     }
@@ -258,11 +235,11 @@ class _ProfilePictureUploaderState extends ConsumerState<ProfilePictureUploader>
               ),
               const SizedBox(height: 20),
               ListTile(
-                leading: const Icon(Icons.photo_library, color: Colors.blue),
+                leading: Icon(Icons.photo_library, color: Colors.amber.shade700),
                 title: const Text('Choose from Gallery'),
                 onTap: () {
                   Navigator.pop(context);
-                  _pickAndUploadImage();
+                  _pickAndUploadImage(ImageSource.gallery);
                 },
               ),
               ListTile(
@@ -270,7 +247,7 @@ class _ProfilePictureUploaderState extends ConsumerState<ProfilePictureUploader>
                 title: const Text('Take Photo'),
                 onTap: () {
                   Navigator.pop(context);
-                  _takePicture();
+                  _pickAndUploadImage(ImageSource.camera);
                 },
               ),
               if (_profileImageUrl != null)
@@ -296,7 +273,7 @@ class _ProfilePictureUploaderState extends ConsumerState<ProfilePictureUploader>
         // Avatar
         CircleAvatar(
           radius: widget.size / 2,
-          backgroundColor: Colors.blue.shade100,
+          backgroundColor: Colors.amber.shade100,
           backgroundImage: _profileImageUrl != null
               ? NetworkImage(_profileImageUrl!)
               : null,
@@ -304,7 +281,7 @@ class _ProfilePictureUploaderState extends ConsumerState<ProfilePictureUploader>
               ? Icon(
             Icons.person,
             size: widget.size / 2,
-            color: Colors.blue.shade700,
+            color: Colors.amber.shade700,
           )
               : null,
         ),
@@ -318,7 +295,7 @@ class _ProfilePictureUploaderState extends ConsumerState<ProfilePictureUploader>
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.blue,
+                color: Colors.amber.shade600,
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white, width: 2),
                 boxShadow: [
@@ -335,13 +312,13 @@ class _ProfilePictureUploaderState extends ConsumerState<ProfilePictureUploader>
                 height: 18,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.black87),
                 ),
               )
                   : const Icon(
                 Icons.camera_alt,
                 size: 18,
-                color: Colors.white,
+                color: Colors.black87,
               ),
             ),
           ),
