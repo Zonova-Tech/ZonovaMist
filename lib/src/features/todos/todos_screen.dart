@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../shared/widgets/app_drawer.dart';
 import 'providers/todo_provider.dart';
 import 'tasks_view.dart';
 import 'my_todos_view.dart';
@@ -37,12 +38,15 @@ class _TodosScreenState extends ConsumerState<TodosScreen> with SingleTickerProv
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xFFFACC15), // Yellow
+        foregroundColor: const Color(0xFF333333), // Dark Grey
         title: const Text('Todos'),
         elevation: 0,
-        // Remove drawer icon when in bottom nav
-        automaticallyImplyLeading: false,
         bottom: TabBar(
           controller: _tabController,
+          indicatorColor: const Color(0xFF333333), // Dark Grey
+          labelColor: const Color(0xFF333333),
+          unselectedLabelColor: Colors.black54,
           tabs: const [
             Tab(
               icon: Icon(Icons.list_alt),
@@ -67,6 +71,7 @@ class _TodosScreenState extends ConsumerState<TodosScreen> with SingleTickerProv
           ),
         ],
       ),
+      drawer: const AppDrawer(),
       body: TabBarView(
         controller: _tabController,
         children: const [
@@ -76,6 +81,8 @@ class _TodosScreenState extends ConsumerState<TodosScreen> with SingleTickerProv
       ),
       floatingActionButton: _tabController.index == 0
           ? FloatingActionButton(
+        backgroundColor: const Color(0xFFFACC15),
+        foregroundColor: Colors.white,
         onPressed: () async {
           final result = await Navigator.push(
             context,
