@@ -54,18 +54,18 @@ jobs:
       - name: Restore google-services.json
         run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
 
-      # 6. Build the APK
+      # 7. Build the APK
       - name: Build APK
         run: flutter build apk --release
 
-      # 7. Save the APK so you can download it
+      # 8. Save the APK so you can download it
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
 
-      # 8. Upload to Firebase App Distribution
+      # 9. Upload to Firebase App Distribution
       - name: Upload to Firebase App Distribution
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
