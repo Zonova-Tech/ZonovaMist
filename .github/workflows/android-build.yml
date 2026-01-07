@@ -50,6 +50,10 @@ jobs:
           echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/key.properties
           echo "storeFile=upload-keystore.jks" >> android/key.properties
 
+      # 5.1 Restore google-services.json
+      - name: Restore google-services.json
+        run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
+
       # 6. Build the APK
       - name: Build APK
         run: flutter build apk --release
