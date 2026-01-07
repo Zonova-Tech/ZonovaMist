@@ -122,3 +122,8 @@ app.*.symbols
 !/dev/ci/**/Gemfile.lock
 /android/.kotlin
 /android/.kotlin
+
+# Firebase
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+**/firebase-service-account.json
