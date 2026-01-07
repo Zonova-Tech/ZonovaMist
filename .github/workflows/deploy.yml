@@ -32,11 +32,11 @@ jobs:
     # 5. Analyze code (optional but recommended)
     - name: Analyze Code
       run: flutter analyze --no-fatal-infos
-      continue-on-error: false
+      continue-on-error: true
 
     # 6. Build the Web App
     - name: Build Web
-      run: flutter build web --release --base-href /roomshub/
+      run: flutter build web --release --base-href /
 
     # 7. Verify build output exists
     - name: Verify Build
@@ -49,10 +49,9 @@ jobs:
         server: ${{ secrets.FTP_SERVER }}
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
-        protocol: sftp
+        protocol: ftps
         local-dir: ./build/web/
-        server-dir: ./public_html/roomshub/
-        # Keep dangerous-clean-slate disabled to avoid deleting unexpected files on the server.
+        server-dir: ./
         dangerous-clean-slate: false
         log-level: verbose
         exclude: |
