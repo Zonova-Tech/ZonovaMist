@@ -2,7 +2,7 @@ name: Build Android APK
 
 on:
   push:
-    branches: [ "dev" ] 
+    branches: [ "dev", "ci-cd-android" ] 
   workflow_dispatch:     
 
 jobs:
