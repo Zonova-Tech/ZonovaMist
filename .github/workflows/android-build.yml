@@ -41,8 +41,18 @@ jobs:
       # We create the files your build.gradle.kts is looking for
       - name: Decode Keystore & Create Properties
         run: |
-          # Decode the secret into a file
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
+          # Decode the secret into a file with validation
+          KEYSTORE_B64="${{ secrets.ANDROID_KEYSTORE_BASE64 }}"
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "ERROR: ANDROID_KEYSTORE_BASE64 secret is not set or is empty." >&2
+            exit 1
+          fi
+
+          if ! echo "$KEYSTORE_B64" | base64 --decode > android/app/upload-keystore.jks 2>/dev/null; then
+            echo "ERROR: Failed to decode ANDROID_KEYSTORE_BASE64. Ensure it is valid base64-encoded keystore data." >&2
+            rm -f android/app/upload-keystore.jks
+            exit 1
+          fi
           
           # Create the key.properties file
           echo "storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" > android/key.properties
