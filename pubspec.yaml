@@ -51,7 +51,7 @@ dependencies:
   dio: ^5.4.3+1
 
   # Forms
-  flutter_form_builder: ^10.0.1
+  flutter_form_builder: ^10.2.0
   form_builder_validators: ^11.1.2
 
   # Secure Storage
