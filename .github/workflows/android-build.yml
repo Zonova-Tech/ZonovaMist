@@ -1,0 +1,87 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ "dev" ] 
+  workflow_dispatch:     
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout Code
+      - uses: actions/checkout@v4
+
+      # 2. Setup Java (Required for Android)
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      # 3. Setup Flutter
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.1'
+          channel: 'stable'
+          cache: true
+            
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsecret-1-dev libjsoncpp-dev
+
+      # 4. Install Dependencies
+      - name: Install Dependencies
+        run: flutter pub get
+
+      # 5. RESTORE KEYSTORE (The Magic Step)
+      # We create the files your build.gradle.kts is looking for
+      - name: Decode Keystore & Create Properties
+        run: |
+          # Decode the secret into a file with validation
+          KEYSTORE_B64="${{ secrets.ANDROID_KEYSTORE_BASE64 }}"
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "ERROR: ANDROID_KEYSTORE_BASE64 secret is not set or is empty." >&2
+            exit 1
+          fi
+
+          if ! echo "$KEYSTORE_B64" | base64 --decode > android/app/upload-keystore.jks 2>/dev/null; then
+            echo "ERROR: Failed to decode ANDROID_KEYSTORE_BASE64. Ensure it is valid base64-encoded keystore data." >&2
+            rm -f android/app/upload-keystore.jks
+            exit 1
+          fi
+          
+          # Create the key.properties file
+          echo "storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" > android/key.properties
+          echo "keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/key.properties
+          echo "storeFile=upload-keystore.jks" >> android/key.properties
+
+      # 5.1 Restore google-services.json
+      - name: Restore google-services.json
+        run: |
+          printf '%s' "${{ secrets.GOOGLE_SERVICES_JSON }}" > android/app/google-services.json
+
+      # 6. Build the APK
+      - name: Build APK
+        run: flutter build apk --release
+
+      # 7. Save the APK so you can download it
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      # 8. Upload to Firebase App Distribution
+      - name: Upload to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_CREDENTIAL_FILE_CONTENT }}
+          file: build/app/outputs/flutter-apk/app-release.apk
+          groups: testers
+          releaseNotes: "New build triggered by ${{ github.actor }}. Commit: ${{ github.event.head_commit.message }}"

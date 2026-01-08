@@ -189,7 +189,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   width: 4,
                   height: 24,
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade600,
+                    color: const Color(0xFFFACC15), // Yellow accent
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -200,10 +200,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     children: [
                       Text(
                         title,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade800,
+                          color: Color(0xFF333333), // Dark Grey
                         ),
                       ),
                       if (subtitle != null) ...[
@@ -234,6 +234,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
+        backgroundColor: const Color(0xFFFACC15), // Yellow
+        foregroundColor: const Color(0xFF333333), // Dark Grey
         elevation: 0,
       ),
       drawer: const AppDrawer(),
@@ -253,7 +255,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     controller: _guestHouseNameController,
                     decoration: const InputDecoration(
                       labelText: 'Guest House Name',
-                      border: OutlineInputBorder(),
                     ),
                     validator: (val) => val!.isEmpty ? 'Required' : null,
                   ),
@@ -262,7 +263,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     controller: _guestHouseAddressController,
                     decoration: const InputDecoration(
                       labelText: 'Guest House Address',
-                      border: OutlineInputBorder(),
                     ),
                     maxLines: 2,
                     validator: (val) => val!.isEmpty ? 'Required' : null,
@@ -272,7 +272,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     controller: _guestHouseLocationController,
                     decoration: const InputDecoration(
                       labelText: 'Location (e.g., Ambewela)',
-                      border: OutlineInputBorder(),
                       helperText: 'Used in discount SMS',
                     ),
                     validator: (val) => val!.isEmpty ? 'Required' : null,
@@ -282,7 +281,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     controller: _hostNameController,
                     decoration: const InputDecoration(
                       labelText: 'Host Name',
-                      border: OutlineInputBorder(),
                     ),
                     validator: (val) => val!.isEmpty ? 'Required' : null,
                   ),
@@ -291,7 +289,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     controller: _telephoneController,
                     decoration: const InputDecoration(
                       labelText: 'Telephone',
-                      border: OutlineInputBorder(),
                       helperText: 'Include country code (e.g., 94728651815)',
                     ),
                     keyboardType: TextInputType.phone,
@@ -309,17 +306,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     decoration: const InputDecoration(
                       labelText: 'New Booking SMS Template',
                       hintText: 'Hello {clientName}, your booking for room {roomNo}...',
-                      border: OutlineInputBorder(),
                     ),
                     maxLines: 3,
                     validator: (v) => _validateSmsTemplate(v),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Valid placeholders: ${_validPlaceholders.join(', ')}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
+                  const SizedBox(height: 8),
+                  _buildPlaceholderInfo(
+                    'Valid placeholders',
+                    _validPlaceholders,
+                    Colors.blue,
                   ),
                   const SizedBox(height: 16),
 
@@ -329,17 +324,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Today Booking Reminder SMS Template',
                       hintText: 'Hello {clientName}, reminder: check-in today...',
-                      border: OutlineInputBorder(),
                     ),
                     maxLines: 3,
                     validator: (v) => _validateSmsTemplate(v),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Valid placeholders: ${_validPlaceholders.join(', ')}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
+                  const SizedBox(height: 8),
+                  _buildPlaceholderInfo(
+                    'Valid placeholders',
+                    _validPlaceholders,
+                    Colors.blue,
                   ),
                   const SizedBox(height: 16),
 
@@ -349,14 +342,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Advance Paid Invoice SMS Template',
                       hintText: 'Dear {clientName}, advance payment of Rs. {advanceAmount}...',
-                      border: OutlineInputBorder(),
                       helperText: 'Sent when booking status changes to Advance Paid',
                       helperMaxLines: 2,
                     ),
                     maxLines: 4,
                     validator: (v) => _validateSmsTemplate(v, validPlaceholders: _advancePaidPlaceholders),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   _buildPlaceholderInfo(
                     'Advance Paid SMS Placeholders',
                     _advancePaidPlaceholders,
@@ -364,20 +356,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // NEW: Discount SMS Template
+                  // Discount SMS Template
                   TextFormField(
                     controller: _discountSmsController,
                     decoration: const InputDecoration(
                       labelText: 'Discount SMS Template',
                       hintText: 'Missing the cool breeze of {location}?...',
-                      border: OutlineInputBorder(),
                       helperText: 'Sent automatically after specified days from checkout',
                       helperMaxLines: 2,
                     ),
                     maxLines: 4,
                     validator: (v) => _validateSmsTemplate(v, validPlaceholders: _discountPlaceholders),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   _buildPlaceholderInfo(
                     'Discount SMS Placeholders',
                     _discountPlaceholders,
@@ -397,7 +388,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           controller: _discountAmountController,
                           decoration: const InputDecoration(
                             labelText: 'Discount Amount (LKR)',
-                            border: OutlineInputBorder(),
                             prefixText: 'Rs. ',
                           ),
                           keyboardType: TextInputType.number,
@@ -411,7 +401,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           controller: _daysAfterCheckoutController,
                           decoration: const InputDecoration(
                             labelText: 'Days After Checkout',
-                            border: OutlineInputBorder(),
                             suffixText: 'days',
                           ),
                           keyboardType: TextInputType.number,
@@ -426,7 +415,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     controller: _validityPeriodController,
                     decoration: const InputDecoration(
                       labelText: 'Validity Period Text',
-                      border: OutlineInputBorder(),
                       hintText: 'e.g., within a month, within 30 days',
                     ),
                     validator: (val) => val!.isEmpty ? 'Required' : null,
@@ -464,11 +452,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 child: ElevatedButton(
                   onPressed: _saveSettings,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue.shade600,
+                    backgroundColor: const Color(0xFF4CAF50), // Green
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   child: const Text(

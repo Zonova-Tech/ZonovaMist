@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/api/api_service.dart';
-import '../../../shared/widgets/profile_picture_uploader.dart';
 import 'staff_provider.dart';
 
 class AddStaffScreen extends ConsumerStatefulWidget {
@@ -76,7 +75,7 @@ class _AddStaffScreenState extends ConsumerState<AddStaffScreen> {
             ? double.tryParse(_salaryController.text)
             : null,
         'role': _selectedRole,
-        'profile_picture': _profilePictureUrl, // ✅ Save profile picture URL
+        'profile_picture': _profilePictureUrl,
       });
 
       if (mounted) {
@@ -105,6 +104,9 @@ class _AddStaffScreenState extends ConsumerState<AddStaffScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Add Staff Member'),
+        backgroundColor: const Color(0xFFFACC15), // Yellow
+        foregroundColor: const Color(0xFF333333), // Dark Grey
+        elevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -121,12 +123,12 @@ class _AddStaffScreenState extends ConsumerState<AddStaffScreen> {
                       children: [
                         CircleAvatar(
                           radius: 50,
-                          backgroundColor: Colors.blue.shade100,
+                          backgroundColor: const Color(0xFFFEFCE8), // Light Yellow
                           backgroundImage: _profilePictureUrl != null
                               ? NetworkImage(_profilePictureUrl!)
                               : null,
                           child: _profilePictureUrl == null
-                              ? Icon(Icons.person, size: 50, color: Colors.blue.shade700)
+                              ? const Icon(Icons.person, size: 50, color: Color(0xFFFACC15))
                               : null,
                         ),
                         Positioned(
@@ -134,8 +136,8 @@ class _AddStaffScreenState extends ConsumerState<AddStaffScreen> {
                           right: 0,
                           child: CircleAvatar(
                             radius: 18,
-                            backgroundColor: Colors.blue,
-                            child: Icon(Icons.camera_alt, size: 18, color: Colors.white),
+                            backgroundColor: const Color(0xFF4CAF50), // Green
+                            child: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
                           ),
                         ),
                       ],
@@ -161,7 +163,6 @@ class _AddStaffScreenState extends ConsumerState<AddStaffScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Name *',
                   prefixIcon: Icon(Icons.person),
-                  border: OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -178,7 +179,6 @@ class _AddStaffScreenState extends ConsumerState<AddStaffScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Email',
                   prefixIcon: Icon(Icons.email),
-                  border: OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
@@ -198,7 +198,6 @@ class _AddStaffScreenState extends ConsumerState<AddStaffScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Phone',
                   prefixIcon: Icon(Icons.phone),
-                  border: OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.phone,
               ),
@@ -211,14 +210,13 @@ class _AddStaffScreenState extends ConsumerState<AddStaffScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Birthday',
                     prefixIcon: Icon(Icons.cake),
-                    border: OutlineInputBorder(),
                   ),
                   child: Text(
                     _birthday != null
                         ? DateFormat('yyyy-MM-dd').format(_birthday!)
                         : 'Select birthday',
                     style: TextStyle(
-                      color: _birthday != null ? Colors.black : Colors.grey,
+                      color: _birthday != null ? const Color(0xFF333333) : Colors.grey,
                     ),
                   ),
                 ),
@@ -232,14 +230,13 @@ class _AddStaffScreenState extends ConsumerState<AddStaffScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Joined Date',
                     prefixIcon: Icon(Icons.date_range),
-                    border: OutlineInputBorder(),
                   ),
                   child: Text(
                     _joinedDate != null
                         ? DateFormat('yyyy-MM-dd').format(_joinedDate!)
                         : 'Select joined date',
                     style: TextStyle(
-                      color: _joinedDate != null ? Colors.black : Colors.grey,
+                      color: _joinedDate != null ? const Color(0xFF333333) : Colors.grey,
                     ),
                   ),
                 ),
@@ -252,7 +249,6 @@ class _AddStaffScreenState extends ConsumerState<AddStaffScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Current Salary',
                   prefixIcon: Icon(Icons.attach_money),
-                  border: OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.number,
               ),
@@ -265,7 +261,6 @@ class _AddStaffScreenState extends ConsumerState<AddStaffScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Role *',
                     prefixIcon: Icon(Icons.work),
-                    border: OutlineInputBorder(),
                   ),
                   items: roles.map((role) {
                     return DropdownMenuItem(
@@ -286,64 +281,18 @@ class _AddStaffScreenState extends ConsumerState<AddStaffScreen> {
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (err, stack) => Text('Error loading roles: $err'),
               ),
-              const SizedBox(height: 24),
-
-              // Document Upload Section
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.file_upload, color: Colors.blue.shade700),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Documents (NIC, etc.)',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          // TODO: Implement document upload
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Document upload will be available after staff is created')),
-                          );
-                        },
-                        icon: const Icon(Icons.add_photo_alternate),
-                        label: const Text('Upload Documents'),
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 48),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'You can upload documents after creating the staff member',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
               const SizedBox(height: 32),
 
               // Submit Button
               ElevatedButton(
                 onPressed: _isLoading ? null : _submitForm,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue.shade700,
+                  backgroundColor: const Color(0xFF4CAF50), // Green
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  textStyle: const TextStyle(fontSize: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 child: _isLoading
                     ? const SizedBox(
@@ -354,7 +303,7 @@ class _AddStaffScreenState extends ConsumerState<AddStaffScreen> {
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
                 )
-                    : const Text('Add Staff Member'),
+                    : const Text('Add Staff Member', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
