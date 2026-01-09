@@ -5,6 +5,7 @@ class AppConfig {
     'dart.vm.product',
     defaultValue: false,
   );
+  static const String _renderBaseUrl = 'https://zonovamistapi-uke8.onrender.com/api';
 
   static const String _renderBaseUrl = "https://zonova-mist-api-dev-487454014534.us-central1.run.app/api";
 
@@ -41,4 +42,5 @@ class AppConfig {
     }
     */
   }
+  static const String cloudinaryCloudName = 'dqi0bndrs';
 }

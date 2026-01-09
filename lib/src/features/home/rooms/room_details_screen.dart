@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/widgets/common_image_manager.dart';
-import '../edit_room_screen.dart';
+import 'edit_room_screen.dart';
+import 'room_rate_page.dart';
+
 class RoomDetailsScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> room;
 
@@ -15,6 +17,8 @@ class _RoomDetailsScreenState extends ConsumerState<RoomDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final roomId = widget.room['_id'] as String? ?? '';
+
+    print('Room Price Per Night: ${widget.room['pricePerNight']}');
 
     return Scaffold(
       appBar: AppBar(
@@ -58,7 +62,8 @@ class _RoomDetailsScreenState extends ConsumerState<RoomDetailsScreen> {
                         const SizedBox(width: 8),
                         Text(
                           'Room ${widget.room['roomNumber'] ?? 'N/A'} - ${widget.room['type'] ?? 'Unknown'}',
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -86,7 +91,23 @@ class _RoomDetailsScreenState extends ConsumerState<RoomDetailsScreen> {
                         Text('Price Per Night: LKR ${widget.room['pricePerNight'] ?? 'N/A'}'),
                       ],
                     ),
-                    const SizedBox(height: 8),
+
+                    const SizedBox(height: 15),
+
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const RoomRatePage(),
+                          ),
+                        );
+                      },
+                      child: const Text("View Room Rates"),
+                    ),
+
+                    const SizedBox(height: 15),
+
                     Row(
                       children: [
                         const Icon(Icons.check_circle, size: 18, color: Colors.grey),
@@ -94,7 +115,9 @@ class _RoomDetailsScreenState extends ConsumerState<RoomDetailsScreen> {
                         Text(
                           'Status: ${widget.room['status'] ?? 'N/A'}',
                           style: TextStyle(
-                            color: widget.room['status'] == 'available' ? Colors.green : Colors.red,
+                            color: widget.room['status'] == 'available'
+                                ? Colors.green
+                                : Colors.red,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
