@@ -3,6 +3,7 @@ import '../../features/home/staff/staff_screen.dart';
 import '../../features/home/rooms/rooms_screen.dart';
 import '../../features/home/hotels/partner_hotels_screen.dart';
 import './logout_button.dart';
+import '../../features/home/assets/asset_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -151,6 +152,29 @@ class AppDrawer extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (context) => const StaffScreen(),
+                  ),
+                );
+              },
+            ),
+            const Divider(height: 1),
+
+            // Assets Menu Item
+            ListTile(
+              leading: Icon(Icons.business_center, color: Colors.blue.shade700),
+              title: const Text(
+                'Assets',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              subtitle: const Text(
+                'Manage assets',
+                style: TextStyle(fontSize: 12),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AssetsScreen(),
                   ),
                 );
               },
