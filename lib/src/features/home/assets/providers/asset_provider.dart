@@ -93,7 +93,7 @@ class AssetNotifier extends StateNotifier<AsyncValue<List<AssetModel>>> {
   }
 
   Future<void> deleteAsset(String assetId) async {
-    // Optimistic update: remove asset from UI immediately without mutating
+    // Optimistic update: remove asset from UI immediately for instant feedback
     state.whenData((assets) {
       final updatedAssets = assets.where((a) => a.id != assetId).toList();
       state = AsyncValue.data(updatedAssets);
