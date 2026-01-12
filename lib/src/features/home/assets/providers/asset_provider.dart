@@ -65,8 +65,7 @@ class AssetNotifier extends StateNotifier<AsyncValue<List<AssetModel>>> {
     
     // Optimistically add the asset to the list (only if we have data)
     state = state.whenData((assets) {
-      final updatedAssets = [...assets, asset];
-      return AsyncValue.data(updatedAssets);
+      return [...assets, asset];
     }).maybeWhen(
       orElse: () => state,
     );
@@ -88,8 +87,7 @@ class AssetNotifier extends StateNotifier<AsyncValue<List<AssetModel>>> {
     
     // Optimistically update the asset in the list (only if we have data)
     state = state.whenData((assets) {
-      final updatedAssets = [for (final a in assets) a.id == asset.id ? asset : a];
-      return AsyncValue.data(updatedAssets);
+      return [for (final a in assets) a.id == asset.id ? asset : a];
     }).maybeWhen(
       orElse: () => state,
     );
@@ -110,8 +108,7 @@ class AssetNotifier extends StateNotifier<AsyncValue<List<AssetModel>>> {
     
     // Optimistically remove the asset from the list (only if we have data)
     state = state.whenData((assets) {
-      final updatedAssets = assets.where((a) => a.id != assetId).toList();
-      return AsyncValue.data(updatedAssets);
+      return assets.where((a) => a.id != assetId).toList();
     }).maybeWhen(
       orElse: () => state,
     );
