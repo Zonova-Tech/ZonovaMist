@@ -60,6 +60,12 @@ class AssetNotifier extends StateNotifier<AsyncValue<List<AssetModel>>> {
   }
 
   Future<AssetModel> addAsset(AssetModel asset) async {
+    // Optimistic update: add asset to UI immediately
+    state.whenData((assets) {
+      final updatedAssets = [...assets, asset];
+      state = AsyncValue.data(updatedAssets);
+    });
+
     try {
       final newAsset = await _assetService.addAsset(asset);
       await loadAssets();
@@ -71,6 +77,7 @@ class AssetNotifier extends StateNotifier<AsyncValue<List<AssetModel>>> {
   }
 
   Future<void> updateAsset(AssetModel asset) async {
+    // Optimistic update: update asset in UI immediately
     state.whenData((assets) {
       final updatedAssets = [for (final a in assets) a.id == asset.id ? asset : a];
       state = AsyncValue.data(updatedAssets);
@@ -86,9 +93,10 @@ class AssetNotifier extends StateNotifier<AsyncValue<List<AssetModel>>> {
   }
 
   Future<void> deleteAsset(String assetId) async {
+    // Optimistic update: remove asset from UI immediately without mutating
     state.whenData((assets) {
-      assets.removeWhere((a) => a.id == assetId);
-      state = AsyncValue.data(List.from(assets));
+      final updatedAssets = assets.where((a) => a.id != assetId).toList();
+      state = AsyncValue.data(updatedAssets);
     });
 
     try {
