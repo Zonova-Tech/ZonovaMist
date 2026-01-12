@@ -2,10 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/dashboard_models.dart';
 import '../../../../core/api/dashboard_service.dart';
+import './../../../../core/api/api_service.dart';
 
 /// Provider for dashboard service
 final dashboardServiceProvider = Provider<DashboardService>((ref) {
-  return DashboardService();
+  // 1. Get the dio instance
+final dio = ref.watch(dioProvider);
+
+// 2. Pass it to the service
+return DashboardService(dio);
 });
 
 /// Provider for dashboard state

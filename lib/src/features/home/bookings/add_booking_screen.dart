@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/api_service.dart';
+import '../../../shared/widgets/room_selector_widget.dart';
 import 'package:intl/intl.dart';
 
 class AddBookingScreen extends ConsumerStatefulWidget {
@@ -15,7 +16,6 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
 
   final _guestNicController = TextEditingController();
   final _guestNameController = TextEditingController();
-  final _bookedRoomNoController = TextEditingController();
   DateTime? _checkinDate;
   DateTime? _checkoutDate;
   DateTime? _birthday;
@@ -27,6 +27,14 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
   final _specialNotesController = TextEditingController();
   final _advanceAmountController = TextEditingController();
   String _status = 'pending';
+
+  // Room selection - now managed by widget but state kept here
+  Set<String> _selectedRooms = {};
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   Future<void> _pickDate(BuildContext context, bool isCheckin) async {
     final selected = await showDatePicker(
@@ -60,6 +68,16 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
     }
   }
 
+  void _handleRoomToggle(String room, bool selected) {
+    setState(() {
+      if (selected) {
+        _selectedRooms.add(room);
+      } else {
+        _selectedRooms.remove(room);
+      }
+    });
+  }
+
   Future<void> _addBooking() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -70,12 +88,21 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
       return;
     }
 
+    if (_selectedRooms.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select at least one room')),
+      );
+      return;
+    }
+
     try {
       final dio = ref.read(dioProvider);
 
+      final roomsString = _selectedRooms.join(', ');
+
       final data = {
         'guest_name': _guestNameController.text,
-        'booked_room_no': _bookedRoomNoController.text,
+        'booked_room_no': roomsString,
         'checkin_date': _checkinDate!.toIso8601String(),
         'checkout_date': _checkoutDate!.toIso8601String(),
         'phone_no': _phoneNoController.text,
@@ -123,7 +150,6 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
     int? minLines,
     String? Function(String?)? validator,
   }) {
-    // Determine if this is a multi-line field
     final isMultiline = maxLines == null || (maxLines > 1);
 
     return Padding(
@@ -296,11 +322,6 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
             _buildCard(
               title: "Booking Details",
               children: [
-                _buildTextField(
-                  label: 'Room Number(s) *',
-                  controller: _bookedRoomNoController,
-                  validator: (v) => v!.isEmpty ? 'Enter room number' : null,
-                ),
                 _buildDateSelector(
                   label: 'Check-in Date *',
                   selectedDate: _checkinDate,
@@ -312,6 +333,12 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
                   selectedDate: _checkoutDate,
                   onTap: () => _pickDate(context, false),
                   icon: Icons.logout,
+                ),
+                RoomSelectorWidget(
+                  selectedRooms: _selectedRooms,
+                  checkinDate: _checkinDate,
+                  checkoutDate: _checkoutDate,
+                  onRoomToggle: _handleRoomToggle,
                 ),
                 _buildDateSelector(
                   label: 'Birthday (Optional)',
@@ -465,7 +492,6 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
   void dispose() {
     _guestNicController.dispose();
     _guestNameController.dispose();
-    _bookedRoomNoController.dispose();
     _phoneNoController.dispose();
     _adultCountController.dispose();
     _childCountController.dispose();

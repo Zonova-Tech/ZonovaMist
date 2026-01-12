@@ -1,3 +1,4 @@
+import 'package:Zonova_Mist/src/features/home/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,7 +11,6 @@ import 'package:Zonova_Mist/src/features/auth/register_screen.dart';
 import 'package:Zonova_Mist/src/core/routing/app_router.dart';
 
 import '../../core/i18n/arb/app_localizations.dart';
-
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -64,7 +64,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.listen(authProvider, (previous, next) {
       next.when(
         loading: () {},
-        authenticated: (_) {},
+        authenticated: (_) {
+          // The moment login succeeds, we force the screen to change
+          if (mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const HomeScreen()), 
+              // IMPORTANT: Change 'BookingsScreen' to your actual Dashboard/Home Widget
+            );
+          }
+        },
         unauthenticated: () {},
         error: (message) {
           ScaffoldMessenger.of(context)

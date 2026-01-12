@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../config.dart';
+import '../auth/auth_provider.dart';
 
 final dioProvider = Provider<Dio>((ref) {
   final dio = Dio(BaseOptions(
@@ -10,12 +10,11 @@ final dioProvider = Provider<Dio>((ref) {
     receiveTimeout: const Duration(seconds: 30),
   ));
 
-  final storage = const FlutterSecureStorage();
-
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) async {
-        final token = await storage.read(key: 'jwt_token');
+        // final token = await storage.read(key: 'jwt_token');
+        final token = ref.read(tokenProvider); // Read from RAM!
         print("🔑 JWT: $token");
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';

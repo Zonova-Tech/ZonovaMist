@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/api_service.dart';
+import '../../../shared/widgets/room_selector_widget.dart';
 import 'bookings_provider.dart';
 import 'package:intl/intl.dart';
 
@@ -15,7 +16,6 @@ class EditBookingScreen extends ConsumerStatefulWidget {
 
 class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
   late TextEditingController guestNameController;
-  late TextEditingController roomNoController;
   late TextEditingController phoneNoController;
   late TextEditingController notesController;
   late TextEditingController guestAddressController;
@@ -29,21 +29,22 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
   DateTime? birthday;
   late String status;
 
+  // Room selection
+  Set<String> _selectedRooms = {};
+  String _originalBookingId = '';
+
   /// Helper to extract decimal value from MongoDB Decimal128 format
   String _extractDecimalValue(dynamic value) {
     if (value == null) return '';
 
-    // Handle Decimal128 format: {$numberDecimal: "5000"}
     if (value is Map && value.containsKey('\$numberDecimal')) {
       return value['\$numberDecimal'].toString();
     }
 
-    // Handle regular numbers
     if (value is num) {
       return value.toString();
     }
 
-    // Handle strings
     if (value is String) {
       return value;
     }
@@ -54,8 +55,9 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
   @override
   void initState() {
     super.initState();
+    _originalBookingId = widget.booking['_id'];
+
     guestNameController = TextEditingController(text: widget.booking['guest_name']);
-    roomNoController = TextEditingController(text: widget.booking['booked_room_no']?.toString());
     phoneNoController = TextEditingController(text: widget.booking['phone_no']);
     notesController = TextEditingController(text: widget.booking['special_notes'] ?? '');
     guestAddressController = TextEditingController(text: widget.booking['guest_address'] ?? '');
@@ -63,13 +65,18 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
     adultCountController = TextEditingController(text: widget.booking['adult_count']?.toString() ?? '');
     childCountController = TextEditingController(text: widget.booking['child_count']?.toString() ?? '');
 
-    // ✅ Fixed: Extract decimal values properly
     totalPriceController = TextEditingController(
         text: _extractDecimalValue(widget.booking['total_price'])
     );
     advanceAmountController = TextEditingController(
         text: _extractDecimalValue(widget.booking['advance_amount'])
     );
+
+    // Parse selected rooms
+    final roomsStr = widget.booking['booked_room_no'] as String? ?? '';
+    if (roomsStr.isNotEmpty) {
+      _selectedRooms = roomsStr.split(',').map((r) => r.trim()).toSet();
+    }
 
     // Parse dates
     if (widget.booking['checkin_date'] != null) {
@@ -100,7 +107,6 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
   @override
   void dispose() {
     guestNameController.dispose();
-    roomNoController.dispose();
     phoneNoController.dispose();
     notesController.dispose();
     guestAddressController.dispose();
@@ -142,12 +148,31 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
     }
   }
 
+  void _handleRoomToggle(String room, bool selected) {
+    setState(() {
+      if (selected) {
+        _selectedRooms.add(room);
+      } else {
+        _selectedRooms.remove(room);
+      }
+    });
+  }
+
   Future<void> _saveBooking() async {
+    if (_selectedRooms.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select at least one room')),
+      );
+      return;
+    }
+
     final dio = ref.read(dioProvider);
     try {
+      final roomsString = _selectedRooms.join(', ');
+
       final data = {
         'guest_name': guestNameController.text,
-        'booked_room_no': roomNoController.text,
+        'booked_room_no': roomsString,
         'phone_no': phoneNoController.text,
         'status': status,
         if (checkinDate != null) 'checkin_date': checkinDate!.toIso8601String(),
@@ -195,7 +220,6 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
     int? maxLines = 1,
     int? minLines,
   }) {
-    // Determine if this is a multi-line field
     final isMultiline = maxLines == null || (maxLines > 1);
 
     return Padding(
@@ -363,10 +387,6 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
           _buildCard(
             title: "Booking Details",
             children: [
-              _buildTextField(
-                label: 'Room Number(s)',
-                controller: roomNoController,
-              ),
               _buildDateSelector(
                 label: 'Check-in Date',
                 selectedDate: checkinDate,
@@ -378,6 +398,13 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
                 selectedDate: checkoutDate,
                 onTap: () => _pickDate(context, 'checkout'),
                 icon: Icons.logout,
+              ),
+              RoomSelectorWidget(
+                selectedRooms: _selectedRooms,
+                checkinDate: checkinDate,
+                checkoutDate: checkoutDate,
+                excludeBookingId: _originalBookingId,
+                onRoomToggle: _handleRoomToggle,
               ),
               _buildDateSelector(
                 label: 'Birthday',
