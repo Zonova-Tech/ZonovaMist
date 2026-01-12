@@ -60,17 +60,31 @@ class AssetNotifier extends StateNotifier<AsyncValue<List<AssetModel>>> {
   }
 
   Future<AssetModel> addAsset(AssetModel asset) async {
+    // Store previous state for rollback
+    final previousState = state;
+    
+    // Optimistically add the asset to the list
+    state.whenData((assets) {
+      final updatedAssets = [...assets, asset];
+      state = AsyncValue.data(updatedAssets);
+    });
+
     try {
       final newAsset = await _assetService.addAsset(asset);
       await loadAssets();
       return newAsset;
     } catch (e) {
-      await loadAssets();
+      // Rollback to previous state on error
+      state = previousState;
       rethrow;
     }
   }
 
   Future<void> updateAsset(AssetModel asset) async {
+    // Store previous state for rollback
+    final previousState = state;
+    
+    // Optimistically update the asset in the list
     state.whenData((assets) {
       final updatedAssets = [for (final a in assets) a.id == asset.id ? asset : a];
       state = AsyncValue.data(updatedAssets);
@@ -80,22 +94,28 @@ class AssetNotifier extends StateNotifier<AsyncValue<List<AssetModel>>> {
       await _assetService.updateAsset(asset);
       await loadAssets();
     } catch (e) {
-      await loadAssets();
+      // Rollback to previous state on error
+      state = previousState;
       rethrow;
     }
   }
 
   Future<void> deleteAsset(String assetId) async {
+    // Store previous state for rollback
+    final previousState = state;
+    
+    // Optimistically remove the asset from the list without mutating
     state.whenData((assets) {
-      assets.removeWhere((a) => a.id == assetId);
-      state = AsyncValue.data(List.from(assets));
+      final updatedAssets = assets.where((a) => a.id != assetId).toList();
+      state = AsyncValue.data(updatedAssets);
     });
 
     try {
       await _assetService.deleteAsset(assetId);
       await loadAssets();
     } catch (e) {
-      await loadAssets();
+      // Rollback to previous state on error
+      state = previousState;
       rethrow;
     }
   }
