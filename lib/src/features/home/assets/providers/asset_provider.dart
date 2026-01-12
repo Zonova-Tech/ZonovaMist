@@ -63,11 +63,13 @@ class AssetNotifier extends StateNotifier<AsyncValue<List<AssetModel>>> {
     // Store previous state for rollback
     final previousState = state;
     
-    // Optimistically add the asset to the list
-    state.whenData((assets) {
+    // Optimistically add the asset to the list (only if we have data)
+    state = state.whenData((assets) {
       final updatedAssets = [...assets, asset];
-      state = AsyncValue.data(updatedAssets);
-    });
+      return AsyncValue.data(updatedAssets);
+    }).maybeWhen(
+      orElse: () => state,
+    );
 
     try {
       final newAsset = await _assetService.addAsset(asset);
@@ -84,11 +86,13 @@ class AssetNotifier extends StateNotifier<AsyncValue<List<AssetModel>>> {
     // Store previous state for rollback
     final previousState = state;
     
-    // Optimistically update the asset in the list
-    state.whenData((assets) {
+    // Optimistically update the asset in the list (only if we have data)
+    state = state.whenData((assets) {
       final updatedAssets = [for (final a in assets) a.id == asset.id ? asset : a];
-      state = AsyncValue.data(updatedAssets);
-    });
+      return AsyncValue.data(updatedAssets);
+    }).maybeWhen(
+      orElse: () => state,
+    );
 
     try {
       await _assetService.updateAsset(asset);
@@ -104,11 +108,13 @@ class AssetNotifier extends StateNotifier<AsyncValue<List<AssetModel>>> {
     // Store previous state for rollback
     final previousState = state;
     
-    // Optimistically remove the asset from the list without mutating
-    state.whenData((assets) {
+    // Optimistically remove the asset from the list (only if we have data)
+    state = state.whenData((assets) {
       final updatedAssets = assets.where((a) => a.id != assetId).toList();
-      state = AsyncValue.data(updatedAssets);
-    });
+      return AsyncValue.data(updatedAssets);
+    }).maybeWhen(
+      orElse: () => state,
+    );
 
     try {
       await _assetService.deleteAsset(assetId);
