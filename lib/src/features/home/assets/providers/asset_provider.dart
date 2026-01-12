@@ -64,11 +64,7 @@ class AssetNotifier extends StateNotifier<AsyncValue<List<AssetModel>>> {
     final previousState = state;
     
     // Optimistically add the asset to the list (only if we have data)
-    state = state.whenData((assets) {
-      return [...assets, asset];
-    }).maybeWhen(
-      orElse: () => state,
-    );
+    state = state.whenData((assets) => [...assets, asset]);
 
     try {
       final newAsset = await _assetService.addAsset(asset);
@@ -86,11 +82,7 @@ class AssetNotifier extends StateNotifier<AsyncValue<List<AssetModel>>> {
     final previousState = state;
     
     // Optimistically update the asset in the list (only if we have data)
-    state = state.whenData((assets) {
-      return [for (final a in assets) a.id == asset.id ? asset : a];
-    }).maybeWhen(
-      orElse: () => state,
-    );
+    state = state.whenData((assets) => [for (final a in assets) a.id == asset.id ? asset : a]);
 
     try {
       await _assetService.updateAsset(asset);
@@ -107,11 +99,7 @@ class AssetNotifier extends StateNotifier<AsyncValue<List<AssetModel>>> {
     final previousState = state;
     
     // Optimistically remove the asset from the list (only if we have data)
-    state = state.whenData((assets) {
-      return assets.where((a) => a.id != assetId).toList();
-    }).maybeWhen(
-      orElse: () => state,
-    );
+    state = state.whenData((assets) => assets.where((a) => a.id != assetId).toList());
 
     try {
       await _assetService.deleteAsset(assetId);
