@@ -22,7 +22,7 @@ class AssetGroupScreen extends ConsumerWidget { // Changed to ConsumerWidget
 
     // Find the latest version of the assets for this group from the provider state
     final currentGroupAssets = assetsState.when(
-      data: (allAssets) => allAssets.where((a) => a.name == groupName).toList(),
+      data: (allAssets) => allAssets.where((a) => a.category == groupName).toList(),
       loading: () => assets, // Show initial assets while loading
       error: (_, __) => [], // Show empty list on error
     );
