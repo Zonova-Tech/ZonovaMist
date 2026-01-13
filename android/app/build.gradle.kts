@@ -6,6 +6,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     // Flutter plugin must be applied *after* Android and Kotlin
     id("dev.flutter.flutter-gradle-plugin")
+    id("com.google.gms.google-services")
 }
 
 // Load keystore properties (for release signing)
@@ -48,20 +49,19 @@ android {
 
     buildTypes {
         getByName("release") {
-            // ✅ Use your actual release key
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             isShrinkResources = false
-            // You can enable these for smaller APKs later if tested:
-            // isMinifyEnabled = true
-            // isShrinkResources = true
-            // proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
 
         getByName("debug") {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+}
+
+dependencies {
+    implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
 }
 
 flutter {

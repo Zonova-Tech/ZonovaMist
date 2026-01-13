@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../../../services/expense_service.dart';
 import 'add_expense_page.dart';
@@ -6,14 +7,14 @@ import 'edit_expense_page.dart';
 import 'view_expense_page.dart';
 
 
-class ExpensesListPage extends StatefulWidget {
+class ExpensesListPage extends ConsumerStatefulWidget {
   const ExpensesListPage({super.key});
 
   @override
-  State<ExpensesListPage> createState() => _ExpensesListPageState();
+  ConsumerState<ExpensesListPage> createState() => _ExpensesListPageState();
 }
 
-class _ExpensesListPageState extends State<ExpensesListPage> {
+class _ExpensesListPageState extends ConsumerState<ExpensesListPage> {
   // List of expense items fetched from API
   List<Map<String, dynamic>> _items = [];
 
@@ -24,17 +25,18 @@ class _ExpensesListPageState extends State<ExpensesListPage> {
   void initState() {
     super.initState();
     // Load expenses when page is initialized
-    _load();
+    _loadExpenses();
   }
 
   /// Fetch all expenses from the API
   /// Updates the expenses list and handles loading state
   /// Shows error message if fetch fails
-  Future<void> _load() async {
+  Future<void> _loadExpenses() async {
     setState(() => _loading = true);
     try {
+      final expenseService = ref.read(expenseServiceProvider);
       // Fetch expenses from service
-      final list = await ExpenseService.fetchExpenses();
+      final list = await expenseService.fetchExpenses();
 
       // Process and update state with fetched data
       setState(() {
@@ -73,7 +75,8 @@ class _ExpensesListPageState extends State<ExpensesListPage> {
     // If data returned, create expense via API
     if (res != null) {
       try {
-        final created = await ExpenseService.createExpense(res);
+        final expenseService = ref.read(expenseServiceProvider);
+        final created = await expenseService.createExpense(res);
 
         // Add new expense to the top of the list
         setState(() {
@@ -116,7 +119,8 @@ class _ExpensesListPageState extends State<ExpensesListPage> {
     // If data returned, update expense via API
     if (res != null) {
       try {
-        final upd = await ExpenseService.updateExpense(e['id'], res);
+        final expenseService = ref.read(expenseServiceProvider);
+        final upd = await expenseService.updateExpense(e['id'], res);
 
         // Update expense in the list
         setState(() {
@@ -175,7 +179,8 @@ class _ExpensesListPageState extends State<ExpensesListPage> {
     // If confirmed, delete expense via API
     if (ok == true) {
       try {
-        await ExpenseService.deleteExpense(e['id']);
+        final expenseService = ref.read(expenseServiceProvider);
+        await expenseService.deleteExpense(e['id']);
 
         // Remove expense from list
         setState(() => _items.removeWhere((el) => el['id'] == e['id']));
@@ -212,7 +217,7 @@ class _ExpensesListPageState extends State<ExpensesListPage> {
           // Refresh button to reload expenses
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _load,
+            onPressed: _loadExpenses,
           ),
         ],
       ),
@@ -243,7 +248,7 @@ class _ExpensesListPageState extends State<ExpensesListPage> {
       )
       // Show list of expenses with swipe actions
           : RefreshIndicator(
-        onRefresh: _load,
+        onRefresh: _loadExpenses,
         child: ListView.builder(
           padding: const EdgeInsets.all(12),
           itemCount: _items.length,
