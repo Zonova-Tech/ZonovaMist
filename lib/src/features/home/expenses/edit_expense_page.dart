@@ -183,11 +183,18 @@ class _EditExpensePageState extends State<EditExpensePage> {
       return;
     }
 
+    // Extract original amount from expense data
+    final originalAmount = widget.expense['amountValue'] ??
+        widget.expense['amount']?['\$numberDecimal'] ??
+        widget.expense['amount'] ??
+        0;
+
     // Prepare updated expense data
     final updated = {
       'id': widget.expense['id'] ?? widget.expense['_id'],
       'category': _category,
       'title': _titleCtrl.text.trim(),
+      'amount': originalAmount,
       'date': _date.toIso8601String().split('T').first,
       'description': _noteCtrl.text.trim(),
       'existingImages': _existing,  // Images to keep

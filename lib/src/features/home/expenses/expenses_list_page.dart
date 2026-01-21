@@ -291,14 +291,24 @@ class _ExpensesListPageState extends ConsumerState<ExpensesListPage> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
                   child: ListTile(
-                    onTap: () {
-                      // Navigate to view expense details page
-                      Navigator.push(
+                    onTap: () async {
+                      // Navigate to view expense details page and wait for result
+                      final updatedExpense = await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (_) => ViewExpensePage(expense: e),
                         ),
                       );
+
+                      // If data returned (edited from ViewPage), update the list
+                      if (updatedExpense != null && mounted) {
+                        setState(() {
+                          final index = _items.indexWhere((el) => el['id'] == e['id']);
+                          if (index != -1) {
+                            _items[index] = updatedExpense;
+                          }
+                        });
+                      }
                     },
                     // Expense title
                     title: Text(

@@ -1,14 +1,15 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'edit_expense_page.dart';
+import '../../../../services/expense_service.dart';
 
-class ViewExpensePage extends StatelessWidget {
+class ViewExpensePage extends ConsumerWidget {
   // Expense data to display
   final Map<String, dynamic> expense;
 
   const ViewExpensePage({super.key, required this.expense});
-
 
   Color _getCategoryColor(String? category) {
     switch (category?.toLowerCase()) {
@@ -64,7 +65,7 @@ class ViewExpensePage extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // Extract expense data fields
     final title = expense['title']?.toString() ?? 'No Title';
     final category = expense['category']?.toString() ?? 'No Category';
@@ -123,9 +124,36 @@ class ViewExpensePage extends StatelessWidget {
                 context,
                 MaterialPageRoute(builder: (_) => EditExpensePage(expense: expense)),
               );
-              // Return updated data to previous screen if edited
+
+              // ✅ If data returned, update via API
               if (res != null && context.mounted) {
-                Navigator.pop(context, res);
+                try {
+                  final expenseService = ref.read(expenseServiceProvider);
+                  final updated = await expenseService.updateExpense(expense['id'], res);
+
+                  // Show success message
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('✅ Expense updated'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+
+                    // Return updated data to ListPage
+                    Navigator.pop(context, {...updated, 'id': updated['_id'] ?? updated['id']});
+                  }
+                } catch (err) {
+                  // Show error message if update fails
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('❌ Update failed: $err'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
               }
             },
           ),
