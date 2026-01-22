@@ -2,7 +2,7 @@ name: Build and Deploy to ServerByt
 
 on:
   push:
-    branches: [ "dev" ]
+    branches: [ "dev", "api-url" ]
 
 jobs:
   build-and-deploy:
