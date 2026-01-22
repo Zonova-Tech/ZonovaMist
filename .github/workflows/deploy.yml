@@ -2,7 +2,7 @@ name: Build and Deploy to ServerByt
 
 on:
   push:
-    branches: [ "dev"]
+    branches: [ "dev", "api-url"]
 
 jobs:
   build-and-deploy:
@@ -25,24 +25,29 @@ jobs:
     - name: Verify Flutter
       run: flutter doctor -v
 
-    # 4. Install Dependencies
+    # 4. Create .env file
+    - name: Create .env file
+      run: |
+        echo "API_BASE_URL=${{ secrets.API_BASE_URL }}" > .env
+
+    # 5. Install Dependencies
     - name: Install Dependencies
       run: flutter pub get
 
-    # 5. Analyze code (optional but recommended)
+    # 6. Analyze code (optional but recommended)
     - name: Analyze Code
       run: flutter analyze --no-fatal-infos
       continue-on-error: true
 
-    # 6. Build the Web App
+    # 7. Build the Web App
     - name: Build Web
       run: flutter build web --release --base-href /
 
-    # 7. Verify build output exists
+    # 8. Verify build output exists
     - name: Verify Build
       run: ls -la ./build/web/
 
-    # 8. Deploy to ServerByt via SFTP
+    # 9. Deploy to ServerByt via SFTP
     - name: SFTP Deploy
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
@@ -57,4 +62,5 @@ jobs:
         exclude: |
           **/.git*
           **/.git*/**
-          **/.DS_Store
+
+          **/.DS_Store          **/.DS_Store
