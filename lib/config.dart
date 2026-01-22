@@ -41,4 +41,5 @@ class AppConfig {
     }
     */
   }
+  static const String cloudinaryCloudName = 'dqi0bndrs';
 }
