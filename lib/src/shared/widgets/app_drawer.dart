@@ -276,7 +276,7 @@ class AppDrawer extends StatelessWidget {
               top: false,
               child: LogoutTile(),
             ),
-            SizedBox(height: 5),
+            const SizedBox(height: 5),
           ],
         ),
       ),
