@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/api_service.dart';
 import '../../../shared/widgets/room_selector_widget.dart';
+import '../../../shared/widgets/common_image_manager.dart';
+import '../../../shared/models/nic_data.dart';
 import 'bookings_provider.dart';
 import 'package:intl/intl.dart';
 
@@ -32,6 +34,9 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
   // Room selection
   Set<String> _selectedRooms = {};
   String _originalBookingId = '';
+
+  // NIC detection state
+  bool _nicDataApplied = false;
 
   /// Helper to extract decimal value from MongoDB Decimal128 format
   String _extractDecimalValue(dynamic value) {
@@ -116,6 +121,169 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
     totalPriceController.dispose();
     advanceAmountController.dispose();
     super.dispose();
+  }
+
+  // Handle NIC data from CommonImageManager
+  void _handleNICDataSelected(NICData nicData) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              nicData.hasValidData ? Icons.check_circle : Icons.warning,
+              color: nicData.hasValidData ? Colors.green : Colors.orange,
+            ),
+            const SizedBox(width: 8),
+            const Text('Apply NIC Data?'),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Confidence indicator
+              LinearProgressIndicator(
+                value: nicData.confidence,
+                backgroundColor: Colors.grey[300],
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  nicData.confidence > 0.7 ? Colors.green : Colors.orange,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Confidence: ${(nicData.confidence * 100).toStringAsFixed(0)}%',
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+              const Divider(height: 24),
+
+              const Text(
+                'Do you want to fill the form with this NIC data?',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 16),
+
+              if (nicData.fullName != null)
+                _buildPreviewRow('Guest Name', nicData.fullName!, nicData.fieldsExtracted.name),
+              if (nicData.nicNumber != null)
+                _buildPreviewRow('NIC Number', nicData.nicNumber!, nicData.fieldsExtracted.nic),
+              if (nicData.dateOfBirth != null)
+                _buildPreviewRow(
+                  'Date of Birth',
+                  '${nicData.dateOfBirth!.day}/${nicData.dateOfBirth!.month}/${nicData.dateOfBirth!.year}',
+                  nicData.fieldsExtracted.dob,
+                ),
+              if (nicData.address != null)
+                _buildPreviewRow('Address', nicData.address!, nicData.fieldsExtracted.address),
+
+              if (nicData.errors.isNotEmpty) ...[
+                const Divider(height: 24),
+                Text(
+                  'Note: ${nicData.errors.length} issue${nicData.errors.length > 1 ? 's' : ''} found. Please verify the data.',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.orange,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              _applyNICData(nicData);
+              Navigator.pop(context);
+            },
+            icon: const Icon(Icons.check),
+            label: const Text('Apply'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue.shade700,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPreviewRow(String label, String value, bool extracted) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            extracted ? Icons.check_circle : Icons.help_outline,
+            size: 16,
+            color: extracted ? Colors.green : Colors.grey,
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 100,
+            child: Text(
+              '$label:',
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _applyNICData(NICData nicData) {
+    setState(() {
+      _nicDataApplied = true;
+
+      // Only fill empty fields to avoid overwriting user data
+      if (nicData.fullName != null && guestNameController.text.isEmpty) {
+        guestNameController.text = nicData.fullName!;
+      }
+
+      if (nicData.nicNumber != null && guestNicController.text.isEmpty) {
+        guestNicController.text = nicData.nicNumber!;
+      }
+
+      if (nicData.dateOfBirth != null && birthday == null) {
+        birthday = nicData.dateOfBirth;
+      }
+
+      if (nicData.address != null && guestAddressController.text.isEmpty) {
+        guestAddressController.text = nicData.address!;
+      }
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white),
+            const SizedBox(width: 8),
+            const Expanded(child: Text('NIC data applied to form')),
+            if (nicData.hasWarnings)
+              const Icon(Icons.warning, color: Colors.amber, size: 20),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   Future<void> _pickDate(BuildContext context, String type) async {
@@ -355,6 +523,36 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
       appBar: AppBar(
         title: const Text("Edit Booking"),
         elevation: 0,
+        actions: [
+          if (_nicDataApplied)
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.verified, size: 16, color: Colors.green.shade700),
+                      const SizedBox(width: 4),
+                      Text(
+                        'NIC Applied',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.green.shade700,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -521,6 +719,33 @@ class _EditBookingScreenState extends ConsumerState<EditBookingScreen> {
                 controller: notesController,
                 maxLines: null,
                 minLines: 4,
+              ),
+            ],
+          ),
+
+          // Photos & NIC Upload Section
+          _buildCard(
+            title: "Photos & Documents",
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.photo_camera, color: Colors.blue, size: 20),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Upload guest photos or NIC for automatic data extraction',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ),
+                  if (_nicDataApplied)
+                    Icon(Icons.verified, color: Colors.green.shade600, size: 20),
+                ],
+              ),
+              const SizedBox(height: 16),
+              CommonImageManager(
+                entityType: 'Booking',
+                entityId: _originalBookingId,
+                onNICDataSelected: _handleNICDataSelected,
               ),
             ],
           ),
