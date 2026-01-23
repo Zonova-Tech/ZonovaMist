@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
@@ -414,20 +415,39 @@ class _MyTodosViewState extends ConsumerState<MyTodosView> {
 
   Future<void> _completeTodo(Todo todo) async {
     final ImagePicker picker = ImagePicker();
-    List<String> imagePaths = [];
+    List<XFile> imageFiles = [];
 
     bool keepTakingPhotos = true;
 
     while (keepTakingPhotos) {
       try {
-        // Take photo
+        // On web, use ImageSource.gallery. On mobile, use camera
         final XFile? photo = await picker.pickImage(
-          source: ImageSource.camera,
+          source: kIsWeb ? ImageSource.gallery : ImageSource.camera,
           imageQuality: 80,
         );
 
         if (photo != null) {
-          imagePaths.add(photo.path);
+          // Validate image size
+          final bytes = await photo.readAsBytes();
+          final sizeInMB = bytes.length / (1024 * 1024);
+
+          if (sizeInMB > 10) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Image too large: ${sizeInMB.toStringAsFixed(1)}MB. Max 10MB allowed.',
+                  ),
+                  backgroundColor: Colors.orange,
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            }
+            continue; // Skip this image and let user try again
+          }
+
+          imageFiles.add(photo);
 
           if (!mounted) break;
 
@@ -436,28 +456,79 @@ class _MyTodosViewState extends ConsumerState<MyTodosView> {
             context: context,
             barrierDismissible: false,
             builder: (context) => AlertDialog(
-              title: const Text('Photo Captured'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.file(
-                      File(photo.path),
-                      height: 200,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
+              title: Text(kIsWeb ? 'Image Selected' : 'Photo Captured'),
+              content: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.8,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Fixed image preview for web with constraints
+                    Container(
+                      constraints: const BoxConstraints(
+                        maxHeight: 200,
+                        maxWidth: 400,
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: FutureBuilder<Widget>(
+                          future: _buildImagePreview(photo),
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData) {
+                              return snapshot.data!;
+                            }
+                            if (snapshot.hasError) {
+                              return Container(
+                                height: 200,
+                                color: Colors.grey.shade300,
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.error, color: Colors.red),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Preview failed',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }
+                            return Container(
+                              height: 200,
+                              color: Colors.grey.shade300,
+                              child: const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    '${imagePaths.length} photo(s) captured',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                    const SizedBox(height: 16),
+                    Text(
+                      '${imageFiles.length} ${imageFiles.length == 1 ? 'photo' : 'photos'} selected',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
+                    if (sizeInMB > 1) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'Size: ${sizeInMB.toStringAsFixed(2)} MB',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
               actions: [
                 TextButton(
@@ -466,7 +537,7 @@ class _MyTodosViewState extends ConsumerState<MyTodosView> {
                 ),
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context, 'more'),
-                  child: const Text('Take More'),
+                  child: Text(kIsWeb ? 'Add More' : 'Take More'),
                 ),
               ],
             ),
@@ -476,15 +547,18 @@ class _MyTodosViewState extends ConsumerState<MyTodosView> {
             keepTakingPhotos = false;
           }
         } else {
-          // User cancelled camera
+          // User cancelled
           keepTakingPhotos = false;
 
-          // If no photos taken, just return
-          if (imagePaths.isEmpty) {
+          if (imageFiles.isEmpty) {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('No photos captured. Task not completed.'),
+                SnackBar(
+                  content: Text(
+                    kIsWeb
+                        ? 'No images selected. Task not completed.'
+                        : 'No photos captured. Task not completed.',
+                  ),
                   backgroundColor: Colors.orange,
                 ),
               );
@@ -493,36 +567,50 @@ class _MyTodosViewState extends ConsumerState<MyTodosView> {
           }
         }
       } catch (e) {
-        print('Error taking photo: $e');
+        print('Error selecting image: $e');
         keepTakingPhotos = false;
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error taking photo: $e'),
+              content: Text('Error selecting image: $e'),
               backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
             ),
           );
         }
       }
     }
 
-    // Upload photos if any were taken
-    if (imagePaths.isNotEmpty) {
+    // Upload photos if any were selected
+    if (imageFiles.isNotEmpty) {
       if (!mounted) return;
 
       // Show loading dialog
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const AlertDialog(
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Uploading photos...'),
-            ],
+        builder: (dialogContext) => PopScope(
+          canPop: false,
+          child: AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(
+                  'Uploading ${imageFiles.length} ${imageFiles.length == 1 ? 'photo' : 'photos'}...',
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'This may take a moment',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -530,9 +618,9 @@ class _MyTodosViewState extends ConsumerState<MyTodosView> {
       try {
         final success = await ref
             .read(myTodoProvider.notifier)
-            .completeTodo(todo.id, imagePaths);
+            .completeTodoWithFiles(todo.id, imageFiles);
 
-        if (mounted) {
+        if (mounted && Navigator.canPop(context)) {
           Navigator.pop(context); // Close loading dialog
 
           ScaffoldMessenger.of(context).showSnackBar(
@@ -543,28 +631,87 @@ class _MyTodosViewState extends ConsumerState<MyTodosView> {
                     : 'Failed to complete task. Please try again.',
               ),
               backgroundColor: success ? Colors.green : Colors.red,
+              duration: const Duration(seconds: 3),
             ),
           );
 
           if (success) {
-            // Refresh the list
             ref.read(myTodoProvider.notifier).fetchMyTodos();
           }
         }
       } catch (e) {
         print('Error uploading: $e');
 
-        if (mounted) {
+        if (mounted && Navigator.canPop(context)) {
           Navigator.pop(context); // Close loading dialog
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error uploading: $e'),
+              content: Text('Upload error: $e'),
               backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
             ),
           );
         }
       }
+    }
+  }
+
+  // Helper method to build image preview (handles web vs mobile correctly)
+  Future<Widget> _buildImagePreview(XFile photo) async {
+    try {
+      if (kIsWeb) {
+        // On web, read bytes and use Image.memory with fixed constraints
+        final bytes = await photo.readAsBytes();
+        return SizedBox(
+          height: 200,
+          width: 400,
+          child: Image.memory(
+            bytes,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) {
+              print('Image preview error: $error');
+              return Container(
+                height: 200,
+                color: Colors.grey.shade300,
+                child: const Center(
+                  child: Icon(Icons.error, color: Colors.red),
+                ),
+              );
+            },
+          ),
+        );
+      } else {
+        // On mobile, use Image.file with fixed constraints
+        return SizedBox(
+          height: 200,
+          width: 400,
+          child: Image.file(
+            File(photo.path),
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) {
+              print('Image preview error: $error');
+              return Container(
+                height: 200,
+                color: Colors.grey.shade300,
+                child: const Center(
+                  child: Icon(Icons.error, color: Colors.red),
+                ),
+              );
+            },
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error building image preview: $e');
+      return Container(
+        height: 200,
+        width: 400,
+        color: Colors.grey.shade300,
+        child: const Center(
+          child: Icon(Icons.error, color: Colors.red),
+        ),
+      );
     }
   }
 }

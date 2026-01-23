@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:dio/dio.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'dart:io';
 import '../models/todo_model.dart';
@@ -258,56 +260,71 @@ class MyTodoNotifier extends StateNotifier<TodoState> {
     }
   }
 
-  // Complete todo with images (with compression)
-  Future<bool> completeTodo(String id, List<String> imagePaths) async {
+  // Complete todo with XFile (works on both web and mobile)
+  Future<bool> completeTodoWithFiles(String id, List<XFile> imageFiles) async {
     try {
       print('🔵 Starting completeTodo');
       print('Todo ID: $id');
-      print('Images: ${imagePaths.length}');
+      print('Images: ${imageFiles.length}');
+      print('Platform: ${kIsWeb ? "Web" : "Mobile"}');
 
       FormData formData = FormData();
 
-      for (var i = 0; i < imagePaths.length; i++) {
-        final path = imagePaths[i];
-        print('Processing image $i: $path');
+      for (var i = 0; i < imageFiles.length; i++) {
+        final file = imageFiles[i];
+        print('Processing image $i: ${file.name}');
 
-        // Get original file size
-        final originalFile = File(path);
-        final originalSize = await originalFile.length();
-        print('Original size: ${(originalSize / 1024).toStringAsFixed(2)} KB');
+        if (kIsWeb) {
+          // Web: Use bytes directly
+          final bytes = await file.readAsBytes();
+          print('File size (web): ${(bytes.length / 1024).toStringAsFixed(2)} KB');
 
-        // Compress image
-        final compressedPath = path.replaceAll('.jpg', '_compressed.jpg');
-
-        final compressedFile = await FlutterImageCompress.compressAndGetFile(
-          path,
-          compressedPath,
-          quality: 70,
-          minWidth: 1920,
-          minHeight: 1080,
-        );
-
-        if (compressedFile == null) {
-          print('❌ Compression failed for image $i');
-          continue;
-        }
-
-        final compressedSize = await compressedFile.length();
-        print('Compressed size: ${(compressedSize / 1024).toStringAsFixed(2)} KB');
-        print('Saved: ${((originalSize - compressedSize) / originalSize * 100).toStringAsFixed(1)}%');
-
-        final fileName = compressedFile.path.split('/').last;
-
-        formData.files.add(
-          MapEntry(
-            'images',
-            await MultipartFile.fromFile(
-              compressedFile.path,
-              filename: fileName,
-              contentType: MediaType('image', 'jpeg'),
+          formData.files.add(
+            MapEntry(
+              'images',
+              MultipartFile.fromBytes(
+                bytes,
+                filename: file.name,
+                contentType: MediaType('image', 'jpeg'),
+              ),
             ),
-          ),
-        );
+          );
+        } else {
+          // Mobile: Compress then upload
+          final originalSize = await File(file.path).length();
+          print('Original size: ${(originalSize / 1024).toStringAsFixed(2)} KB');
+
+          // Compress image
+          final compressedPath = file.path.replaceAll('.jpg', '_compressed.jpg');
+
+          final compressedFile = await FlutterImageCompress.compressAndGetFile(
+            file.path,
+            compressedPath,
+            quality: 70,
+            minWidth: 1920,
+            minHeight: 1080,
+          );
+
+          if (compressedFile == null) {
+            print('❌ Compression failed for image $i');
+            continue;
+          }
+
+          final compressedSize = await compressedFile.length();
+          print('Compressed size: ${(compressedSize / 1024).toStringAsFixed(2)} KB');
+          print('Saved: ${((originalSize - compressedSize) / originalSize * 100).toStringAsFixed(1)}%');
+
+          formData.files.add(
+            MapEntry(
+              'images',
+              await MultipartFile.fromFile(
+                compressedFile.path,
+                filename: compressedFile.path.split('/').last,
+                contentType: MediaType('image', 'jpeg'),
+              ),
+            ),
+          );
+        }
       }
 
       if (formData.files.isEmpty) {
@@ -315,7 +332,7 @@ class MyTodoNotifier extends StateNotifier<TodoState> {
         return false;
       }
 
-      print('📤 Uploading ${formData.files.length} compressed images...');
+      print('📤 Uploading ${formData.files.length} images...');
 
       final response = await dio.post(
         '/todos/$id/complete',
@@ -362,6 +379,12 @@ class MyTodoNotifier extends StateNotifier<TodoState> {
       state = state.copyWith(error: 'Error: $e');
       return false;
     }
+  }
+
+  // Keep old method for backward compatibility
+  Future<bool> completeTodo(String id, List<String> imagePaths) async {
+    final files = imagePaths.map((path) => XFile(path)).toList();
+    return completeTodoWithFiles(id, files);
   }
 }
 
