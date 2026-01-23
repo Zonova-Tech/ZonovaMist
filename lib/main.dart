@@ -8,18 +8,9 @@ import 'package:Zonova_Mist/src/core/theme/app_theme.dart';
 import 'package:Zonova_Mist/src/features/auth/login_screen.dart';
 import 'package:Zonova_Mist/src/features/home/home_screen.dart';
 import 'package:Zonova_Mist/src/shared/widgets/splash_screen.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  
-  try {
-    await dotenv.load(fileName: ".env");
-  } catch (e) {
-    debugPrint('Warning: .env file not found, using fallback values');
-  }
-
+void main() {
   runApp(
       const ProviderScope(
         child: MyApp(),

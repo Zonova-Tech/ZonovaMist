@@ -2,7 +2,7 @@ name: Build Android APK
 
 on:
   push:
-    branches: [ "dev"] 
+    branches: [ "dev", "ci-cd-android" ] 
   workflow_dispatch:     
 
 jobs:
@@ -33,16 +33,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libsecret-1-dev libjsoncpp-dev
 
-      # 4. Create .env file
-      - name: Create .env file
-        run: |
-          echo "API_BASE_URL=${{ secrets.API_BASE_URL }}" > .env
-
-      # 5. Install Dependencies
+      # 4. Install Dependencies
       - name: Install Dependencies
         run: flutter pub get
 
-      # 6. RESTORE KEYSTORE (The Magic Step)
+      # 5. RESTORE KEYSTORE (The Magic Step)
       # We create the files your build.gradle.kts is looking for
       - name: Decode Keystore & Create Properties
         run: |
@@ -65,22 +60,22 @@ jobs:
           echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/key.properties
           echo "storeFile=upload-keystore.jks" >> android/key.properties
 
-      # 6.1 Restore google-services.json
+      # 5.1 Restore google-services.json
       - name: Restore google-services.json
         run: echo '${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}' | base64 --decode > android/app/google-services.json
 
-      # 7. Build the APK
+      # 6. Build the APK
       - name: Build APK
         run: flutter build apk --release
 
-      # 8. Save the APK so you can download it
+      # 7. Save the APK so you can download it
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
 
-      # 9. Upload to Firebase App Distribution
+      # 8. Upload to Firebase App Distribution
       - name: Upload to Firebase App Distribution
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
