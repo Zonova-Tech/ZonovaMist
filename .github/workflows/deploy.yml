@@ -54,7 +54,7 @@ jobs:
         server: ${{ secrets.FTP_SERVER }}
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
-        protocol: ftps
+        protocol: sftp
         local-dir: ./build/web/
         server-dir: ./
         dangerous-clean-slate: false
@@ -62,5 +62,4 @@ jobs:
         exclude: |
           **/.git*
           **/.git*/**
-
-          **/.DS_Store          **/.DS_Store
+          **/.DS_Store
