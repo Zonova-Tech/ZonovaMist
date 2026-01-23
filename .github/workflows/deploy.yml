@@ -62,5 +62,4 @@ jobs:
         exclude: |
           **/.git*
           **/.git*/**
-
-          **/.DS_Store          **/.DS_Store
+          **/.DS_Store
