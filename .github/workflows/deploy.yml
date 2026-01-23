@@ -49,13 +49,18 @@ jobs:
 
     # 9. Deploy to ServerByt via SFTP
     - name: SFTP Deploy
-      uses: AEnterprise/sftp-deploy@v2.2.2
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
         server: ${{ secrets.FTP_SERVER }}
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
-        port: 22
-        local_path: ./build/web/*
-        remote_path: ./
-        sftp_only: true
-        delete_remote_files: false
+        protocol: ftps
+        local-dir: ./build/web/
+        server-dir: ./
+        dangerous-clean-slate: false
+        log-level: verbose
+        exclude: |
+          **/.git*
+          **/.git*/**
+
+          **/.DS_Store          **/.DS_Store
