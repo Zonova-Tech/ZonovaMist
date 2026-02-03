@@ -816,7 +816,7 @@ class _CommonImageManagerState extends ConsumerState<CommonImageManager> {
               foregroundColor: Colors.white,
               icon: const Icon(Icons.badge),
               label: Text('Apply NIC Data${_detectedNICs.length > 1 ? ' (${_detectedNICs.length})' : ''}'),
-              heroTag: 'nic_fab_${widget.entityId}',
+              // No heroTag needed - parent may already be in a Hero widget
             ),
           ),
       ],
