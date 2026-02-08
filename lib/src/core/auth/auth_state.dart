@@ -11,7 +11,13 @@ class AuthLoading extends AuthState {
 
 class Authenticated extends AuthState {
   final String userName;
-  const Authenticated(this.userName);
+  final String role;
+  final List<String> permissions;
+  const Authenticated({
+    required this.userName,
+    required this.role,
+    required this.permissions,
+  });
 }
 
 class Unauthenticated extends AuthState {
@@ -27,7 +33,7 @@ class AuthError extends AuthState {
 extension AuthStateX on AuthState {
   T when<T>({
     required T Function() loading,
-    required T Function(String userName) authenticated,
+    required T Function(String userName, String role, List<String> permissions) authenticated,
     required T Function() unauthenticated,
     required T Function(String message) error,
   }) {
@@ -35,7 +41,8 @@ extension AuthStateX on AuthState {
       return loading();
     }
     if (this is Authenticated) {
-      return authenticated((this as Authenticated).userName);
+      final auth = this as Authenticated;
+      return authenticated(auth.userName, auth.role, auth.permissions);
     }
     if (this is Unauthenticated) {
       return unauthenticated();

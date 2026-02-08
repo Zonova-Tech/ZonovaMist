@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../core/auth/rbac.dart';
 import '../../../core/api/api_service.dart';
+import '../../../shared/widgets/rbac_gate.dart';
 import 'staff_provider.dart';
 
 class AddStaffScreen extends ConsumerStatefulWidget {
@@ -101,20 +103,22 @@ class _AddStaffScreenState extends ConsumerState<AddStaffScreen> {
   Widget build(BuildContext context) {
     final rolesAsync = ref.watch(staffRolesProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add Staff Member'),
-        backgroundColor: const Color(0xFFFACC15), // Yellow
-        foregroundColor: const Color(0xFF333333), // Dark Grey
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+    return RbacGate(
+      permission: AppPermission.staff,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Add Staff Member'),
+          backgroundColor: const Color(0xFFFACC15), // Yellow
+          foregroundColor: const Color(0xFF333333), // Dark Grey
+          elevation: 0,
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
               // Profile Picture Placeholder
               Center(
                 child: Column(
@@ -305,7 +309,8 @@ class _AddStaffScreenState extends ConsumerState<AddStaffScreen> {
                 )
                     : const Text('Add Staff Member', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

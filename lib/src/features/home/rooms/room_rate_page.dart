@@ -1,7 +1,9 @@
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/auth/rbac.dart';
 import '../../../core/api/api_service.dart';
+import '../../../shared/widgets/rbac_gate.dart';
 
 
 class RoomRatePage extends ConsumerStatefulWidget {
@@ -288,19 +290,22 @@ class _RoomRatePageState extends ConsumerState<RoomRatePage> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Room Rate Display"),
-        backgroundColor: Colors.blue,
-        centerTitle: true,
-      ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : rooms.isEmpty
-          ? const Center(child: Text("No rooms found"))
-          : Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: SingleChildScrollView(child: _buildTable(screenWidth)),
+    return RbacGate(
+      permission: AppPermission.roomRates,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("Room Rate Display"),
+          backgroundColor: Colors.blue,
+          centerTitle: true,
+        ),
+        body: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : rooms.isEmpty
+                ? const Center(child: Text("No rooms found"))
+                : Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: SingleChildScrollView(child: _buildTable(screenWidth)),
+                  ),
       ),
     );
   }

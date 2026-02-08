@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:Zonova_Mist/src/core/api/api_service.dart';
+import '../../../core/auth/rbac.dart';
 import '../../../shared/widgets/app_drawer.dart';
+import '../../../shared/widgets/rbac_gate.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -231,23 +233,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
-        backgroundColor: const Color(0xFFFACC15), // Yellow
-        foregroundColor: const Color(0xFF333333), // Dark Grey
-        elevation: 0,
-      ),
-      drawer: const AppDrawer(),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+    return RbacGate(
+      permission: AppPermission.settings,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Settings'),
+          backgroundColor: const Color(0xFFFACC15), // Yellow
+          foregroundColor: const Color(0xFF333333), // Dark Grey
+          elevation: 0,
+        ),
+        drawer: const AppDrawer(),
+        body: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
               _buildCard(
                 title: 'Guest House Information',
                 children: [
@@ -466,9 +470,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-            ],
-          ),
-        ),
+                    ],
+                  ),
+                ),
+              ),
       ),
     );
   }

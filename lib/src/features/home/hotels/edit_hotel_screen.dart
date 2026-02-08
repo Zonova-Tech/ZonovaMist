@@ -1,8 +1,10 @@
 // edit_hotel_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/auth/rbac.dart';
 import '../../../core/api/api_service.dart';
 import '../../../core/auth/hotels_provider.dart';
+import '../../../shared/widgets/rbac_gate.dart';
 
 class EditHotelScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> hotel;
@@ -80,12 +82,14 @@ class _EditHotelScreenState extends ConsumerState<EditHotelScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Edit Hotel')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ListView(
-          children: [
+    return RbacGate(
+      permission: AppPermission.partnerHotels,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Edit Hotel')),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: ListView(
+            children: [
             TextField(
               controller: nameController,
               decoration: const InputDecoration(
@@ -125,7 +129,8 @@ class _EditHotelScreenState extends ConsumerState<EditHotelScreen> {
                 ),
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );

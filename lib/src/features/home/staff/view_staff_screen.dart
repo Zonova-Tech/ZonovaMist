@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../core/auth/rbac.dart';
 import '../../../shared/widgets/common_image_manager.dart';
 import '../../../core/utils/decimal_helper.dart';
 import 'edit_staff_screen.dart';
+import '../../../shared/widgets/rbac_gate.dart';
 
 class ViewStaffScreen extends ConsumerWidget {
   final Map<String, dynamic> staff;
@@ -64,31 +66,33 @@ class ViewStaffScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final staffId = staff['_id'] ?? '';
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Staff Details'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => EditStaffScreen(staff: staff),
-                ),
-              );
-              if (result == true && context.mounted) {
-                Navigator.pop(context, true);
-              }
-            },
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+    return RbacGate(
+      permission: AppPermission.staff,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Staff Details'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => EditStaffScreen(staff: staff),
+                  ),
+                );
+                if (result == true && context.mounted) {
+                  Navigator.pop(context, true);
+                }
+              },
+            ),
+          ],
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             // Profile Section
             Card(
               elevation: 4,
@@ -315,7 +319,8 @@ class ViewStaffScreen extends ConsumerWidget {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildInfoRow(IconData icon, String label, String value) {

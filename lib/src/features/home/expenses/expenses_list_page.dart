@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import '../../../core/auth/rbac.dart';
 import '../../../../services/expense_service.dart';
+import '../../../shared/widgets/rbac_gate.dart';
 import 'add_expense_page.dart';
 import 'edit_expense_page.dart';
 import 'view_expense_page.dart';
@@ -210,7 +212,9 @@ class _ExpensesListPageState extends ConsumerState<ExpensesListPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return RbacGate(
+      permission: AppPermission.expenses,
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Expenses'),
         actions: [
@@ -343,6 +347,7 @@ class _ExpensesListPageState extends ConsumerState<ExpensesListPage> {
       floatingActionButton: FloatingActionButton(
         onPressed: _openAdd,
         child: const Icon(Icons.add),
+      ),
       ),
     );
   }

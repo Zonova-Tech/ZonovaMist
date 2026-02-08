@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import '../../../core/auth/rbac.dart';
 import '../../../core/api/api_service.dart';
 import '../../../shared/widgets/common_image_manager.dart';
+import '../../../shared/widgets/rbac_gate.dart';
 import 'staff_provider.dart';
 import 'add_staff_screen.dart';
 import 'edit_staff_screen.dart';
@@ -56,7 +58,9 @@ class StaffScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final staffAsync = ref.watch(staffProvider);
 
-    return Scaffold(
+    return RbacGate(
+      permission: AppPermission.staff,
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Guest Staff'),
         leading: IconButton(
@@ -280,6 +284,7 @@ class StaffScreen extends ConsumerWidget {
         },
         icon: const Icon(Icons.add),
         label: const Text('Add Staff'),
+      ),
       ),
     );
   }

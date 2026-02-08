@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../core/auth/rbac.dart';
+import '../../shared/widgets/rbac_gate.dart';
 import 'models/todo_model.dart';
 import 'providers/todo_provider.dart';
 
@@ -47,20 +49,22 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
   Widget build(BuildContext context) {
     final usersAsync = ref.watch(usersProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.todo == null ? 'Add Task' : 'Edit Task'),
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Title field (required)
-              TextFormField(
+    return RbacGate(
+      permission: AppPermission.todos,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(widget.todo == null ? 'Add Task' : 'Edit Task'),
+          elevation: 0,
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Title field (required)
+                TextFormField(
                 controller: _titleController,
                 decoration: InputDecoration(
                   labelText: 'Title *',
@@ -295,7 +299,8 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
                   ),
                 ),
               ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/auth/rbac.dart';
 import '../../../core/api/api_service.dart';
+import '../../../shared/widgets/rbac_gate.dart';
 
 class AddRoomScreen extends ConsumerStatefulWidget {
   const AddRoomScreen({super.key});
@@ -51,14 +53,16 @@ class _AddRoomScreenState extends ConsumerState<AddRoomScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Add Room'), backgroundColor: Colors.blueAccent),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
+    return RbacGate(
+      permission: AppPermission.rooms,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Add Room'), backgroundColor: Colors.blueAccent),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              children: [
               TextFormField(
                 controller: _roomNumberController,
                 decoration: const InputDecoration(
@@ -126,7 +130,8 @@ class _AddRoomScreenState extends ConsumerState<AddRoomScreen> {
                   ),
                 ),
               ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

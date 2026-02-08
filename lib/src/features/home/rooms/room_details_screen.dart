@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/auth/rbac.dart';
 import '../../../shared/widgets/common_image_manager.dart';
+import '../../../shared/widgets/rbac_gate.dart';
 import 'edit_room_screen.dart';
 import 'room_rate_page.dart';
 
@@ -20,32 +22,34 @@ class _RoomDetailsScreenState extends ConsumerState<RoomDetailsScreen> {
 
     print('Room Price Per Night: ${widget.room['pricePerNight']}');
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Room Details'),
-        backgroundColor: Colors.blueAccent,
-        elevation: 2,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit, color: Colors.white),
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => EditRoomScreen(room: widget.room),
-                ),
-              );
-              if (result == true && context.mounted) {
-                setState(() {});
-              }
-            },
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ListView(
-          children: [
+    return RbacGate(
+      permission: AppPermission.rooms,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Room Details'),
+          backgroundColor: Colors.blueAccent,
+          elevation: 2,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.edit, color: Colors.white),
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => EditRoomScreen(room: widget.room),
+                  ),
+                );
+                if (result == true && context.mounted) {
+                  setState(() {});
+                }
+              },
+            ),
+          ],
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: ListView(
+            children: [
             Card(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -142,7 +146,8 @@ class _RoomDetailsScreenState extends ConsumerState<RoomDetailsScreen> {
               entityType: 'Room',
               entityId: roomId,
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );

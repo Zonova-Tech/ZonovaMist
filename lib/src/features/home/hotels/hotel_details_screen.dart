@@ -4,7 +4,9 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../../../core/auth/rbac.dart';
 import '../../../core/api/api_service.dart';
+import '../../../shared/widgets/rbac_gate.dart';
 
 class HotelDetailsScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> hotel;
@@ -84,15 +86,17 @@ class _HotelDetailsScreenState extends ConsumerState<HotelDetailsScreen> {
     final hotel = widget.hotel;
     final photos = List<String>.from(hotel['photos'] ?? []);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(hotel['name'] ?? 'Hotel Details'),
-        backgroundColor: Colors.blueAccent,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ListView(
-          children: [
+    return RbacGate(
+      permission: AppPermission.partnerHotels,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(hotel['name'] ?? 'Hotel Details'),
+          backgroundColor: Colors.blueAccent,
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: ListView(
+            children: [
             Card(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               elevation: 4,
@@ -172,7 +176,8 @@ class _HotelDetailsScreenState extends ConsumerState<HotelDetailsScreen> {
                 }
               },
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );

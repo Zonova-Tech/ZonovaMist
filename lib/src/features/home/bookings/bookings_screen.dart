@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import '../../../core/auth/rbac.dart';
 import '../../../core/api/api_service.dart';
 import '../../../shared/widgets/common_image_manager.dart';
+import '../../../shared/widgets/rbac_gate.dart';
 import 'add_booking_screen.dart';
 import 'bookings_provider.dart';
 import 'edit_booking_screen.dart';
@@ -232,27 +234,29 @@ class BookingsScreen extends ConsumerWidget {
     final statusFilter = ref.watch(bookingStatusFilterProvider);
     final searchQuery = ref.watch(bookingSearchProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Bookings'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () => _showSearchDialog(context, ref),
-          ),
-          IconButton(
-            icon: Badge(
-              isLabelVisible: currentFilter != 'upcoming' || statusFilter != 'advance_paid' || searchQuery.isNotEmpty,
-              label: const Text('•'),
-              child: const Icon(Icons.filter_list),
+    return RbacGate(
+      permission: AppPermission.bookings,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Bookings'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () => _showSearchDialog(context, ref),
             ),
-            onPressed: () => _showFilterSheet(context, ref),
-          ),
-        ],
-      ),
-      drawer: const AppDrawer(),
-      body: Column(
-        children: [
+            IconButton(
+              icon: Badge(
+                isLabelVisible: currentFilter != 'upcoming' || statusFilter != 'advance_paid' || searchQuery.isNotEmpty,
+                label: const Text('•'),
+                child: const Icon(Icons.filter_list),
+              ),
+              onPressed: () => _showFilterSheet(context, ref),
+            ),
+          ],
+        ),
+        drawer: const AppDrawer(),
+        body: Column(
+          children: [
           // Active Filter Chips
           if (currentFilter != 'upcoming' || statusFilter != 'advance_paid' || searchQuery.isNotEmpty)
             Container(
@@ -542,20 +546,21 @@ class BookingsScreen extends ConsumerWidget {
               ),
             ),
           ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'add_booking_fab',
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AddBookingScreen()),
-          );
-          if (result == true) {
-            ref.refresh(bookingsProvider);
-          }
-        },
-        child: const Icon(Icons.add),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          heroTag: 'add_booking_fab',
+          onPressed: () async {
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const AddBookingScreen()),
+            );
+            if (result == true) {
+              ref.refresh(bookingsProvider);
+            }
+          },
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }

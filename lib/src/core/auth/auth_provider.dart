@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -22,7 +24,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
       _ref.read(tokenProvider.notifier).state = token;
       
       final userFullName = await _storage.read(key: 'user_full_name');
-      state = Authenticated(userFullName ?? 'User');
+      final role = await _storage.read(key: 'user_role') ?? 'Guest';
+      final permissionsRaw = await _storage.read(key: 'user_permissions');
+      final permissions = _decodePermissions(permissionsRaw);
+      state = Authenticated(
+        userName: userFullName ?? 'User',
+        role: role,
+        permissions: permissions,
+      );
     } else {
       state = const Unauthenticated();
     }
@@ -40,15 +49,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
       print("after call");
       final token = response.data['token'];
       final userFullName = response.data['user']['fullName'];
+      final role = response.data['user']['role'] ?? response.data['role'] ?? 'Guest';
+      final permissions = _extractPermissions(response.data);
 
       // Write to Disk (Slow, Persistent)
       await _storage.write(key: 'jwt_token', value: token);
       await _storage.write(key: 'user_full_name', value: userFullName);
+      await _storage.write(key: 'user_role', value: role.toString());
+      await _storage.write(key: 'user_permissions', value: jsonEncode(permissions));
 
       // 3. UPDATE RAM IMMEDIATELY (Fast, for immediate API calls)
       _ref.read(tokenProvider.notifier).state = token;
 
-      state = Authenticated(userFullName);
+      state = Authenticated(
+        userName: userFullName,
+        role: role.toString(),
+        permissions: permissions,
+      );
     } on DioException catch (e) {
       print("exception $e");
       final message = e.response?.data['message'] ?? 'An unknown error occurred';
@@ -82,6 +99,27 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _ref.read(tokenProvider.notifier).state = null;
     
     state = const Unauthenticated();
+  }
+
+  List<String> _decodePermissions(String? permissionsRaw) {
+    if (permissionsRaw == null || permissionsRaw.isEmpty) {
+      return <String>[];
+    }
+    try {
+      final decoded = jsonDecode(permissionsRaw);
+      if (decoded is List) {
+        return decoded.map((permission) => permission.toString()).toList();
+      }
+    } catch (_) {}
+    return <String>[];
+  }
+
+  List<String> _extractPermissions(Map<String, dynamic> data) {
+    final permissions = data['permissions'] ?? data['user']?['permissions'];
+    if (permissions is List) {
+      return permissions.map((permission) => permission.toString()).toList();
+    }
+    return <String>[];
   }
 }
 

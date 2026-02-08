@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:collection/collection.dart'; // Import the collection package
 
+import 'package:Zonova_Mist/src/core/auth/rbac.dart';
 import 'package:Zonova_Mist/src/features/home/assets/providers/asset_provider.dart';
 import 'package:Zonova_Mist/src/features/home/assets/models/asset_model.dart';
 import 'package:Zonova_Mist/src/features/home/assets/asset_details_screen.dart';
 import 'package:Zonova_Mist/src/features/home/assets/add_asset_screen.dart';
 import 'package:Zonova_Mist/src/features/home/assets/asset_group_screen.dart';
+import 'package:Zonova_Mist/src/shared/widgets/rbac_gate.dart';
 
 class AssetsScreen extends ConsumerWidget {
   const AssetsScreen({super.key});
@@ -16,68 +18,70 @@ class AssetsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final assetsAsyncValue = ref.watch(assetsProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Assets'),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddAssetScreen()),
-          );
-        },
-        child: const Icon(Icons.add),
-      ),
-      body: assetsAsyncValue.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(
-          child: Text(
-            'Failed to load assets.\nPlease try again later.\n\nError: $error',
-            textAlign: TextAlign.center,
-          ),
+    return RbacGate(
+      permission: AppPermission.assets,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Assets'),
         ),
-        data: (assets) {
-          // Calculate the total value and total quantity of all assets
-          final totalValue = assets.fold<double>(0, (sum, item) => sum + (item.purchasePrice * item.quantity));
-          final totalQuantity = assets.fold<int>(0, (sum, item) => sum + item.quantity);
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AddAssetScreen()),
+            );
+          },
+          child: const Icon(Icons.add),
+        ),
+        body: assetsAsyncValue.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stackTrace) => Center(
+            child: Text(
+              'Failed to load assets.\nPlease try again later.\n\nError: $error',
+              textAlign: TextAlign.center,
+            ),
+          ),
+          data: (assets) {
+            // Calculate the total value and total quantity of all assets
+            final totalValue = assets.fold<double>(0, (sum, item) => sum + (item.purchasePrice * item.quantity));
+            final totalQuantity = assets.fold<int>(0, (sum, item) => sum + item.quantity);
 
-          // Group assets by name
-          final groupedAssets = groupBy(assets, (AssetModel asset) => asset.name);
+            // Group assets by name
+            final groupedAssets = groupBy(assets, (AssetModel asset) => asset.name);
 
-          return RefreshIndicator(
-            onRefresh: () => ref.read(assetsProvider.notifier).loadAssets(),
-            child: ListView(
-              padding: const EdgeInsets.all(16.0),
-              children: [
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 2.2,
-                  children: [
-                    _buildStatCard(
-                      title: 'Total Quantity', // <-- Changed from Total Assets
-                      value: totalQuantity.toString(),
-                      icon: Icons.business_center,
-                      color: Colors.blue.shade700,
-                    ),
-                    _buildStatCard(
-                      title: 'Total Value',
-                      value: NumberFormat.currency(locale: 'en_LK', symbol: 'Rs.').format(totalValue),
-                      icon: Icons.account_balance_wallet,
-                      color: Colors.green.shade700,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Asset Groups', // <-- Changed from All Assets
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 12),
+            return RefreshIndicator(
+              onRefresh: () => ref.read(assetsProvider.notifier).loadAssets(),
+              child: ListView(
+                padding: const EdgeInsets.all(16.0),
+                children: [
+                  GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 2.2,
+                    children: [
+                      _buildStatCard(
+                        title: 'Total Quantity', // <-- Changed from Total Assets
+                        value: totalQuantity.toString(),
+                        icon: Icons.business_center,
+                        color: Colors.blue.shade700,
+                      ),
+                      _buildStatCard(
+                        title: 'Total Value',
+                        value: NumberFormat.currency(locale: 'en_LK', symbol: 'Rs.').format(totalValue),
+                        icon: Icons.account_balance_wallet,
+                        color: Colors.green.shade700,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Asset Groups', // <-- Changed from All Assets
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
                 if (assets.isEmpty)
                   const Center(
                     child: Padding(
@@ -87,10 +91,11 @@ class AssetsScreen extends ConsumerWidget {
                   )
                 else
                   _buildGroupedAssetList(context, groupedAssets),
-              ],
-            ),
-          );
-        },
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }

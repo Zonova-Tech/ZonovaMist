@@ -4,8 +4,10 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 import 'reservations_provider.dart';
 import 'package:Zonova_Mist/src/core/api/api_service.dart';
+import '../../../core/auth/rbac.dart';
 import '../../../shared/widgets/app_drawer.dart';
 import '../../../shared/widgets/audio_recordings_widget.dart';
+import '../../../shared/widgets/rbac_gate.dart';
 
 class ReservationsScreen extends ConsumerWidget {
   const ReservationsScreen({super.key});
@@ -166,27 +168,29 @@ class ReservationsScreen extends ConsumerWidget {
     final statusFilter = ref.watch(reservationStatusFilterProvider);
     final searchQuery = ref.watch(reservationSearchProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Reservations"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () => _showSearchDialog(context, ref),
-          ),
-          IconButton(
-            icon: Badge(
-              isLabelVisible: currentFilter != 'upcoming' || statusFilter != 'pending' || searchQuery.isNotEmpty,
-              label: const Text('•'),
-              child: const Icon(Icons.filter_list),
+    return RbacGate(
+      permission: AppPermission.reservations,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("Reservations"),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () => _showSearchDialog(context, ref),
             ),
-            onPressed: () => _showFilterSheet(context, ref),
-          ),
-        ],
-      ),
-      drawer: const AppDrawer(),
-      body: Column(
-        children: [
+            IconButton(
+              icon: Badge(
+                isLabelVisible: currentFilter != 'upcoming' || statusFilter != 'pending' || searchQuery.isNotEmpty,
+                label: const Text('•'),
+                child: const Icon(Icons.filter_list),
+              ),
+              onPressed: () => _showFilterSheet(context, ref),
+            ),
+          ],
+        ),
+        drawer: const AppDrawer(),
+        body: Column(
+          children: [
           // Active Filter Chips
           if (currentFilter != 'upcoming' || statusFilter != 'pending' || searchQuery.isNotEmpty)
             Container(
@@ -435,7 +439,8 @@ class ReservationsScreen extends ConsumerWidget {
               ),
             ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }

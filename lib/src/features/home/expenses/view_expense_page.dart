@@ -2,8 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/auth/rbac.dart';
 import 'edit_expense_page.dart';
 import '../../../../services/expense_service.dart';
+import '../../../shared/widgets/rbac_gate.dart';
 
 class ViewExpensePage extends ConsumerWidget {
   // Expense data to display
@@ -112,7 +114,9 @@ class ViewExpensePage extends ConsumerWidget {
       }
     }
 
-    return Scaffold(
+    return RbacGate(
+      permission: AppPermission.expenses,
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Expense Details'),
         actions: [

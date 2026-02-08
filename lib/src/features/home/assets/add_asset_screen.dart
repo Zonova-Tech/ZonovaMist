@@ -3,8 +3,10 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:intl/intl.dart';
+import 'package:Zonova_Mist/src/core/auth/rbac.dart';
 import 'package:Zonova_Mist/src/features/home/assets/models/asset_model.dart';
 import 'package:Zonova_Mist/src/features/home/assets/providers/asset_provider.dart';
+import 'package:Zonova_Mist/src/shared/widgets/rbac_gate.dart';
 
 class AddAssetScreen extends ConsumerStatefulWidget {
   const AddAssetScreen({super.key});
@@ -61,17 +63,19 @@ class _AddAssetScreenState extends ConsumerState<AddAssetScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add New Asset'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: FormBuilder(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+    return RbacGate(
+      permission: AppPermission.assets,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Add New Asset'),
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: FormBuilder(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
               FormBuilderTextField(
                 name: 'name',
                 decoration: const InputDecoration(labelText: 'Asset Name'),
@@ -135,7 +139,8 @@ class _AddAssetScreenState extends ConsumerState<AddAssetScreen> {
                     ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white,))
                     : const Text('Save Asset'),
               ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
