@@ -95,9 +95,25 @@ final Map<String, Set<AppPermission>> rolePermissions = {
     AppPermission.dashboard,
     AppPermission.expenses,
   },
+
+  /// STAFF ROLE - VIEW-ONLY ACCESS
+  /// IMPORTANT: Staff can see all pages and data, but CANNOT modify anything.
+  /// All create/update/delete operations must be blocked at UI and API level.
+  /// See staff_enforcement.dart for UI guard utilities.
   'staff': {
     AppPermission.dashboard,
+    AppPermission.bookings,
+    AppPermission.reservations,
+    AppPermission.todos,
+    AppPermission.settings,
+    AppPermission.rooms,
+    AppPermission.roomRates,
+    AppPermission.expenses,
+    AppPermission.partnerHotels,
+    AppPermission.staff,
+    AppPermission.assets,
   },
+
   'user': {
     AppPermission.dashboard,
   },
@@ -154,6 +170,19 @@ class Rbac {
   /// Internal helper: check if normalized role is admin (role should already be lowercase).
   static bool _isAdminRole(String normalizedRole) {
     return _adminRoles.contains(normalizedRole);
+  }
+
+  /// Check if a role can perform mutations (create, update, delete).
+  /// Returns false for STAFF (view-only), true for all others.
+  ///
+  /// Usage: Hide/disable mutation UI if !Rbac.canMutate(role)
+  static bool canMutate(String role) {
+    if (role.isEmpty) return false;
+    final normalized = role.toLowerCase();
+    // Staff cannot mutate - view-only access
+    if (normalized == 'staff') return false;
+    // All other roles can mutate
+    return true;
   }
 
   /// Match explicit permissions against required permission (case-insensitive).

@@ -85,9 +85,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       userRole = auth.role;
     }
 
-    // Debug logging: show role and number of visible tabs
+    // Debug logging: show role, tab count, and mutation capability
+    // This helps verify staff always has enough tabs for BottomNavigationBar
+    final canMutate = Rbac.canMutate(userRole);
     developer.log(
-      'HomeScreen build - Role: $userRole, Available tabs: ${availableTabs.length}',
+      'HomeScreen.build() - Role: $userRole, Tabs: ${availableTabs.length}, '
+      'CanMutate: $canMutate',
       name: 'HomeScreen',
     );
 
