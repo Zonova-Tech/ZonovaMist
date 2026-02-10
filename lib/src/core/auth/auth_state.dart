@@ -24,9 +24,14 @@ class Unauthenticated extends AuthState {
   const Unauthenticated();
 }
 
+enum AuthErrorType { network, expiredToken, invalidToken, storage, unknown }
+
 class AuthError extends AuthState {
   final String message;
-  const AuthError(this.message);
+  final AuthErrorType type;
+  final dynamic cause;
+
+  const AuthError(this.message, {this.type = AuthErrorType.unknown, this.cause});
 }
 
 // Using a Freezed-like pattern for convenience
@@ -51,5 +56,18 @@ extension AuthStateX on AuthState {
       return error((this as AuthError).message);
     }
     throw Exception('Unhandled AuthState: $this');
+  }
+}
+
+// Optional helpers for callers that want the typed error
+extension AuthStateErrorHelpers on AuthState {
+  AuthErrorType? get errorType {
+    if (this is AuthError) return (this as AuthError).type;
+    return null;
+  }
+
+  dynamic get errorCause {
+    if (this is AuthError) return (this as AuthError).cause;
+    return null;
   }
 }

@@ -8,6 +8,7 @@ import '../../features/home/expenses/expenses_list_page.dart';
 import './logout_button.dart';
 import '../../features/home/assets/asset_screen.dart';
 import '../../core/auth/auth_provider.dart';
+import '../../core/auth/auth_state.dart';
 import '../../core/auth/rbac.dart';
 
 class AppDrawer extends ConsumerWidget {
@@ -18,16 +19,19 @@ class AppDrawer extends ConsumerWidget {
     final authState = ref.watch(authProvider);
 
     bool hasAccess(AppPermission permission) {
-      return authState.when(
-        loading: () => false,
-        unauthenticated: () => false,
-        error: (_) => false,
-        authenticated: (_, role, permissions) => Rbac.canAccess(
-          role: role,
-          permissions: permissions,
+      // Use runtime type checks because AuthState doesn't provide `when` globally
+      if (authState is AuthLoading) return false;
+      if (authState is Unauthenticated) return false;
+      if (authState is AuthError) return false;
+      if (authState is Authenticated) {
+        final auth = authState as Authenticated;
+        return Rbac.canAccess(
+          role: auth.role,
+          permissions: auth.permissions,
           permission: permission,
-        ),
-      );
+        );
+      }
+      return false;
     }
 
     return Drawer(

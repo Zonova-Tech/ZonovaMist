@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +5,7 @@ import '../../../core/auth/rbac.dart';
 import 'edit_expense_page.dart';
 import '../../../../services/expense_service.dart';
 import '../../../shared/widgets/rbac_gate.dart';
+import '../../../shared/widgets/platform_image_stub.dart';
 
 class ViewExpensePage extends ConsumerWidget {
   // Expense data to display
@@ -107,8 +107,10 @@ class ViewExpensePage extends ConsumerWidget {
     if (imageFiles is List && imageFiles.isNotEmpty) {
       for (var file in imageFiles) {
         try {
-          if (file != null && file.path != null) {
-            imageUrls.add(file.path.toString());
+          // Some items might be XFile or PlatformFile, guard against missing path
+          final path = file?.path ?? file?.toString();
+          if (path != null && path.isNotEmpty) {
+            imageUrls.add(path.toString());
           }
         } catch (_) {}
       }
@@ -117,200 +119,118 @@ class ViewExpensePage extends ConsumerWidget {
     return RbacGate(
       permission: AppPermission.expenses,
       child: Scaffold(
-      appBar: AppBar(
-        title: const Text('Expense Details'),
-        actions: [
-          // Edit button - opens edit page
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () async {
-              final res = await Navigator.push<Map<String, dynamic>>(
-                context,
-                MaterialPageRoute(builder: (_) => EditExpensePage(expense: expense)),
-              );
+        appBar: AppBar(
+          title: const Text('Expense Details'),
+          actions: [
+            // Edit button - opens edit page
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () async {
+                final res = await Navigator.push<Map<String, dynamic>>(
+                  context,
+                  MaterialPageRoute(builder: (_) => EditExpensePage(expense: expense)),
+                );
 
-              // ✅ If data returned, update via API
-              if (res != null && context.mounted) {
-                try {
-                  final expenseService = ref.read(expenseServiceProvider);
-                  final updated = await expenseService.updateExpense(expense['id'], res);
+                // ✅ If data returned, update via API
+                if (res != null && context.mounted) {
+                  try {
+                    final expenseService = ref.read(expenseServiceProvider);
+                    final updated = await expenseService.updateExpense(expense['id'], res);
 
-                  // Show success message
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('✅ Expense updated'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
+                    // Show success message
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('✅ Expense updated'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
 
-                    // Return updated data to ListPage
-                    Navigator.pop(context, {...updated, 'id': updated['_id'] ?? updated['id']});
-                  }
-                } catch (err) {
-                  // Show error message if update fails
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('❌ Update failed: $err'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
+                      // Return updated data to ListPage
+                      Navigator.pop(context, {...updated, 'id': updated['_id'] ?? updated['id']});
+                    }
+                  } catch (err) {
+                    // Show error message if update fails
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('❌ Update failed: $err'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
                   }
                 }
-              }
-            },
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Header Section - Shows expense title and category with visual styling
-            Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: [
-                    // Category icon with colored background
-                    CircleAvatar(
-                      radius: 60,
-                      backgroundColor: _getCategoryColor(category).withOpacity(0.2),
-                      child: Icon(
-                        Icons.receipt_long,
-                        size: 60,
-                        color: _getCategoryColor(category),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Expense title
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    // Category badge with colored border
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _getCategoryColor(category).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
+              },
+            ),
+          ],
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Header Section - Shows expense title and category with visual styling
+              Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      // Category icon with colored background
+                      CircleAvatar(
+                        radius: 60,
+                        backgroundColor: _getCategoryColor(category).withAlpha((0.2 * 255).round()),
+                        child: Icon(
+                          Icons.receipt_long,
+                          size: 60,
                           color: _getCategoryColor(category),
-                          width: 2,
                         ),
                       ),
-                      child: Text(
-                        category,
-                        style: TextStyle(
-                          fontSize: 16,
+                      const SizedBox(height: 16),
+                      // Expense title
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: _getCategoryColor(category),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      // Category badge with colored border
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _getCategoryColor(category).withAlpha((0.1 * 255).round()),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: _getCategoryColor(category),
+                            width: 2,
+                          ),
+                        ),
+                        child: Text(
+                          category,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: _getCategoryColor(category),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            // Details Section - Shows date and description
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Date Section - Icon, label and value
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(Icons.calendar_today, color: Colors.blue.shade700, size: 20),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Date',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Spacer(),
-                        // Display date or fallback message
-                        Flexible(
-                          child: displayDate.isNotEmpty
-                              ? Text(
-                            displayDate,
-                            style: const TextStyle(fontSize: 16),
-                            textAlign: TextAlign.right,
-                          )
-                              : Text(
-                            'No date provided',
-                            style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
-                            textAlign: TextAlign.right,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const Divider(height: 32),
-
-                    // Description Section - Icon, label and value
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(Icons.notes, color: Colors.blue.shade700, size: 20),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Description',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Spacer(),
-                        // Display description or fallback message
-                        Flexible(
-                          child: description.isNotEmpty
-                              ? Text(
-                            description,
-                            style: const TextStyle(fontSize: 16),
-                            textAlign: TextAlign.right,
-                          )
-                              : Text(
-                            'No description provided',
-                            style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
-                            textAlign: TextAlign.right,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Bill & Receipt Images Section - Shows grid of attached images
-            // Only displayed if images are available
-            if (imageUrls.isNotEmpty)
+              // Details Section - Shows date and description
               Card(
                 elevation: 2,
                 shape: RoundedRectangleBorder(
@@ -321,78 +241,162 @@ class ViewExpensePage extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Section header
+                      // Date Section - Icon, label and value
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.receipt_long, color: Colors.blue.shade700),
-                          const SizedBox(width: 5),
+                          Icon(Icons.calendar_today, color: Colors.blue.shade700, size: 20),
+                          const SizedBox(width: 8),
                           const Text(
-                            'Bill & Receipt',
+                            'Date',
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                          const Spacer(),
+                          // Display date or fallback message
+                          Flexible(
+                            child: displayDate.isNotEmpty
+                                ? Text(
+                                    displayDate,
+                                    style: const TextStyle(fontSize: 16),
+                                    textAlign: TextAlign.right,
+                                  )
+                                : Text(
+                                    'No date provided',
+                                    style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
+                                    textAlign: TextAlign.right,
+                                  ),
+                          ),
                         ],
                       ),
-                      const Divider(height: 24),
-                      // Image grid - 3 columns, displays all attached images
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 8,
-                          mainAxisSpacing: 8,
-                          childAspectRatio: 1,
-                        ),
-                        itemCount: imageUrls.length,
-                        itemBuilder: (context, i) {
-                          final url = imageUrls[i];
-                          final isUrl = url.startsWith('http://') || url.startsWith('https://');
 
-                          // Tappable image thumbnail - opens full size view on tap
-                          return GestureDetector(
-                            onTap: () {
-                              // Show full-size image in dialog
-                              showDialog(
-                                context: context,
-                                builder: (_) => Dialog(
-                                  child: (isUrl || kIsWeb)
-                                      ? Image.network(url, fit: BoxFit.contain)
-                                      : Image.file(File(url), fit: BoxFit.contain),
-                                ),
-                              );
-                            },
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              // Display image based on source type (network URL or local file)
-                              child: (isUrl || kIsWeb)
-                                  ? Image.network(
-                                url,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Container(
-                                  color: Colors.grey[300],
-                                  child: const Icon(Icons.broken_image),
-                                ),
-                              )
-                                  : Image.file(
-                                File(url),
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Container(
-                                  color: Colors.grey[300],
-                                  child: const Icon(Icons.broken_image),
-                                ),
-                              ),
+                      const Divider(height: 32),
+
+                      // Description Section - Icon, label and value
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.notes, color: Colors.blue.shade700, size: 20),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Description',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                             ),
-                          );
-                        },
+                          ),
+                          const Spacer(),
+                          // Display description or fallback message
+                          Flexible(
+                            child: description.isNotEmpty
+                                ? Text(
+                                    description,
+                                    style: const TextStyle(fontSize: 16),
+                                    textAlign: TextAlign.right,
+                                  )
+                                : Text(
+                                    'No description provided',
+                                    style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
+                                    textAlign: TextAlign.right,
+                                  ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
               ),
-          ],
+              const SizedBox(height: 16),
+
+              // Bill & Receipt Images Section - Shows grid of attached images
+              // Only displayed if images are available
+              if (imageUrls.isNotEmpty)
+                Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Section header
+                        Row(
+                          children: [
+                            Icon(Icons.receipt_long, color: Colors.blue.shade700),
+                            const SizedBox(width: 5),
+                            const Text(
+                              'Bill & Receipt',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 24),
+                        // Image grid - 3 columns, displays all attached images
+                        GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 8,
+                            mainAxisSpacing: 8,
+                            childAspectRatio: 1,
+                          ),
+                          itemCount: imageUrls.length,
+                          itemBuilder: (context, i) {
+                            final url = imageUrls[i];
+                            final isUrl = url.startsWith('http://') || url.startsWith('https://');
+
+                            // Tappable image thumbnail - opens full size view on tap
+                            return GestureDetector(
+                              onTap: () {
+                                // Show full-size image in dialog
+                                showDialog(
+                                  context: context,
+                                  builder: (_) => Dialog(
+                                    child: (isUrl || kIsWeb)
+                                        ? Image.network(url, fit: BoxFit.contain)
+                                        : platformImage(url, isNetwork: false, fit: BoxFit.contain),
+                                  ),
+                                );
+                              },
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                // Display image based on source type (network URL or local file)
+                                child: (isUrl || kIsWeb)
+                                    ? Image.network(
+                                        url,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) => Container(
+                                          color: Colors.grey[300],
+                                          child: const Icon(Icons.broken_image),
+                                        ),
+                                      )
+                                    : platformImage(
+                                        url,
+                                        isNetwork: false,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) => Container(
+                                          color: Colors.grey[300],
+                                          child: const Icon(Icons.broken_image),
+                                        ),
+                                      ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

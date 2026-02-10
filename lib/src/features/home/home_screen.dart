@@ -7,8 +7,10 @@ import 'bookings/add_booking_screen.dart';
 import 'dashboard/dashboard_screen.dart';
 import '../todos/todos_screen.dart';
 import '../../core/auth/auth_provider.dart';
+import '../../core/auth/auth_state.dart';
 import '../../core/auth/rbac.dart';
 import '../../shared/widgets/access_denied_screen.dart';
+import 'dart:developer' as developer;
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -54,6 +56,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
     ];
 
+    // Filter tabs based on role and permissions
     return allTabs
         .where(
           (tab) => Rbac.canAccess(
@@ -75,7 +78,66 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       authenticated: (_, role, permissions) => _buildTabs(role, permissions),
     );
 
+    // Extract role for debug logging
+    String userRole = 'unknown';
+    if (authState is Authenticated) {
+      final auth = authState;
+      userRole = auth.role;
+    }
+
+    // Debug logging: show role and number of visible tabs
+    developer.log(
+      'HomeScreen build - Role: $userRole, Available tabs: ${availableTabs.length}',
+      name: 'HomeScreen',
+    );
+
     if (availableTabs.isEmpty) {
+      // Check if user is admin - they should always have access to dashboard
+      if (authState is Authenticated) {
+        final auth = authState;
+        if (Rbac.isAdmin(auth.role)) {
+          developer.log(
+            'Admin with no tabs - showing fallback dashboard',
+            name: 'HomeScreen',
+          );
+          // Admin has no tabs available - this is a system issue, not a permission issue.
+          // Show a fallback dashboard or redirect to home.
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Dashboard'),
+            ),
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.dashboard,
+                      size: 64,
+                      color: Colors.blue,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Welcome',
+                      style: Theme.of(context).textTheme.titleLarge,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'No dashboard features available at the moment.',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+      }
+
+      // Non-admin user has no available pages
       return const AccessDeniedScreen(
         message: 'No pages are available for your role.',
         showBackButton: false,
@@ -83,6 +145,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
 
     final safeIndex = _selectedIndex.clamp(0, availableTabs.length - 1);
+
+    // BottomNavigationBar requires minimum 2 items (Flutter assertion).
+    // If user has fewer than 2 tabs, render without bottom navigation bar.
+    // This typically occurs for 'staff' and 'user' roles with minimal permissions.
+    final hasMultipleTabs = availableTabs.length >= 2;
+
+    if (!hasMultipleTabs) {
+      developer.log(
+        'Single tab only (${availableTabs.length}) - rendering without BottomNavigationBar. '
+        'This is normal for roles like "staff" and "user" with minimal permissions.',
+        name: 'HomeScreen',
+      );
+
+      // Single-tab fallback: render without bottom navigation
+      return Scaffold(
+        body: availableTabs[safeIndex].page,
+        floatingActionButton: availableTabs[safeIndex].permission == AppPermission.bookings
+            ? FloatingActionButton(
+          onPressed: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const AddBookingScreen()),
+            );
+          },
+          child: const Icon(Icons.add),
+        )
+            : null,
+      );
+    }
+
+    // Multi-tab layout: render with BottomNavigationBar
+    developer.log(
+      'Rendering BottomNavigationBar with ${availableTabs.length} tabs',
+      name: 'HomeScreen',
+    );
 
     return Scaffold(
       body: availableTabs[safeIndex].page,
