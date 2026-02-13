@@ -3,8 +3,10 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:intl/intl.dart';
+import 'package:Zonova_Mist/src/core/auth/rbac.dart';
 import 'package:Zonova_Mist/src/features/home/assets/models/asset_model.dart';
 import 'package:Zonova_Mist/src/features/home/assets/providers/asset_provider.dart';
+import 'package:Zonova_Mist/src/shared/widgets/rbac_gate.dart';
 
 class EditAssetScreen extends ConsumerStatefulWidget {
   final AssetModel asset;
@@ -112,25 +114,27 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
       'warrantyDetails': widget.asset.warrantyDetails,
     };
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit Asset'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.red),
-            onPressed: _deleteAsset,
-            tooltip: 'Delete Asset',
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: FormBuilder(
-          key: _formKey,
-          initialValue: initialFormValues, // <-- The fix is here
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+    return RbacGate(
+      permission: AppPermission.assets,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Edit Asset'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              onPressed: _deleteAsset,
+              tooltip: 'Delete Asset',
+            ),
+          ],
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: FormBuilder(
+            key: _formKey,
+            initialValue: initialFormValues, // <-- The fix is here
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
               FormBuilderTextField(name: 'name', decoration: const InputDecoration(labelText: 'Asset Name'), validator: FormBuilderValidators.required()),
               const SizedBox(height: 16),
               FormBuilderDropdown(name: 'category', decoration: const InputDecoration(labelText: 'Category'), items: ['Furniture', 'Electronics', 'Appliances', 'Linens', 'Other'].map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(), validator: FormBuilderValidators.required()),
@@ -153,7 +157,8 @@ class _EditAssetScreenState extends ConsumerState<EditAssetScreen> {
                 onPressed: _isSaving ? null : _submitForm,
                 child: _isSaving ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white,)) : const Text('Save Changes'),
               ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
+import 'package:Zonova_Mist/src/core/auth/rbac.dart';
 import 'package:Zonova_Mist/src/features/home/assets/models/asset_model.dart';
 import 'package:Zonova_Mist/src/features/home/assets/asset_details_screen.dart';
 import 'package:Zonova_Mist/src/features/home/assets/providers/asset_provider.dart';
+import 'package:Zonova_Mist/src/shared/widgets/rbac_gate.dart';
 
 class AssetGroupScreen extends ConsumerWidget { // Changed to ConsumerWidget
   final String groupName;
@@ -37,7 +39,9 @@ class AssetGroupScreen extends ConsumerWidget { // Changed to ConsumerWidget
       });
     }
 
-    return Scaffold(
+    return RbacGate(
+      permission: AppPermission.assets,
+      child: Scaffold(
       appBar: AppBar(
         title: Text(groupName),
       ),
@@ -110,7 +114,7 @@ class AssetGroupScreen extends ConsumerWidget { // Changed to ConsumerWidget
           );
         },
       ),
+      ),
     );
   }
 }
-

@@ -69,7 +69,7 @@ class RegisterScreen extends ConsumerWidget {
                     final authState = ref.watch(authProvider);
                     final isLoading = authState.when(
                       loading: () => true,
-                      authenticated: (_) => false,
+                      authenticated: (_, __, ___) => false,
                       unauthenticated: () => false,
                       error: (_) => false,
                     );

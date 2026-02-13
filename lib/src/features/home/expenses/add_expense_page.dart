@@ -3,6 +3,8 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:Zonova_Mist/enums/expense_category.dart';
+import '../../../core/auth/rbac.dart';
+import '../../../shared/widgets/rbac_gate.dart';
 
 
 class AddExpensePage extends StatefulWidget {
@@ -132,15 +134,17 @@ class _AddExpensePageState extends State<AddExpensePage> {
         .map((e) => e.displayName)
         .toList();
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Add Expense')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+    return RbacGate(
+      permission: AppPermission.expenses,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Add Expense')),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
               // Category dropdown field
               DropdownButtonFormField<String>(
                 value: _category,
@@ -370,7 +374,8 @@ class _AddExpensePageState extends State<AddExpensePage> {
                 )
                     : const Text('Add Expense'),
               ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

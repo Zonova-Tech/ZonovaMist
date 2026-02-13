@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/auth/rbac.dart';
 import '../../../core/api/api_service.dart';
 import '../../../core/auth/rooms_provider.dart';
+import '../../../shared/widgets/rbac_gate.dart';
 
 class EditRoomScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> room;
@@ -100,12 +102,14 @@ class _EditRoomScreenState extends ConsumerState<EditRoomScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Edit Room')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ListView(
-          children: [
+    return RbacGate(
+      permission: AppPermission.rooms,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Edit Room')),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: ListView(
+            children: [
             TextField(
               controller: roomNumberController,
               decoration: const InputDecoration(
@@ -166,7 +170,8 @@ class _EditRoomScreenState extends ConsumerState<EditRoomScreen> {
                 child: const Text('Save Changes', style: TextStyle(fontSize: 16)),
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );

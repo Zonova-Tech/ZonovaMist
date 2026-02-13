@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/auth/rbac.dart';
 import '../../../core/api/api_service.dart';
+import '../../../shared/widgets/rbac_gate.dart';
 
 class InvoiceFormScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> booking;
@@ -103,18 +105,20 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Generate Invoice'),
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+    return RbacGate(
+      permission: AppPermission.bookings,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Generate Invoice'),
+          elevation: 0,
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               // Guest Info Card
               Card(
                 color: Colors.blue.shade50,
@@ -312,7 +316,8 @@ class _InvoiceFormScreenState extends ConsumerState<InvoiceFormScreen> {
                   textAlign: TextAlign.center,
                 ),
               ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

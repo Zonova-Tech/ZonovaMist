@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image_picker/image_picker.dart';
+import '../../../core/auth/rbac.dart';
+import '../../../shared/widgets/rbac_gate.dart';
 
 /// Edit Expense Page - Allows users to modify existing expense entries
 /// Users can update expense details and manage attached images
@@ -308,15 +310,17 @@ class _EditExpensePageState extends State<EditExpensePage> {
     final expenseId = widget.expense['id'] ?? widget.expense['_id'] ?? '';
     final hasImages = _existing.isNotEmpty || _newPicked.isNotEmpty;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Edit Expense')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+    return RbacGate(
+      permission: AppPermission.expenses,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Edit Expense')),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
               // Category dropdown field
               DropdownButtonFormField<String>(
                 value: categories.contains(_category) ? _category : null,
@@ -574,7 +578,8 @@ class _EditExpensePageState extends State<EditExpensePage> {
                 ),
                 child: const Text('Update Expense'),
               ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

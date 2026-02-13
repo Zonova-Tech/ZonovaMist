@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/home/staff/staff_screen.dart';
 import '../../features/home/rooms/rooms_screen.dart';
 import '../../features/home/rooms/room_rate_page.dart';
@@ -6,12 +7,33 @@ import '../../features/home/hotels/partner_hotels_screen.dart';
 import '../../features/home/expenses/expenses_list_page.dart';
 import './logout_button.dart';
 import '../../features/home/assets/asset_screen.dart';
+import '../../core/auth/auth_provider.dart';
+import '../../core/auth/auth_state.dart';
+import '../../core/auth/rbac.dart';
 
-class AppDrawer extends StatelessWidget {
+class AppDrawer extends ConsumerWidget {
   const AppDrawer({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authProvider);
+
+    bool hasAccess(AppPermission permission) {
+      // Use runtime type checks because AuthState doesn't provide `when` globally
+      if (authState is AuthLoading) return false;
+      if (authState is Unauthenticated) return false;
+      if (authState is AuthError) return false;
+      if (authState is Authenticated) {
+        final auth = authState as Authenticated;
+        return Rbac.canAccess(
+          role: auth.role,
+          permissions: auth.permissions,
+          permission: permission,
+        );
+      }
+      return false;
+    }
+
     return Drawer(
       child: Container(
         color: Colors.white,
@@ -96,140 +118,152 @@ class AppDrawer extends StatelessWidget {
                   ),
 
                   // Rooms Menu Item
-                  ListTile(
-                    leading: Icon(Icons.meeting_room, color: Colors.blue.shade700),
-                    title: const Text(
-                      'Rooms',
-                      style: TextStyle(fontWeight: FontWeight.w500),
+                  if (hasAccess(AppPermission.rooms)) ...[
+                    ListTile(
+                      leading: Icon(Icons.meeting_room, color: Colors.blue.shade700),
+                      title: const Text(
+                        'Rooms',
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      subtitle: const Text(
+                        'Manage rooms',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const RoomsScreen(showBackButton: true),
+                          ),
+                        );
+                      },
                     ),
-                    subtitle: const Text(
-                      'Manage rooms',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const RoomsScreen(showBackButton: true),
-                        ),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
+                    const Divider(height: 1),
+                  ],
 
-                  ListTile(
-                    leading: Icon(Icons.attach_money, color: Colors.blue.shade700),
-                    title: const Text(
-                      'Room Rates',
-                      style: TextStyle(fontWeight: FontWeight.w500),
+                  if (hasAccess(AppPermission.roomRates)) ...[
+                    ListTile(
+                      leading: Icon(Icons.attach_money, color: Colors.blue.shade700),
+                      title: const Text(
+                        'Room Rates',
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      subtitle: const Text(
+                        'Manage room rates',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const RoomRatePage(),
+                          ),
+                        );
+                      },
                     ),
-                    subtitle: const Text(
-                      'Manage room rates',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const RoomRatePage(),
-                        ),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
+                    const Divider(height: 1),
+                  ],
 
                   // Expenses Menu Item
-                  ListTile(
-                    leading: Icon(Icons.receipt_long, color: Colors.blue.shade700),
-                    title: const Text(
-                      'Expenses',
-                      style: TextStyle(fontWeight: FontWeight.w500),
+                  if (hasAccess(AppPermission.expenses)) ...[
+                    ListTile(
+                      leading: Icon(Icons.receipt_long, color: Colors.blue.shade700),
+                      title: const Text(
+                        'Expenses',
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      subtitle: const Text(
+                        'View expenses',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ExpensesListPage(),
+                          ),
+                        );
+                      },
                     ),
-                    subtitle: const Text(
-                      'View expenses',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ExpensesListPage(),
-                        ),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
+                    const Divider(height: 1),
+                  ],
 
-                  ListTile(
-                    leading: Icon(Icons.hotel, color: Colors.blue.shade700),
-                    title: const Text(
-                      'Partner Hotels',
-                      style: TextStyle(fontWeight: FontWeight.w500),
+                  if (hasAccess(AppPermission.partnerHotels)) ...[
+                    ListTile(
+                      leading: Icon(Icons.hotel, color: Colors.blue.shade700),
+                      title: const Text(
+                        'Partner Hotels',
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      subtitle: const Text(
+                        'Manage partner hotels',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const PartnerHotelsScreen(),
+                          ),
+                        );
+                      },
                     ),
-                    subtitle: const Text(
-                      'Manage partner hotels',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const PartnerHotelsScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
+                    const Divider(height: 1),
+                  ],
 
                   // Staff Menu Item
-                  ListTile(
-                    leading: Icon(Icons.people, color: Colors.blue.shade700),
-                    title: const Text(
-                      'Guest Staff',
-                      style: TextStyle(fontWeight: FontWeight.w500),
+                  if (hasAccess(AppPermission.staff)) ...[
+                    ListTile(
+                      leading: Icon(Icons.people, color: Colors.blue.shade700),
+                      title: const Text(
+                        'Guest Staff',
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      subtitle: const Text(
+                        'Manage staff members',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const StaffScreen(),
+                          ),
+                        );
+                      },
                     ),
-                    subtitle: const Text(
-                      'Manage staff members',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const StaffScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
+                    const Divider(height: 1),
+                  ],
 
                   // Assets Menu Item
-                  ListTile(
-                    leading: Icon(Icons.business_center, color: Colors.blue.shade700),
-                    title: const Text(
-                      'Assets',
-                      style: TextStyle(fontWeight: FontWeight.w500),
+                  if (hasAccess(AppPermission.assets)) ...[
+                    ListTile(
+                      leading: Icon(Icons.business_center, color: Colors.blue.shade700),
+                      title: const Text(
+                        'Assets',
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      subtitle: const Text(
+                        'Manage assets',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AssetsScreen(),
+                          ),
+                        );
+                      },
                     ),
-                    subtitle: const Text(
-                      'Manage assets',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AssetsScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
+                    const Divider(height: 1),
+                  ],
 
                   // About Menu Item
                   ListTile(

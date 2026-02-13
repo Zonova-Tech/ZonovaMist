@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/auth/rbac.dart';
 import '../../../core/api/api_service.dart';
 import '../../../shared/widgets/room_selector_widget.dart';
 import '../../../shared/widgets/common_image_manager.dart';
+import '../../../shared/widgets/rbac_gate.dart';
 import '../../../shared/models/nic_data.dart';
 import 'package:intl/intl.dart';
 
@@ -458,46 +460,48 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add Booking'),
-        elevation: 0,
-        actions: [
-          if (_nicDataApplied)
-            Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade100,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.verified, size: 16, color: Colors.green.shade700),
-                      const SizedBox(width: 4),
-                      Text(
-                        'NIC Applied',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.green.shade700,
-                          fontWeight: FontWeight.w600,
+    return RbacGate(
+      permission: AppPermission.bookings,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Add Booking'),
+          elevation: 0,
+          actions: [
+            if (_nicDataApplied)
+              Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.verified, size: 16, color: Colors.green.shade700),
+                        const SizedBox(width: 4),
+                        Text(
+                          'NIC Applied',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.green.shade700,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-        ],
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
+          ],
+        ),
+        body: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
             _buildCard(
               title: "Guest Information",
               children: [
@@ -716,6 +720,7 @@ class _AddBookingScreenState extends ConsumerState<AddBookingScreen> {
             ),
             const SizedBox(height: 24),
           ],
+          ),
         ),
       ),
     );
