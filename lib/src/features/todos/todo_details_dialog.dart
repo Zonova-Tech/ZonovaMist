@@ -76,6 +76,22 @@ class TodoDetailsDialog extends StatelessWidget {
                 _getStatusColor(todo.status),
               ),
 
+              if (todo.rating != null)
+                _buildDetailRow(
+                  'Rating',
+                  '${todo.rating!.toStringAsFixed(1)} / 5',
+                  Icons.star,
+                  Colors.amber,
+                ),
+
+              if (todo.ratingComment != null && todo.ratingComment!.isNotEmpty)
+                _buildDetailRow(
+                  'Review Comment',
+                  todo.ratingComment!,
+                  Icons.rate_review,
+                  Colors.blueGrey,
+                ),
+
               // Assigned To
               if (todo.assignedToName != null)
                 _buildDetailRow(

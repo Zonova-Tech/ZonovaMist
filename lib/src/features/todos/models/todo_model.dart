@@ -15,6 +15,9 @@ class Todo {
   final List<TodoImage> images;
   final DateTime? completedAt;
   final DateTime? approvedAt;
+  final double? rating;
+  final String? ratingComment;
+  final DateTime? ratedAt;
   final bool deleted;
 
   Todo({
@@ -34,6 +37,9 @@ class Todo {
     this.images = const [],
     this.completedAt,
     this.approvedAt,
+    this.rating,
+    this.ratingComment,
+    this.ratedAt,
     this.deleted = false,
   });
 
@@ -73,6 +79,16 @@ class Todo {
       approvedAt: json['approvedAt'] != null
           ? DateTime.parse(json['approvedAt'])
           : null,
+      rating: json['rating'] is num
+          ? (json['rating'] as num).toDouble()
+          : null,
+      ratingComment: json['ratingComment'] != null &&
+          json['ratingComment'].toString().trim().isNotEmpty
+          ? json['ratingComment'].toString()
+          : null,
+      ratedAt: json['ratedAt'] != null
+          ? DateTime.parse(json['ratedAt'])
+          : null,
       deleted: json['deleted'] ?? false,
     );
   }
@@ -106,6 +122,9 @@ class Todo {
     List<TodoImage>? images,
     DateTime? completedAt,
     DateTime? approvedAt,
+    double? rating,
+    String? ratingComment,
+    DateTime? ratedAt,
     bool? deleted,
   }) {
     return Todo(
@@ -125,6 +144,9 @@ class Todo {
       images: images ?? this.images,
       completedAt: completedAt ?? this.completedAt,
       approvedAt: approvedAt ?? this.approvedAt,
+      rating: rating ?? this.rating,
+      ratingComment: ratingComment ?? this.ratingComment,
+      ratedAt: ratedAt ?? this.ratedAt,
       deleted: deleted ?? this.deleted,
     );
   }

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'dart:io' show File;
 import 'providers/todo_provider.dart';
 import 'models/todo_model.dart';
 import 'todo_details_dialog.dart';
@@ -20,23 +21,26 @@ class _MyTodosViewState extends ConsumerState<MyTodosView> {
   bool _sortAscending = false; // false = desc, true = asc
   String _filterStatus = 'All';
   String _filterPriority = 'All';
+  bool _isUploading = false; // Track global upload state
 
   @override
   Widget build(BuildContext context) {
     final todoState = ref.watch(myTodoProvider);
 
-    return Column(
+    return Stack(
       children: [
-        // Filter and Sort Section
-        _buildControlSection(),
-
-        // Todo Grid
-        Expanded(
-          child: todoState.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : todoState.error != null
-              ? _buildErrorWidget(todoState.error!)
-              : _buildTodoGrid(todoState.todos),
+        Column(
+          children: [
+            _buildControlSection(),
+            if (_isUploading) const LinearProgressIndicator(backgroundColor: Colors.transparent),
+            Expanded(
+              child: todoState.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : todoState.error != null
+                  ? _buildErrorWidget(todoState.error!)
+                  : _buildTodoGrid(todoState.todos),
+            ),
+          ],
         ),
       ],
     );
@@ -172,14 +176,25 @@ class _MyTodosViewState extends ConsumerState<MyTodosView> {
     });
 
     if (filteredTodos.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.assignment_outlined, size: 80, color: Colors.grey.shade300),
-            const SizedBox(height: 16),
-            Text('No todos assigned', style: TextStyle(fontSize: 18, color: Colors.grey.shade600)),
-          ],
+      return RefreshIndicator(
+        onRefresh: () => ref.read(myTodoProvider.notifier).fetchMyTodos(),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height * 0.6,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.assignment_outlined, size: 80, color: Colors.grey.shade300),
+                  const SizedBox(height: 16),
+                  Text('No tasks assigned to you', style: TextStyle(fontSize: 18, color: Colors.grey.shade600)),
+                  const SizedBox(height: 8),
+                  const Text('Only tasks assigned to your user ID appear here.', style: TextStyle(fontSize: 14, color: Colors.grey)),
+                ],
+              ),
+            ),
+          ),
         ),
       );
     }
@@ -190,7 +205,7 @@ class _MyTodosViewState extends ConsumerState<MyTodosView> {
         padding: const EdgeInsets.all(12),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          childAspectRatio: 0.75,
+          childAspectRatio: 0.65,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
         ),
@@ -216,143 +231,151 @@ class _MyTodosViewState extends ConsumerState<MyTodosView> {
       },
       child: Card(
         elevation: 3,
+        clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: BorderSide(color: borderColor, width: 2),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Status badge
-              _buildStatusBadge(todo.status),
-              const SizedBox(height: 8),
-
-              // Title
-              Text(
-                todo.title,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // --- TASK IMAGE (IF COMPLETED) ---
+            if (todo.images.isNotEmpty)
+              GestureDetector(
+                onTap: todo.status == 'Completed' ? () {} : null,
+                behavior: HitTestBehavior.opaque,
+                child: Image.network(
+                  todo.images.first.url,
+                  height: 100,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    height: 100,
+                    color: Colors.grey.shade200,
+                    child: const Icon(Icons.broken_image, color: Colors.grey),
+                  ),
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              )
+            else
+              GestureDetector(
+                onTap: todo.status == 'Completed' ? () {} : null,
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  height: 100,
+                  width: double.infinity,
+                  color: Colors.grey.shade50,
+                  child: Icon(Icons.assignment, color: Colors.grey.shade300, size: 40),
+                ),
               ),
-              const SizedBox(height: 6),
-
-              // Description
-              if (todo.description.isNotEmpty)
-                Text(
-                  todo.description,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade700,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-
-              const Spacer(),
-
-              // Due date
-              Row(
+            
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.calendar_today,
-                    size: 14,
-                    color: isOverdue ? Colors.red : Colors.grey,
-                  ),
-                  const SizedBox(width: 4),
+                  _buildStatusBadge(todo.status),
+                  const SizedBox(height: 8),
                   Text(
-                    DateFormat('MMM dd').format(todo.dueDate),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: isOverdue ? Colors.red : Colors.grey.shade700,
-                      fontWeight: isOverdue ? FontWeight.bold : FontWeight.normal,
+                    todo.title,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today, size: 12, color: isOverdue ? Colors.red : Colors.grey),
+                      const SizedBox(width: 4),
+                      Text(
+                        DateFormat('MMM dd').format(todo.dueDate),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isOverdue ? Colors.red : Colors.grey.shade700,
+                          fontWeight: isOverdue ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: _getPriorityColor(todo.priority).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      todo.priority,
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _getPriorityColor(todo.priority)),
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              // Priority badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                decoration: BoxDecoration(
-                  color: _getPriorityColor(todo.priority).withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: _getPriorityColor(todo.priority).withOpacity(0.5),
-                  ),
-                ),
-                child: Text(
-                  todo.priority,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: _getPriorityColor(todo.priority),
-                  ),
-                ),
-              ),
-
-              // Done button
-              if (todo.status == 'New') ...[
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => _completeTodo(todo),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                  if (todo.status == 'Approved' && todo.rating != null) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.star, size: 14, color: Colors.amber),
+                        const SizedBox(width: 4),
+                        Text(
+                          todo.rating!.toStringAsFixed(1),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.amber,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (todo.status == 'Approved' &&
+                      todo.ratingComment != null &&
+                      todo.ratingComment!.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      'Review: ${todo.ratingComment!}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.blueGrey.shade700,
+                        fontStyle: FontStyle.italic,
                       ),
                     ),
-                    child: const Text('Done', style: TextStyle(fontSize: 12)),
-                  ),
-                ),
-              ],
-            ],
-          ),
+                  ],
+                  if (todo.status == 'New') ...[
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _isUploading ? null : () => _completeTodo(todo),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          minimumSize: const Size(0, 30),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: const Text('Done', style: TextStyle(fontSize: 11)),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildStatusBadge(String status) {
-    Color color;
-    IconData icon;
-
-    switch (status) {
-      case 'Completed':
-        color = Colors.green;
-        icon = Icons.check_circle;
-        break;
-      case 'Approved':
-        color = Colors.blue;
-        icon = Icons.verified;
-        break;
-      default:
-        color = Colors.orange;
-        icon = Icons.fiber_new;
-    }
+    Color color = status == 'Completed' ? Colors.green : (status == 'Approved' ? Colors.blue : Colors.orange);
+    IconData icon = status == 'Completed' ? Icons.check_circle : (status == 'Approved' ? Icons.verified : Icons.fiber_new);
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: color),
+        Icon(icon, size: 12, color: color),
         const SizedBox(width: 4),
-        Text(
-          status,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
+        Text(status, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color)),
       ],
     );
   }
@@ -361,35 +384,19 @@ class _MyTodosViewState extends ConsumerState<MyTodosView> {
     if (isOverdue && status == 'New') return Colors.red;
     if (status == 'Completed') return Colors.green;
     if (status == 'Approved') return Colors.blue;
-
-    switch (priority) {
-      case 'High':
-        return Colors.orange;
-      case 'Medium':
-        return Colors.yellow.shade700;
-      case 'Low':
-        return Colors.grey;
-      default:
-        return Colors.grey;
-    }
+    return _getPriorityColor(priority).withOpacity(0.5);
   }
 
   Color _getPriorityColor(String priority) {
     switch (priority) {
-      case 'High':
-        return Colors.red;
-      case 'Low':
-        return Colors.green;
-      default:
-        return Colors.orange;
+      case 'High': return Colors.red;
+      case 'Low': return Colors.green;
+      default: return Colors.orange;
     }
   }
 
   void _showTodoDetails(Todo todo) {
-    showDialog(
-      context: context,
-      builder: (context) => TodoDetailsDialog(todo: todo),
-    );
+    showDialog(context: context, builder: (context) => TodoDetailsDialog(todo: todo));
   }
 
   void _showApproveRejectDialog(Todo todo) {
@@ -398,15 +405,15 @@ class _MyTodosViewState extends ConsumerState<MyTodosView> {
       barrierDismissible: false,
       builder: (context) => ApproveRejectDialog(
         todo: todo,
-        onApprove: () async {
+        onApprove: (rating, comment) async {
           Navigator.pop(context);
-          await ref.read(todoProvider.notifier).approveTodo(todo.id);
-          ref.read(myTodoProvider.notifier).fetchMyTodos();
+          final success = await ref.read(todoProvider.notifier).approveTodo(todo.id, rating, comment);
+          if (success) ref.read(myTodoProvider.notifier).fetchMyTodos();
         },
         onReject: () async {
           Navigator.pop(context);
-          await ref.read(todoProvider.notifier).rejectTodo(todo.id);
-          ref.read(myTodoProvider.notifier).fetchMyTodos();
+          final success = await ref.read(todoProvider.notifier).rejectTodo(todo.id);
+          if (success) ref.read(myTodoProvider.notifier).fetchMyTodos();
         },
       ),
     );
@@ -414,157 +421,82 @@ class _MyTodosViewState extends ConsumerState<MyTodosView> {
 
   Future<void> _completeTodo(Todo todo) async {
     final ImagePicker picker = ImagePicker();
-    List<String> imagePaths = [];
+    List<XFile> imageFiles = [];
 
-    bool keepTakingPhotos = true;
-
-    while (keepTakingPhotos) {
-      try {
-        // Take photo
-        final XFile? photo = await picker.pickImage(
-          source: ImageSource.camera,
+    // Prompt user to pick MULTIPLE images (efficient)
+    try {
+      final List<XFile>? picked = await picker.pickMultiImage(imageQuality: 80);
+      
+      if (picked == null || picked.isEmpty) {
+        // Fallback to single picker if multi-picker is canceled or empty
+        final XFile? single = await picker.pickImage(
+          source: kIsWeb ? ImageSource.gallery : ImageSource.camera,
           imageQuality: 80,
         );
-
-        if (photo != null) {
-          imagePaths.add(photo.path);
-
-          if (!mounted) break;
-
-          // Show preview and ask if user wants more photos
-          final result = await showDialog<String>(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) => AlertDialog(
-              title: const Text('Photo Captured'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.file(
-                      File(photo.path),
-                      height: 200,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    '${imagePaths.length} photo(s) captured',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, 'done'),
-                  child: const Text('Done'),
-                ),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context, 'more'),
-                  child: const Text('Take More'),
-                ),
-              ],
-            ),
-          );
-
-          if (result != 'more') {
-            keepTakingPhotos = false;
-          }
-        } else {
-          // User cancelled camera
-          keepTakingPhotos = false;
-
-          // If no photos taken, just return
-          if (imagePaths.isEmpty) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('No photos captured. Task not completed.'),
-                  backgroundColor: Colors.orange,
-                ),
-              );
-            }
-            return;
-          }
-        }
-      } catch (e) {
-        print('Error taking photo: $e');
-        keepTakingPhotos = false;
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error taking photo: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+        if (single != null) picked?.add(single);
       }
+
+      if (picked != null && picked.isNotEmpty) {
+        imageFiles.addAll(picked);
+      } else {
+        return; // User canceled
+      }
+    } catch (e) {
+      print('Picker error: $e');
     }
 
-    // Upload photos if any were taken
-    if (imagePaths.isNotEmpty) {
-      if (!mounted) return;
+    if (imageFiles.isEmpty) return;
 
-      // Show loading dialog
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const AlertDialog(
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Uploading photos...'),
-            ],
-          ),
+    setState(() => _isUploading = true);
+
+    // Show persistent loading indicator dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Processing & Uploading photos...', textAlign: TextAlign.center),
+          ],
         ),
-      );
+      ),
+    );
 
-      try {
-        final success = await ref
-            .read(myTodoProvider.notifier)
-            .completeTodo(todo.id, imagePaths);
+    try {
+      final success = await ref.read(myTodoProvider.notifier).completeTodoWithXFiles(todo.id, imageFiles);
+      
+      if (mounted) {
+        Navigator.pop(context); // Close dialog
+        setState(() => _isUploading = false);
 
-        if (mounted) {
-          Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(success ? 'Task completed successfully!' : 'Upload failed. Check console.'),
+            backgroundColor: success ? Colors.green : Colors.red,
+          ),
+        );
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                success
-                    ? 'Task completed successfully!'
-                    : 'Failed to complete task. Please try again.',
-              ),
-              backgroundColor: success ? Colors.green : Colors.red,
-            ),
-          );
-
-          if (success) {
-            // Refresh the list
-            ref.read(myTodoProvider.notifier).fetchMyTodos();
-          }
-        }
-      } catch (e) {
-        print('Error uploading: $e');
-
-        if (mounted) {
-          Navigator.pop(context); // Close loading dialog
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error uploading: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
+        if (success) {
+          ref.read(myTodoProvider.notifier).fetchMyTodos();
         }
       }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        setState(() => _isUploading = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+      }
+    }
+  }
+
+  Future<Widget> _buildImagePreview(XFile photo) async {
+    if (kIsWeb) {
+      return Image.network(photo.path, fit: BoxFit.contain);
+    } else {
+      return Image.file(File(photo.path), fit: BoxFit.contain);
     }
   }
 }
