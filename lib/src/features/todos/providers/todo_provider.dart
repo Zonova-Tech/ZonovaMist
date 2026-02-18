@@ -175,10 +175,12 @@ class TodoNotifier extends StateNotifier<TodoState> {
     }
   }
 
-  // Reject todo
-  Future<bool> rejectTodo(String id) async {
+  // Reject todo with optional comment
+  Future<bool> rejectTodo(String id, [String? comment]) async {
     try {
-      final response = await dio.patch('/todos/$id/reject');
+      final response = await dio.patch('/todos/$id/reject', data: {
+        if (comment != null) 'comment': comment,
+      });
 
       if (response.statusCode == 200 && response.data['success']) {
         await fetchTodos();

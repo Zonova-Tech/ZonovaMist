@@ -90,6 +90,15 @@ class TodoDetailsDialog extends StatelessWidget {
                   todo.ratingComment!,
                   Icons.rate_review,
                   Colors.blueGrey,
+                  ),
+
+              if (todo.rejectionComment != null && todo.rejectionComment!.isNotEmpty)
+                _buildDetailRow(
+                  'Rejection Reason',
+                  todo.rejectionComment!,
+                  Icons.report_problem,
+                  Colors.redAccent,
+                  valueColor: Colors.red.shade700,
                 ),
 
               // Assigned To
@@ -100,7 +109,6 @@ class TodoDetailsDialog extends StatelessWidget {
                   Icons.person,
                   Colors.purple,
                 ),
-
               // Created By
               if (todo.createdByName != null)
                 _buildDetailRow(
@@ -171,13 +179,13 @@ class TodoDetailsDialog extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildDetailRow(
       String label,
       String value,
       IconData icon,
-      Color color,
-      ) {
+      Color color, {
+      Color? valueColor,
+      }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -200,7 +208,10 @@ class TodoDetailsDialog extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(fontSize: 15),
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: valueColor ?? Colors.black87,
+                  ),
                 ),
               ],
             ),

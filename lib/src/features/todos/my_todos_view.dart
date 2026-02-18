@@ -340,6 +340,22 @@ class _MyTodosViewState extends ConsumerState<MyTodosView> {
                       ),
                     ),
                   ],
+                  if (todo.status == 'New' &&
+                      todo.rejectionComment != null &&
+                      todo.rejectionComment!.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      'Feedback: ${todo.rejectionComment!}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.redAccent,
+                        fontStyle: FontStyle.italic,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                   if (todo.status == 'New') ...[
                     const SizedBox(height: 8),
                     SizedBox(
@@ -410,9 +426,9 @@ class _MyTodosViewState extends ConsumerState<MyTodosView> {
           final success = await ref.read(todoProvider.notifier).approveTodo(todo.id, rating, comment);
           if (success) ref.read(myTodoProvider.notifier).fetchMyTodos();
         },
-        onReject: () async {
+        onReject: (comment) async {
           Navigator.pop(context);
-          final success = await ref.read(todoProvider.notifier).rejectTodo(todo.id);
+          final success = await ref.read(todoProvider.notifier).rejectTodo(todo.id, comment);
           if (success) ref.read(myTodoProvider.notifier).fetchMyTodos();
         },
       ),

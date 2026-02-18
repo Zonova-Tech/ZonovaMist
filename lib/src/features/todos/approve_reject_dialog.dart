@@ -5,7 +5,7 @@ import 'models/todo_model.dart';
 class ApproveRejectDialog extends StatefulWidget {
   final Todo todo;
   final Function(double rating, String comment) onApprove; // Corrected signature
-  final VoidCallback onReject;
+  final Function(String comment) onReject;
 
   const ApproveRejectDialog({
     super.key,
@@ -150,7 +150,7 @@ class _ApproveRejectDialogState extends State<ApproveRejectDialog> {
                         TextField(
                           controller: _commentController,
                           decoration: InputDecoration(
-                            hintText: 'Add a comment (optional)...',
+                            hintText: 'Add a comment or rejection reason...',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -168,96 +168,92 @@ class _ApproveRejectDialogState extends State<ApproveRejectDialog> {
                   // Action buttons
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    child: Row(
+                    child: Column(
                       children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: const Text('Reject Task'),
-                                  content: const Text(
-                                    'Are you sure you want to reject this task? '
-                                        'It will be reset to "New" status and images will be removed.',
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  _showConfirmDialog(
+                                    context: context,
+                                    title: 'Request Changes',
+                                    content: 'Ask the assignee to make changes and submit again?',
+                                    buttonText: 'Request Changes',
+                                    buttonColor: Colors.blue,
+                                    onConfirm: () => widget.onReject(_commentController.text.trim()),
+                                  );
+                                },
+                                icon: const Icon(Icons.edit_note),
+                                label: const Text('Request Changes'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: const Text('Cancel'),
-                                    ),
-                                    ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.orange,
-                                        foregroundColor: Colors.white,
-                                      ),
-                                      onPressed: () {
-                                        Navigator.pop(context); // Close confirm dialog
-                                        widget.onReject();
-                                      },
-                                      child: const Text('Reject'),
-                                    ),
-                                  ],
                                 ),
-                              );
-                            },
-                            icon: const Icon(Icons.cancel),
-                            label: const Text('Reject'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.orange,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                          ),
+                          ],
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: const Text('Approve Task'),
-                                  content: Text(
-                                    'Approve this task with a rating of $_rating/5?',
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  _showConfirmDialog(
+                                    context: context,
+                                    title: 'Reject Task',
+                                    content: 'Are you sure you want to reject this task? This will reset it to "New".',
+                                    buttonText: 'Reject',
+                                    buttonColor: Colors.red,
+                                    onConfirm: () => widget.onReject(_commentController.text.trim()),
+                                  );
+                                },
+                                icon: const Icon(Icons.cancel),
+                                label: const Text('Reject'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.red,
+                                  side: const BorderSide(color: Colors.red),
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: const Text('Cancel'),
-                                    ),
-                                    ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.green,
-                                        foregroundColor: Colors.white,
-                                      ),
-                                      onPressed: () {
-                                        Navigator.pop(context); // Close confirm dialog
-                                        widget.onApprove(
-                                          _rating, 
-                                          _commentController.text.trim(),
-                                        );
-                                      },
-                                      child: const Text('Approve'),
-                                    ),
-                                  ],
                                 ),
-                              );
-                            },
-                            icon: const Icon(Icons.check_circle),
-                            label: const Text('Approve'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                          ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  _showConfirmDialog(
+                                    context: context,
+                                    title: 'Approve Task',
+                                    content: 'Approve this task with a rating of $_rating/5?',
+                                    buttonText: 'Approve',
+                                    buttonColor: Colors.green,
+                                    onConfirm: () => widget.onApprove(
+                                      _rating, 
+                                      _commentController.text.trim(),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.check_circle),
+                                label: const Text('Approve'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -288,6 +284,40 @@ class _ApproveRejectDialogState extends State<ApproveRejectDialog> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showConfirmDialog({
+    required BuildContext context,
+    required String title,
+    required String content,
+    required String buttonText,
+    required Color buttonColor,
+    required VoidCallback onConfirm,
+  }) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(content),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: buttonColor,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.pop(context); // Close confirm dialog
+              onConfirm();
+            },
+            child: Text(buttonText),
+          ),
+        ],
       ),
     );
   }

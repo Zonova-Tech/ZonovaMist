@@ -17,6 +17,7 @@ class Todo {
   final DateTime? approvedAt;
   final double? rating;
   final String? ratingComment;
+  final String? rejectionComment;
   final DateTime? ratedAt;
   final bool deleted;
 
@@ -39,6 +40,7 @@ class Todo {
     this.approvedAt,
     this.rating,
     this.ratingComment,
+    this.rejectionComment,
     this.ratedAt,
     this.deleted = false,
   });
@@ -86,6 +88,10 @@ class Todo {
           json['ratingComment'].toString().trim().isNotEmpty
           ? json['ratingComment'].toString()
           : null,
+      rejectionComment: json['rejectionComment'] != null &&
+          json['rejectionComment'].toString().trim().isNotEmpty
+          ? json['rejectionComment'].toString()
+          : null,
       ratedAt: json['ratedAt'] != null
           ? DateTime.parse(json['ratedAt'])
           : null,
@@ -124,6 +130,7 @@ class Todo {
     DateTime? approvedAt,
     double? rating,
     String? ratingComment,
+    String? rejectionComment,
     DateTime? ratedAt,
     bool? deleted,
   }) {
@@ -146,6 +153,7 @@ class Todo {
       approvedAt: approvedAt ?? this.approvedAt,
       rating: rating ?? this.rating,
       ratingComment: ratingComment ?? this.ratingComment,
+      rejectionComment: rejectionComment ?? this.rejectionComment,
       ratedAt: ratedAt ?? this.ratedAt,
       deleted: deleted ?? this.deleted,
     );

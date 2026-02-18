@@ -229,6 +229,19 @@ class _TasksViewState extends ConsumerState<TasksView> {
                       ),
                     ),
                   ],
+                  if (todo.status == 'New' && todo.rejectionComment != null && todo.rejectionComment!.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      'Feedback: ${todo.rejectionComment!}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.redAccent,
+                        fontStyle: FontStyle.italic,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
@@ -262,11 +275,14 @@ class _TasksViewState extends ConsumerState<TasksView> {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Task approved!'), backgroundColor: Colors.green));
           }
         },
-        onReject: () async {
+        onReject: (comment) async {
           Navigator.pop(context);
-          final success = await ref.read(todoProvider.notifier).rejectTodo(todo.id);
+          final success = await ref.read(todoProvider.notifier).rejectTodo(todo.id, comment);
           if (success && mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Task rejected'), backgroundColor: Colors.orange));
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Changes requested / Task rejected'), 
+              backgroundColor: Colors.orange,
+            ));
           }
         },
       ),
