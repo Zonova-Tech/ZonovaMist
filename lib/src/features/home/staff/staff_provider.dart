@@ -40,3 +40,20 @@ final staffRolesProvider = FutureProvider<List<String>>((ref) async {
     return ['Admin', 'Owner', 'Manager', 'Technician', 'Reception', 'Cleaning'];
   }
 });
+
+final staffPerformanceProvider = FutureProvider.family<Map<String, dynamic>, String>((ref, staffId) async {
+  try {
+    final dio = ref.watch(dioProvider);
+    final response = await dio.get('/staff/$staffId/performance');
+    return response.data as Map<String, dynamic>;
+  } catch (e) {
+    print('Error fetching staff performance: $e');
+    // Return default empty metrics on error
+    return {
+      'averageRating': 0.0,
+      'totalRatings': 0,
+      'totalTasksCompleted': 0,
+      'recentReviews': []
+    };
+  }
+});

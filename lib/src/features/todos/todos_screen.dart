@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/auth/rbac.dart';
+import '../../core/auth/auth_provider.dart';
+import '../../core/auth/auth_state.dart';
 import '../../shared/widgets/app_drawer.dart';
 import '../../shared/widgets/rbac_gate.dart';
 import 'providers/todo_provider.dart';
@@ -17,16 +19,42 @@ class TodosScreen extends ConsumerStatefulWidget {
 
 class _TodosScreenState extends ConsumerState<TodosScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  bool _showTasks = true;
+  bool _showMyTodos = true;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    
+    // Determine visibility based on proper role types from MongoDB
+    final authState = ref.read(authProvider);
+    final role = authState.maybeWhen(
+      authenticated: (_, role, __) => role.toLowerCase(),
+      orElse: () => '',
+    );
+    
+    // Define role categories
+    final isManagement = Rbac.isAdmin(role) || role == 'owner' || role == 'manager';
+    
+    // Strict Role-Based Visibility:
+    // 1. Admins & Managers see ONLY Oversight (Tab: Tasks)
+    // 2. Staff see ONLY their specific work (Tab: My Todos)
+    
+    if (isManagement) {
+      _showTasks = true;
+      _showMyTodos = false;
+    } else {
+      _showTasks = false;
+      _showMyTodos = true;
+    }
+    
+    final tabCount = (_showTasks ? 1 : 0) + (_showMyTodos ? 1 : 0);
+    _tabController = TabController(length: tabCount, vsync: this);
 
-    // Fetch both types of todos on init
+    // Initial data fetch
     Future.microtask(() {
-      ref.read(todoProvider.notifier).fetchTodos();
-      ref.read(myTodoProvider.notifier).fetchMyTodos();
+      if (_showTasks) ref.read(todoProvider.notifier).fetchTodos();
+      if (_showMyTodos) ref.read(myTodoProvider.notifier).fetchMyTodos();
     });
   }
 
@@ -38,6 +66,8 @@ class _TodosScreenState extends ConsumerState<TodosScreen> with SingleTickerProv
 
   @override
   Widget build(BuildContext context) {
+    final showTabs = _showTasks && _showMyTodos;
+
     return RbacGate(
       permission: AppPermission.todos,
       child: Scaffold(
@@ -46,27 +76,35 @@ class _TodosScreenState extends ConsumerState<TodosScreen> with SingleTickerProv
           foregroundColor: const Color(0xFF333333), // Dark Grey
           title: const Text('Todos'),
           elevation: 0,
-          bottom: TabBar(
-            controller: _tabController,
-            indicatorColor: const Color(0xFF333333), // Dark Grey
-            labelColor: const Color(0xFF333333),
-            unselectedLabelColor: Colors.black54,
-            tabs: const [
-              Tab(
-                icon: Icon(Icons.list_alt),
-                text: 'Tasks',
-              ),
-              Tab(
-                icon: Icon(Icons.assignment_ind),
-                text: 'My Todos',
-              ),
-            ],
-          ),
+          bottom: showTabs
+              ? TabBar(
+                  controller: _tabController,
+                  indicatorColor: const Color(0xFF333333), // Dark Grey
+                  labelColor: const Color(0xFF333333),
+                  unselectedLabelColor: Colors.black54,
+                  tabs: [
+                    if (_showTasks)
+                      const Tab(
+                        icon: Icon(Icons.list_alt),
+                        text: 'Tasks',
+                      ),
+                    if (_showMyTodos)
+                      const Tab(
+                        icon: Icon(Icons.assignment_ind),
+                        text: 'My Todos',
+                      ),
+                  ],
+                )
+              : null,
           actions: [
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: () {
-                if (_tabController.index == 0) {
+                final activeTab = _showTasks && _showMyTodos
+                    ? (_tabController.index == 0 ? 'tasks' : 'mytodos')
+                    : (_showTasks ? 'tasks' : 'mytodos');
+
+                if (activeTab == 'tasks') {
                   ref.read(todoProvider.notifier).fetchTodos();
                 } else {
                   ref.read(myTodoProvider.notifier).fetchMyTodos();
@@ -78,12 +116,12 @@ class _TodosScreenState extends ConsumerState<TodosScreen> with SingleTickerProv
         drawer: const AppDrawer(),
         body: TabBarView(
           controller: _tabController,
-          children: const [
-            TasksView(),
-            MyTodosView(),
+          children: [
+            if (_showTasks) const TasksView(),
+            if (_showMyTodos) const MyTodosView(),
           ],
         ),
-        floatingActionButton: _tabController.index == 0
+        floatingActionButton: (_showTasks && _tabController.index == 0)
             ? FloatingActionButton(
                 backgroundColor: const Color(0xFFFACC15),
                 foregroundColor: Colors.white,

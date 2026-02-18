@@ -57,6 +57,29 @@ extension AuthStateX on AuthState {
     }
     throw Exception('Unhandled AuthState: $this');
   }
+
+  T maybeWhen<T>({
+    T Function()? loading,
+    T Function(String userName, String role, List<String> permissions)? authenticated,
+    T Function()? unauthenticated,
+    T Function(String message)? error,
+    required T Function() orElse,
+  }) {
+    if (this is AuthLoading && loading != null) {
+      return loading();
+    }
+    if (this is Authenticated && authenticated != null) {
+      final auth = this as Authenticated;
+      return authenticated(auth.userName, auth.role, auth.permissions);
+    }
+    if (this is Unauthenticated && unauthenticated != null) {
+      return unauthenticated();
+    }
+    if (this is AuthError && error != null) {
+      return error((this as AuthError).message);
+    }
+    return orElse();
+  }
 }
 
 // Optional helpers for callers that want the typed error

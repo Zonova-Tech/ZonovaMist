@@ -5,6 +5,9 @@ import '../../../core/auth/rbac.dart';
 import '../../../shared/widgets/common_image_manager.dart';
 import '../../../core/utils/decimal_helper.dart';
 import 'edit_staff_screen.dart';
+import 'staff_provider.dart';
+import '../../../core/auth/auth_provider.dart';
+import '../../../core/auth/auth_state.dart';
 import '../../../shared/widgets/rbac_gate.dart';
 
 class ViewStaffScreen extends ConsumerWidget {
@@ -245,41 +248,214 @@ class ViewStaffScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
 
-            // Employment Information
-            if (staff['current_salary'] != null)
-              Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.work_outline, color: Colors.blue.shade700),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Employment Information',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+            // Performance & Reviews Section
+            Consumer(
+              builder: (context, ref, child) {
+                final performanceAsync = ref.watch(staffPerformanceProvider(staffId));
+
+                return performanceAsync.when(
+                  data: (data) {
+                    final double avgRating = (data['averageRating'] ?? 0).toDouble();
+                    final int totalRatings = data['totalRatings'] ?? 0;
+                    final int tasksCompleted = data['totalTasksCompleted'] ?? 0;
+                    final List reviews = data['recentReviews'] ?? [];
+
+                    return Card(
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.star_outline, color: Colors.amber.shade700),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Performance & Reviews',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
+                            const Divider(height: 24),
+                            
+                            // Stats Row
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                Column(
+                                  children: [
+                                    Text(
+                                      avgRating.toStringAsFixed(1),
+                                      style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.amber,
+                                      ),
+                                    ),
+                                    const Text('Avg Rating', style: TextStyle(color: Colors.grey)),
+                                  ],
+                                ),
+                                Column(
+                                  children: [
+                                    Text(
+                                      totalRatings.toString(),
+                                      style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const Text('Reviews', style: TextStyle(color: Colors.grey)),
+                                  ],
+                                ),
+                                Column(
+                                  children: [
+                                    Text(
+                                      tasksCompleted.toString(),
+                                      style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.green,
+                                      ),
+                                    ),
+                                    const Text('Completed', style: TextStyle(color: Colors.grey)),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            
+                            if (reviews.isNotEmpty) ...[
+                              const SizedBox(height: 20),
+                              const Text(
+                                'Recent Feedback',
+                                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                              ),
+                              const SizedBox(height: 12),
+                              ListView.separated(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: reviews.length,
+                                separatorBuilder: (_, __) => const Divider(),
+                                itemBuilder: (context, index) {
+                                  final review = reviews[index];
+                                  final rating = review['rating'] ?? 0;
+                                  final comment = review['ratingComment'] ?? '';
+                                  final ratedByName = review['ratedBy']?['fullName'] ?? 'Unknown';
+                                  final date = review['ratedAt'] != null 
+                                      ? DateFormat('MMM d, y').format(DateTime.parse(review['ratedAt'])) 
+                                      : 'Unknown date';
+                                  final taskTitle = review['title'] ?? 'Task';
+
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          ...List.generate(5, (i) => Icon(
+                                            i < rating ? Icons.star : Icons.star_border,
+                                            size: 14,
+                                            color: Colors.amber,
+                                          )),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            date,
+                                            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        comment,
+                                        style: const TextStyle(fontStyle: FontStyle.italic),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'by $ratedByName • $taskTitle',
+                                        style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ] else if (tasksCompleted > 0) ...[
+                               const SizedBox(height: 16),
+                               const Padding(
+                                 padding: EdgeInsets.all(8.0),
+                                 child: Center(
+                                   child: Text(
+                                     'No written reviews yet.',
+                                     style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+                                   ),
+                                 ),
+                               ),
+                            ],
+                          ],
+                        ),
                       ),
-                      const Divider(height: 24),
-                      _buildInfoRow(
-                        Icons.attach_money,
-                        'Current Salary',
-                        _formatSalary(staff['current_salary']),
-                      ),
-                    ],
+                    );
+                  },
+                  loading: () => const Center(child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: CircularProgressIndicator(),
+                  )),
+                  error: (err, stack) => const SizedBox.shrink(), // Hide on error
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Employment Information - Only visible to Admin/Manager
+            Consumer(
+              builder: (context, ref, child) {
+                final authState = ref.watch(authProvider);
+                final isPrivileged = (authState is Authenticated) && 
+                    ['admin', 'manager', 'owner'].contains(authState.role.toLowerCase());
+
+                if (!isPrivileged) return const SizedBox.shrink();
+
+                if (staff['current_salary'] == null) return const SizedBox.shrink();
+
+                return Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                ),
-              ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.work_outline, color: Colors.blue.shade700),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Employment Information',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 24),
+                        _buildInfoRow(
+                          Icons.attach_money,
+                          'Current Salary',
+                          _formatSalary(staff['current_salary']),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
             const SizedBox(height: 16),
 
             // Documents Section

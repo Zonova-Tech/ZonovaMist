@@ -6,6 +6,8 @@ import 'models/todo_model.dart';
 import 'add_todo_screen.dart';
 import 'todo_details_dialog.dart';
 import 'approve_reject_dialog.dart';
+import '../../core/auth/auth_provider.dart';
+import '../../core/auth/auth_state.dart';
 
 class TasksView extends ConsumerStatefulWidget {
   const TasksView({super.key});
@@ -148,7 +150,12 @@ class _TasksViewState extends ConsumerState<TasksView> {
           if (todo.images.isNotEmpty)
             InkWell(
               onTap: () {
-                if (todo.status == 'Completed') {
+                // Only authorized roles can approve/reject
+                final authState = ref.watch(authProvider);
+                final canApprove = (authState is Authenticated) &&
+                    ['admin', 'manager', 'owner'].contains(authState.role.toLowerCase());
+
+                if (todo.status == 'Completed' && canApprove) {
                   _showApproveRejectDialog(todo);
                 } else {
                   _showTodoDetails(todo);
