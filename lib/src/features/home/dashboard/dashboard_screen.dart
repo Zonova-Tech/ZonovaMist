@@ -2,7 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/auth/rbac.dart';
 import '../../../shared/widgets/app_drawer.dart';
+import '../../../shared/widgets/rbac_gate.dart';
 import 'providers/dashboard_provider.dart';
 import 'models/dashboard_models.dart';
 import 'widgets/stat_panel.dart';
@@ -19,73 +21,76 @@ class DashboardScreen extends ConsumerWidget {
     final dashboardState = ref.watch(dashboardProvider);
     final notifier = ref.read(dashboardProvider.notifier);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh',
-            onPressed: () {
-              // Trigger refresh
-              ref.invalidate(dashboardProvider);
-            },
-          ),
-        ],
-      ),
-      drawer: const AppDrawer(),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Welcome Card
-            _buildWelcomeCard(),
-            const SizedBox(height: 24),
-
-            // Filter Chips
-            FilterChipsRow(
-              timePeriod: dashboardState.timePeriod,
-              selectedComparisons: dashboardState.selectedComparisons,
-              onTimePeriodChanged: notifier.setTimePeriod,
-              onComparisonToggled: notifier.toggleComparison,
-              onCustomDatePressed: () => _showDateRangePicker(context, ref),
+    return RbacGate(
+      permission: AppPermission.dashboard,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Dashboard'),
+          elevation: 0,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Refresh',
+              onPressed: () {
+                // Trigger refresh
+                ref.invalidate(dashboardProvider);
+              },
             ),
-            const SizedBox(height: 24),
-
-            // Stat Panel
-            StatPanel(stats: notifier.getStatPanelData()),
-            const SizedBox(height: 24),
-
-            // Revenue Comparison Chart
-            _buildSectionTitle('Revenue Comparison'),
-            const SizedBox(height: 12),
-            RevenueComparisonChart(
-              data: notifier.getRevenueComparisonData(),
-              selectedComparisons: dashboardState.selectedComparisons,
-              timePeriod: dashboardState.timePeriod,
-            ),
-            const SizedBox(height: 24),
-
-            // Expense Comparison Chart
-            _buildSectionTitle('Expense Comparison'),
-            const SizedBox(height: 12),
-            ExpenseComparisonChart(
-              data: notifier.getExpenseComparisonData(),
-              selectedComparisons: dashboardState.selectedComparisons,
-              timePeriod: dashboardState.timePeriod,
-            ),
-            const SizedBox(height: 24),
-
-            // Expense Category Chart
-            _buildSectionTitle('Expenses by Category'),
-            const SizedBox(height: 12),
-            ExpenseCategoryChart(
-              data: notifier.getExpenseCategoryData(),
-            ),
-            const SizedBox(height: 24),
           ],
+        ),
+        drawer: const AppDrawer(),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Welcome Card
+              _buildWelcomeCard(),
+              const SizedBox(height: 24),
+
+              // Filter Chips
+              FilterChipsRow(
+                timePeriod: dashboardState.timePeriod,
+                selectedComparisons: dashboardState.selectedComparisons,
+                onTimePeriodChanged: notifier.setTimePeriod,
+                onComparisonToggled: notifier.toggleComparison,
+                onCustomDatePressed: () => _showDateRangePicker(context, ref),
+              ),
+              const SizedBox(height: 24),
+
+              // Stat Panel
+              StatPanel(stats: notifier.getStatPanelData()),
+              const SizedBox(height: 24),
+
+              // Revenue Comparison Chart
+              _buildSectionTitle('Revenue Comparison'),
+              const SizedBox(height: 12),
+              RevenueComparisonChart(
+                data: notifier.getRevenueComparisonData(),
+                selectedComparisons: dashboardState.selectedComparisons,
+                timePeriod: dashboardState.timePeriod,
+              ),
+              const SizedBox(height: 24),
+
+              // Expense Comparison Chart
+              _buildSectionTitle('Expense Comparison'),
+              const SizedBox(height: 12),
+              ExpenseComparisonChart(
+                data: notifier.getExpenseComparisonData(),
+                selectedComparisons: dashboardState.selectedComparisons,
+                timePeriod: dashboardState.timePeriod,
+              ),
+              const SizedBox(height: 24),
+
+              // Expense Category Chart
+              _buildSectionTitle('Expenses by Category'),
+              const SizedBox(height: 12),
+              ExpenseCategoryChart(
+                data: notifier.getExpenseCategoryData(),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );

@@ -1,9 +1,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:Zonova_Mist/src/core/auth/rbac.dart';
 import 'package:Zonova_Mist/src/features/home/assets/models/asset_model.dart';
 import 'package:Zonova_Mist/src/shared/widgets/common_image_manager.dart';
 import 'package:Zonova_Mist/src/features/home/assets/edit_asset_screen.dart';
+import 'package:Zonova_Mist/src/shared/widgets/rbac_gate.dart';
 
 class AssetDetailsScreen extends StatelessWidget {
   final AssetModel asset;
@@ -12,55 +14,58 @@ class AssetDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(asset.name),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => EditAssetScreen(asset: asset),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Photo Management Section
-            _buildPhotoSection(context),
-            const SizedBox(height: 24),
-
-            // Asset Details
-            _buildDetailSection(context, 'Asset Details', [
-              _buildDetailRow('Category', asset.category),
-              _buildDetailRow('Brand', asset.brand ?? 'N/A'),
-              _buildDetailRow('Quantity', asset.quantity.toString()),
-            ]),
-            const SizedBox(height: 24),
-
-            // Purchase Information
-            _buildDetailSection(context, 'Purchase Information', [
-              _buildDetailRow('Purchase Price', NumberFormat.currency(locale: 'en_LK', symbol: 'Rs. ').format(asset.purchasePrice)),
-              _buildDetailRow('Purchase Date', DateFormat.yMMMd().format(asset.purchaseDate)),
-            ]),
-            const SizedBox(height: 24),
-
-            // Warranty Information
-            if (asset.warrantyEndDate != null)
-              _buildWarrantySection(context),
-
-            // Description
-            if (asset.description != null && asset.description!.isNotEmpty)
-              _buildDescriptionSection(context),
+    return RbacGate(
+      permission: AppPermission.assets,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(asset.name),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EditAssetScreen(asset: asset),
+                  ),
+                );
+              },
+            ),
           ],
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Photo Management Section
+              _buildPhotoSection(context),
+              const SizedBox(height: 24),
+
+              // Asset Details
+              _buildDetailSection(context, 'Asset Details', [
+                _buildDetailRow('Category', asset.category),
+                _buildDetailRow('Brand', asset.brand ?? 'N/A'),
+                _buildDetailRow('Quantity', asset.quantity.toString()),
+              ]),
+              const SizedBox(height: 24),
+
+              // Purchase Information
+              _buildDetailSection(context, 'Purchase Information', [
+                _buildDetailRow('Purchase Price', NumberFormat.currency(locale: 'en_LK', symbol: 'Rs. ').format(asset.purchasePrice)),
+                _buildDetailRow('Purchase Date', DateFormat.yMMMd().format(asset.purchaseDate)),
+              ]),
+              const SizedBox(height: 24),
+
+              // Warranty Information
+              if (asset.warrantyEndDate != null)
+                _buildWarrantySection(context),
+
+              // Description
+              if (asset.description != null && asset.description!.isNotEmpty)
+                _buildDescriptionSection(context),
+            ],
+          ),
         ),
       ),
     );

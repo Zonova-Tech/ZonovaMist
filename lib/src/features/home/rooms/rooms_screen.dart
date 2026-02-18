@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import '../../../core/auth/rbac.dart';
 import '../../../core/auth/rooms_provider.dart';
 import '../../../core/api/api_service.dart';
 import '../../../shared/widgets/common_image_manager.dart';
+import '../../../shared/widgets/rbac_gate.dart';
 import 'add_room_screen.dart';
 import 'edit_room_screen.dart';
 import 'room_rate_page.dart';
@@ -75,50 +77,52 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
   Widget build(BuildContext context) {
     final roomsAsync = ref.watch(roomsProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Rooms'),
-        leading: widget.showBackButton
-            ? IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        )
-            : null,
-        automaticallyImplyLeading: widget.showBackButton,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.attach_money),
-            tooltip: 'Room Rates',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const RoomRatePage(),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      drawer: widget.showBackButton
-          ? null
-          : Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.blue),
-              child: Text('Menu', style: TextStyle(color: Colors.white, fontSize: 24)),
-            ),
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('Home'),
-              onTap: () => Navigator.pop(context),
+    return RbacGate(
+      permission: AppPermission.rooms,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Rooms'),
+          leading: widget.showBackButton
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => Navigator.pop(context),
+                )
+              : null,
+          automaticallyImplyLeading: widget.showBackButton,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.attach_money),
+              tooltip: 'Room Rates',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const RoomRatePage(),
+                  ),
+                );
+              },
             ),
           ],
         ),
-      ),
-      body: roomsAsync.when(
+        drawer: widget.showBackButton
+            ? null
+            : Drawer(
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: [
+                    const DrawerHeader(
+                      decoration: BoxDecoration(color: Colors.blue),
+                      child: Text('Menu', style: TextStyle(color: Colors.white, fontSize: 24)),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.home),
+                      title: const Text('Home'),
+                      onTap: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+        body: roomsAsync.when(
         data: (rooms) {
           if (rooms.isEmpty) {
             return const Center(child: Text('No rooms found.'));
@@ -239,6 +243,7 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
             ref.refresh(roomsProvider);
           }
         },
+        ),
       ),
     );
   }

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../core/auth/rbac.dart';
 import '../../../core/api/api_service.dart';
 import '../../../shared/widgets/common_image_manager.dart';
 import '../../../shared/widgets/profile_picture_uploader.dart';
 import '../../../core/utils/decimal_helper.dart';
+import '../../../shared/widgets/rbac_gate.dart';
 import 'staff_provider.dart';
 
 class EditStaffScreen extends ConsumerStatefulWidget {
@@ -131,17 +133,19 @@ class _EditStaffScreenState extends ConsumerState<EditStaffScreen> {
     final rolesAsync = ref.watch(staffRolesProvider);
     final staffId = widget.staff['_id'] ?? '';
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit Staff Member'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+    return RbacGate(
+      permission: AppPermission.staff,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Edit Staff Member'),
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
               // Profile Picture with Uploader
               Center(
                 child: ProfilePictureUploader(
@@ -343,7 +347,8 @@ class _EditStaffScreenState extends ConsumerState<EditStaffScreen> {
                 )
                     : const Text('Update Staff Member'),
               ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

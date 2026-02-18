@@ -2,12 +2,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import '../../../core/auth/rbac.dart';
 import '../../../core/auth/hotels_provider.dart';
 import '../../../core/api/api_service.dart';
 import '../../../shared/widgets/common_image_manager.dart';
 import 'add_hotel_screen.dart';
 import 'edit_hotel_screen.dart';
 import '../../../shared/widgets/app_drawer.dart';
+import '../../../shared/widgets/rbac_gate.dart';
 
 class PartnerHotelsScreen extends ConsumerStatefulWidget {
   const PartnerHotelsScreen({super.key});
@@ -68,7 +70,9 @@ class _PartnerHotelsScreenState extends ConsumerState<PartnerHotelsScreen> {
   Widget build(BuildContext context) {
     final hotelsAsync = ref.watch(hotelsProvider);
 
-    return Scaffold(
+    return RbacGate(
+      permission: AppPermission.partnerHotels,
+      child: Scaffold(
       appBar: AppBar(title: const Text('Partner Hotels'), backgroundColor: Colors.blueAccent),
       drawer: const AppDrawer(),
       body: hotelsAsync.when(
@@ -197,6 +201,7 @@ class _PartnerHotelsScreenState extends ConsumerState<PartnerHotelsScreen> {
             ref.refresh(hotelsProvider);
           }
         },
+      ),
       ),
     );
   }

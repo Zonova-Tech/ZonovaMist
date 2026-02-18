@@ -64,7 +64,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.listen(authProvider, (previous, next) {
       next.when(
         loading: () {},
-        authenticated: (_) {
+        authenticated: (_, __, ___) {
           // The moment login succeeds, we force the screen to change
           if (mounted) {
             Navigator.of(context).pushReplacement(
@@ -161,7 +161,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     final authState = ref.watch(authProvider);
                     final isLoading = authState.when(
                       loading: () => true,
-                      authenticated: (_) => false,
+                      authenticated: (_, __, ___) => false,
                       unauthenticated: () => false,
                       error: (_) => false,
                     );

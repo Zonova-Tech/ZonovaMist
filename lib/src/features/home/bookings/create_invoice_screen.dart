@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/auth/rbac.dart';
 import '../../../core/api/api_service.dart';
+import '../../../shared/widgets/rbac_gate.dart';
 
 class CreateInvoiceScreen extends ConsumerStatefulWidget {
   final String bookingId;
@@ -59,47 +61,50 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Create Invoice')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              Text('Guest: ${widget.guestName}', style: const TextStyle(fontSize: 18)),
-              Text('Phone: ${widget.phone}', style: const TextStyle(fontSize: 16)),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _roomChargeController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Room Charge'),
-              ),
-              TextFormField(
-                controller: _foodChargeController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Food Charge'),
-              ),
-              TextFormField(
-                controller: _otherChargeController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Other Charges'),
-              ),
-              TextFormField(
-                controller: _totalController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Total'),
-              ),
-              const SizedBox(height: 25),
-              ElevatedButton.icon(
-                onPressed: _isSending ? null : _sendInvoice,
-                icon: const Icon(Icons.send),
-                label: _isSending
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Send Invoice via SMS'),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-              ),
-            ],
+    return RbacGate(
+      permission: AppPermission.bookings,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Create Invoice')),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                Text('Guest: ${widget.guestName}', style: const TextStyle(fontSize: 18)),
+                Text('Phone: ${widget.phone}', style: const TextStyle(fontSize: 16)),
+                const SizedBox(height: 20),
+                TextFormField(
+                  controller: _roomChargeController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Room Charge'),
+                ),
+                TextFormField(
+                  controller: _foodChargeController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Food Charge'),
+                ),
+                TextFormField(
+                  controller: _otherChargeController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Other Charges'),
+                ),
+                TextFormField(
+                  controller: _totalController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Total'),
+                ),
+                const SizedBox(height: 25),
+                ElevatedButton.icon(
+                  onPressed: _isSending ? null : _sendInvoice,
+                  icon: const Icon(Icons.send),
+                  label: _isSending
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Send Invoice via SMS'),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                ),
+              ],
+            ),
           ),
         ),
       ),

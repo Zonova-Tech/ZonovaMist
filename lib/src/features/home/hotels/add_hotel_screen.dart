@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/auth/rbac.dart';
 import '../../../core/api/api_service.dart';
+import '../../../shared/widgets/rbac_gate.dart';
 
 class AddHotelScreen extends ConsumerStatefulWidget {
   const AddHotelScreen({super.key});
@@ -80,14 +82,16 @@ class _AddHotelScreenState extends ConsumerState<AddHotelScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Add Hotel')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
+    return RbacGate(
+      permission: AppPermission.partnerHotels,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Add Hotel')),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              children: [
               _buildTextField("Hotel Name", _nameController),
               _buildTextField("City", _cityController),
               _buildTextField("Phone Number", _phoneController, inputType: TextInputType.phone),
@@ -111,7 +115,8 @@ class _AddHotelScreenState extends ConsumerState<AddHotelScreen> {
                   ),
                 ),
               ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

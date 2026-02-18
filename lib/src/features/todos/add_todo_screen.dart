@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../core/auth/rbac.dart';
+import '../../shared/widgets/rbac_gate.dart';
 import 'models/todo_model.dart';
 import 'providers/todo_provider.dart';
 
@@ -47,58 +49,22 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
   Widget build(BuildContext context) {
     final usersAsync = ref.watch(usersProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.todo == null ? 'Add Task' : 'Edit Task'),
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (widget.todo != null &&
-                  widget.todo!.rejectionComment != null &&
-                  widget.todo!.rejectionComment!.isNotEmpty)
-                Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red.shade200),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.warning_amber_rounded, color: Colors.red.shade700),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Changes Requested',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.red.shade900,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              widget.todo!.rejectionComment!,
-                              style: TextStyle(color: Colors.red.shade800),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              // Title field (required)
-              TextFormField(
+    return RbacGate(
+      permission: AppPermission.todos,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(widget.todo == null ? 'Add Task' : 'Edit Task'),
+          elevation: 0,
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Title field (required)
+                TextFormField(
                 controller: _titleController,
                 decoration: InputDecoration(
                   labelText: 'Title *',
@@ -333,7 +299,8 @@ class _AddTodoScreenState extends ConsumerState<AddTodoScreen> {
                   ),
                 ),
               ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
