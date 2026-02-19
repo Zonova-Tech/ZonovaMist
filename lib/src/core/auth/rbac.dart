@@ -102,9 +102,16 @@ final Map<String, Set<AppPermission>> rolePermissions = {
   /// See staff_enforcement.dart for UI guard utilities.
   'staff': {
     AppPermission.dashboard,
+    AppPermission.bookings,
+    AppPermission.reservations,
     AppPermission.todos,
     AppPermission.settings,
-    // Basic staff only sees tasks and settings
+    AppPermission.rooms,
+    AppPermission.roomRates,
+    AppPermission.expenses,
+    AppPermission.partnerHotels,
+    AppPermission.staff,
+    AppPermission.assets,
   },
 
   'user': {

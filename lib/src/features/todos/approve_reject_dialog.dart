@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'models/todo_model.dart';
 
 class ApproveRejectDialog extends StatefulWidget {
@@ -68,35 +69,68 @@ class _ApproveRejectDialogState extends State<ApproveRejectDialog> {
                         },
                       ),
                       items: widget.todo.images.map((image) {
+                        final isVideo = image.resourceType == 'video';
+                        
                         return InteractiveViewer(
                           minScale: 0.5,
                           maxScale: 4.0,
                           child: Center(
-                            child: Image.network(
-                              image.url,
-                              fit: BoxFit.contain,
-                              loadingBuilder: (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return Center(
-                                  child: CircularProgressIndicator(
-                                    value: loadingProgress.expectedTotalBytes != null
-                                        ? loadingProgress.cumulativeBytesLoaded /
-                                        loadingProgress.expectedTotalBytes!
-                                        : null,
-                                    color: Colors.white,
+                            child: isVideo 
+                              ? GestureDetector(
+                                  onTap: () async {
+                                    final Uri url = Uri.parse(image.url);
+                                    if (await canLaunchUrl(url)) {
+                                      await launchUrl(url, mode: LaunchMode.externalApplication);
+                                    }
+                                  },
+                                  child: Container(
+                                    color: Colors.black,
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.play_circle_fill,
+                                          color: Colors.white,
+                                          size: 100,
+                                        ),
+                                        const SizedBox(height: 16),
+                                        const Text(
+                                          'Tap to play video',
+                                          style: TextStyle(color: Colors.white, fontSize: 16),
+                                        ),
+                                        Text(
+                                          '(Opens in external player)',
+                                          style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                );
-                              },
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Center(
-                                  child: Icon(
-                                    Icons.error_outline,
-                                    color: Colors.white,
-                                    size: 64,
-                                  ),
-                                );
-                              },
-                            ),
+                                )
+                              : Image.network(
+                                  image.url,
+                                  fit: BoxFit.contain,
+                                  loadingBuilder: (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return Center(
+                                      child: CircularProgressIndicator(
+                                        value: loadingProgress.expectedTotalBytes != null
+                                            ? loadingProgress.cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                            : null,
+                                        color: Colors.white,
+                                      ),
+                                    );
+                                  },
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Center(
+                                      child: Icon(
+                                        Icons.error_outline,
+                                        color: Colors.white,
+                                        size: 64,
+                                      ),
+                                    );
+                                  },
+                                ),
                           ),
                         );
                       }).toList(),
@@ -123,44 +157,6 @@ class _ApproveRejectDialogState extends State<ApproveRejectDialog> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        
-                        // Rating Section
-                        const Text(
-                          'Rate Performance:',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600, 
-                            color: Colors.grey,
-                          ),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(5, (index) {
-                            return IconButton(
-                              onPressed: () => setState(() => _rating = index + 1.0),
-                              icon: Icon(
-                                index < _rating ? Icons.star : Icons.star_border,
-                                color: Colors.amber,
-                                size: 32,
-                              ),
-                            );
-                          }),
-                        ),
-                        
-                        // Comment Section
-                        TextField(
-                          controller: _commentController,
-                          decoration: InputDecoration(
-                            hintText: 'Add a comment or rejection reason...',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, 
-                              vertical: 8,
-                            ),
-                          ),
-                          maxLines: 2,
-                        ),
                       ],
                     ),
                   ),
@@ -168,92 +164,47 @@ class _ApproveRejectDialogState extends State<ApproveRejectDialog> {
                   // Action buttons
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    child: Column(
+                    child: Row(
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: () {
-                                  _showConfirmDialog(
-                                    context: context,
-                                    title: 'Request Changes',
-                                    content: 'Ask the assignee to make changes and submit again?',
-                                    buttonText: 'Request Changes',
-                                    buttonColor: Colors.blue,
-                                    onConfirm: () => widget.onReject(_commentController.text.trim()),
-                                  );
-                                },
-                                icon: const Icon(Icons.edit_note),
-                                label: const Text('Request Changes'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blue,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Icons.close),
+                            label: const Text('Cancel'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.white70,
+                              side: const BorderSide(color: Colors.white30),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                          ],
+                          ),
                         ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () {
-                                  _showConfirmDialog(
-                                    context: context,
-                                    title: 'Reject Task',
-                                    content: 'Are you sure you want to reject this task? This will reset it to "New".',
-                                    buttonText: 'Reject',
-                                    buttonColor: Colors.red,
-                                    onConfirm: () => widget.onReject(_commentController.text.trim()),
-                                  );
-                                },
-                                icon: const Icon(Icons.cancel),
-                                label: const Text('Reject'),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.red,
-                                  side: const BorderSide(color: Colors.red),
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              _showConfirmDialog(
+                                context: context,
+                                title: 'Confirm Approval',
+                                content: 'Mark this task as approved?',
+                                buttonText: 'Done',
+                                buttonColor: Colors.green,
+                                onConfirm: () => widget.onApprove(5.0, ''),
+                              );
+                            },
+                            icon: const Icon(Icons.check),
+                            label: const Text('Done'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: () {
-                                  _showConfirmDialog(
-                                    context: context,
-                                    title: 'Approve Task',
-                                    content: 'Approve this task with a rating of $_rating/5?',
-                                    buttonText: 'Approve',
-                                    buttonColor: Colors.green,
-                                    onConfirm: () => widget.onApprove(
-                                      _rating, 
-                                      _commentController.text.trim(),
-                                    ),
-                                  );
-                                },
-                                icon: const Icon(Icons.check_circle),
-                                label: const Text('Approve'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ],
                     ),

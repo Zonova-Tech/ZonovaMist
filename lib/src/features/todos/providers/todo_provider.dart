@@ -273,18 +273,46 @@ class MyTodoNotifier extends StateNotifier<TodoState> {
 
       for (var i = 0; i < images.length; i++) {
         final image = images[i];
-        final bytes = await image.readAsBytes();
         
-        formData.files.add(
-          MapEntry(
-            'images',
-            MultipartFile.fromBytes(
-              bytes,
-              filename: image.name,
-              contentType: MediaType('image', 'jpeg'),
+        // Detect mime type
+        final extension = image.name.split('.').last.toLowerCase();
+        String type;
+        String subtype;
+        
+        if (['mp4', 'mov', 'avi', 'mkv', 'webm', '3gp', 'm4v'].contains(extension)) {
+          type = 'video';
+          subtype = extension == 'mov' ? 'quicktime' : (extension == 'm4v' ? 'mp4' : extension);
+        } else {
+          type = 'image';
+          subtype = ['jpg', 'jpeg'].contains(extension) ? 'jpeg' : extension;
+        }
+        
+        // Use path directly if available (efficient)
+        if (!kIsWeb && image.path.isNotEmpty) {
+          formData.files.add(
+            MapEntry(
+              'images',
+              await MultipartFile.fromFile(
+                image.path,
+                filename: image.name,
+                contentType: MediaType(type, subtype),
+              ),
             ),
-          ),
-        );
+          );
+        } else {
+          // Fallback for web or memory files
+          final bytes = await image.readAsBytes();
+          formData.files.add(
+            MapEntry(
+              'images',
+              MultipartFile.fromBytes(
+                bytes,
+                filename: image.name,
+                contentType: MediaType(type, subtype),
+              ),
+            ),
+          );
+        }
       }
 
       final response = await dio.post(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'models/todo_model.dart';
 
 class TodoDetailsDialog extends StatelessWidget {
@@ -126,11 +127,11 @@ class TodoDetailsDialog extends StatelessWidget {
                 Colors.grey,
               ),
 
-              // Images
+              // Media (Images & Videos)
               if (todo.images.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 const Text(
-                  'Attached Images',
+                  'Attachments',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
@@ -140,23 +141,54 @@ class TodoDetailsDialog extends StatelessWidget {
                     scrollDirection: Axis.horizontal,
                     itemCount: todo.images.length,
                     itemBuilder: (context, index) {
+                      final item = todo.images[index];
+                      final isVideo = item.resourceType == 'video';
+                      
                       return Padding(
                         padding: const EdgeInsets.only(right: 8),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            todo.images[index].url,
-                            width: 100,
-                            height: 100,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                width: 100,
-                                height: 100,
-                                color: Colors.grey.shade300,
-                                child: const Icon(Icons.error),
-                              );
-                            },
+                        child: GestureDetector(
+                          onTap: () async {
+                            final Uri url = Uri.parse(item.url);
+                            if (await canLaunchUrl(url)) {
+                              await launchUrl(url, mode: LaunchMode.externalApplication);
+                            }
+                          },
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Stack(
+                              children: [
+                                if (isVideo)
+                                  Container(
+                                    width: 100,
+                                    height: 100,
+                                    color: Colors.black87,
+                                    child: const Center(
+                                      child: Icon(Icons.videocam, color: Colors.white54, size: 40),
+                                    ),
+                                  )
+                                else
+                                  Image.network(
+                                    item.url,
+                                    width: 100,
+                                    height: 100,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        width: 100,
+                                        height: 100,
+                                        color: Colors.grey.shade300,
+                                        child: const Icon(Icons.image),
+                                      );
+                                    },
+                                  ),
+                                if (isVideo)
+                                  const Positioned.fill(
+                                    child: Center(
+                                      child: Icon(Icons.play_circle_fill, color: Colors.white, size: 30),
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
                       );

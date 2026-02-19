@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'dart:io' show File;
 import 'providers/todo_provider.dart';
 import 'models/todo_model.dart';
@@ -239,21 +240,31 @@ class _MyTodosViewState extends ConsumerState<MyTodosView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- TASK IMAGE (IF COMPLETED) ---
+            // --- TASK MEDIA (IF COMPLETED) ---
             if (todo.images.isNotEmpty)
               GestureDetector(
                 onTap: todo.status == 'Completed' ? () {} : null,
                 behavior: HitTestBehavior.opaque,
-                child: Image.network(
-                  todo.images.first.url,
-                  height: 100,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    height: 100,
-                    color: Colors.grey.shade200,
-                    child: const Icon(Icons.broken_image, color: Colors.grey),
-                  ),
+                child: Stack(
+                  children: [
+                    Image.network(
+                      todo.images.first.url,
+                      height: 100,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        height: 100,
+                        color: Colors.grey.shade200,
+                        child: const Icon(Icons.broken_image, color: Colors.grey),
+                      ),
+                    ),
+                    if (todo.images.first.resourceType == 'video')
+                      const Positioned.fill(
+                        child: Center(
+                          child: Icon(Icons.play_circle_fill, color: Colors.white70, size: 40),
+                        ),
+                      ),
+                  ],
                 ),
               )
             else
@@ -436,32 +447,33 @@ class _MyTodosViewState extends ConsumerState<MyTodosView> {
   }
 
   Future<void> _completeTodo(Todo todo) async {
-    final ImagePicker picker = ImagePicker();
-    List<XFile> imageFiles = [];
+    List<XFile> mediaFiles = [];
 
-    // Prompt user to pick MULTIPLE images (efficient)
     try {
-      final List<XFile>? picked = await picker.pickMultiImage(imageQuality: 80);
+      final FilePickerResult? result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'mov', 'avi', 'mkv', 'webm'],
+      );
       
-      if (picked == null || picked.isEmpty) {
-        // Fallback to single picker if multi-picker is canceled or empty
-        final XFile? single = await picker.pickImage(
-          source: kIsWeb ? ImageSource.gallery : ImageSource.camera,
-          imageQuality: 80,
-        );
-        if (single != null) picked?.add(single);
-      }
-
-      if (picked != null && picked.isNotEmpty) {
-        imageFiles.addAll(picked);
+      if (result != null && result.files.isNotEmpty) {
+        for (var file in result.files) {
+          if (file.path != null) {
+            mediaFiles.add(XFile(file.path!, name: file.name));
+          }
+        }
       } else {
         return; // User canceled
       }
     } catch (e) {
       print('Picker error: $e');
+      // Fallback to ImagePicker if FilePicker fails
+      final ImagePicker picker = ImagePicker();
+      final List<XFile>? picked = await picker.pickMultiImage(imageQuality: 80);
+      if (picked != null) mediaFiles.addAll(picked);
     }
 
-    if (imageFiles.isEmpty) return;
+    if (mediaFiles.isEmpty) return;
 
     setState(() => _isUploading = true);
 
@@ -475,14 +487,14 @@ class _MyTodosViewState extends ConsumerState<MyTodosView> {
           children: [
             CircularProgressIndicator(),
             SizedBox(height: 16),
-            Text('Processing & Uploading photos...', textAlign: TextAlign.center),
+            Text('Processing & Uploading media...', textAlign: TextAlign.center),
           ],
         ),
       ),
     );
 
     try {
-      final success = await ref.read(myTodoProvider.notifier).completeTodoWithXFiles(todo.id, imageFiles);
+      final success = await ref.read(myTodoProvider.notifier).completeTodoWithXFiles(todo.id, mediaFiles);
       
       if (mounted) {
         Navigator.pop(context); // Close dialog

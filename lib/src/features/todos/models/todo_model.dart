@@ -163,16 +163,19 @@ class Todo {
 class TodoImage {
   final String url;
   final String publicId;
+  final String resourceType; // 'image' or 'video'
 
   TodoImage({
     required this.url,
     required this.publicId,
+    this.resourceType = 'image',
   });
 
   factory TodoImage.fromJson(Map<String, dynamic> json) {
     return TodoImage(
       url: json['url'] ?? '',
       publicId: json['public_id'] ?? '',
+      resourceType: json['resourceType'] ?? 'image',
     );
   }
 
@@ -180,6 +183,7 @@ class TodoImage {
     return {
       'url': url,
       'public_id': publicId,
+      'resourceType': resourceType,
     };
   }
 }
