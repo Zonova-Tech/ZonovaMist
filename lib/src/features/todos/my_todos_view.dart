@@ -9,6 +9,9 @@ import 'providers/todo_provider.dart';
 import 'models/todo_model.dart';
 import 'todo_details_dialog.dart';
 import 'approve_reject_dialog.dart';
+import '../../core/auth/auth_provider.dart';
+import '../../core/auth/auth_state.dart';
+import '../../core/auth/rbac.dart';
 
 class MyTodosView extends ConsumerStatefulWidget {
   const MyTodosView({super.key});
@@ -224,7 +227,15 @@ class _MyTodosViewState extends ConsumerState<MyTodosView> {
 
     return GestureDetector(
       onTap: () {
-        if (todo.status == 'Completed') {
+        final authState = ref.watch(authProvider);
+        final role = authState.maybeWhen(
+          authenticated: (_, r, __) => r.toLowerCase(),
+          orElse: () => '',
+        );
+        final isManagement = Rbac.isAdmin(role) || role == 'manager' || role == 'owner';
+
+        // Managers can review Completed OR Approved tasks (to edit feedback)
+        if (isManagement && (todo.status == 'Completed' || todo.status == 'Approved')) {
           _showApproveRejectDialog(todo);
         } else {
           _showTodoDetails(todo);

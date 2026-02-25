@@ -8,6 +8,7 @@ import 'todo_details_dialog.dart';
 import 'approve_reject_dialog.dart';
 import '../../core/auth/auth_provider.dart';
 import '../../core/auth/auth_state.dart';
+import '../../core/auth/rbac.dart';
 
 class TasksView extends ConsumerStatefulWidget {
   const TasksView({super.key});
@@ -260,6 +261,55 @@ class _TasksViewState extends ConsumerState<TasksView> {
                         _buildChip(Icons.person, todo.assignedToName!, Colors.purple),
                     ],
                   ),
+                  
+                  // --- QUICK ACTIONS FOR MANAGEMENT (Only for Reviewable tasks) ---
+                  if (['admin', 'manager', 'owner'].contains(ref.watch(authProvider).maybeWhen(
+                        authenticated: (_, r, __) => r.toLowerCase(), 
+                        orElse: () => ''
+                      )))
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Row(
+                        children: [
+                          // Case 1: Task completed, needs review
+                          if (todo.status == 'Completed')
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () => _showApproveRejectDialog(todo),
+                                icon: const Icon(Icons.rate_review, size: 18),
+                                label: const Text('Review & Approve'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFFACC15), // Theme Yellow
+                                  foregroundColor: const Color(0xFF333333),
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          
+                          // Case 2: Task approved but missing detailed feedback
+                          if (todo.status == 'Approved' && (todo.ratingComment == null || todo.ratingComment!.isEmpty))
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () => _showApproveRejectDialog(todo),
+                                icon: const Icon(Icons.add_comment_rounded, size: 18),
+                                label: const Text('Add Feedback'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue.shade50,
+                                  foregroundColor: Colors.blue.shade700,
+                                  elevation: 0,
+                                  side: BorderSide(color: Colors.blue.shade200),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ),

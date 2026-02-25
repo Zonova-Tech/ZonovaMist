@@ -127,6 +127,35 @@ class TodoDetailsDialog extends StatelessWidget {
                 Colors.grey,
               ),
 
+              // Rating (if approved)
+              if (todo.status == 'Approved' && todo.rating != null)
+                _buildDetailRow(
+                  'Performance Rating',
+                  '${todo.rating!.toStringAsFixed(1)} / 5.0',
+                  Icons.star,
+                  Colors.amber,
+                  valueColor: Colors.amber.shade800,
+                ),
+
+              // Rating Comment
+              if (todo.status == 'Approved' && todo.ratingComment != null && todo.ratingComment!.isNotEmpty)
+                _buildDetailRow(
+                  'Supervisor Feedback',
+                  todo.ratingComment!,
+                  Icons.comment,
+                  Colors.blue,
+                ),
+
+              // Rejection Reason (if rejected and reset)
+              if (todo.status == 'New' && todo.rejectionComment != null && todo.rejectionComment!.isNotEmpty)
+                _buildDetailRow(
+                  'Changes Requested',
+                  todo.rejectionComment!,
+                  Icons.feedback,
+                  Colors.redAccent,
+                  valueColor: Colors.red.shade700,
+                ),
+
               // Media (Images & Videos)
               if (todo.images.isNotEmpty) ...[
                 const SizedBox(height: 16),
