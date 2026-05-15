@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../api/api_service.dart';
+import 'auth_provider.dart';
 
 // Room Model
 class Room {
@@ -144,6 +145,7 @@ class RoomAvailabilityParams {
 
 /// Provider for all rooms (returns raw Map data for existing screens)
 final roomsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  ref.watch(tokenProvider);
   final dio = ref.watch(dioProvider);
   try {
     final response = await dio.get('/rooms');
@@ -165,6 +167,7 @@ final roomsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
 
 /// Provider for all rooms as Room objects
 final allRoomsProvider = FutureProvider<List<Room>>((ref) async {
+  ref.watch(tokenProvider);
   final dio = ref.watch(dioProvider);
   try {
     final response = await dio.get('/rooms');
@@ -184,6 +187,7 @@ final allRoomsProvider = FutureProvider<List<Room>>((ref) async {
 /// Provider for available rooms based on dates
 final availableRoomsProvider = FutureProvider.family<RoomAvailabilityResponse, RoomAvailabilityParams>(
       (ref, params) async {
+    ref.watch(tokenProvider);
     final dio = ref.watch(dioProvider);
 
     try {

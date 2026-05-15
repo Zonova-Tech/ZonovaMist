@@ -1,0 +1,212 @@
+{
+  "version": "1.0.0",
+  "producer": "Java AppCAT CLI",
+  "metadata": {
+    "analysisStartTime": "2026-02-05T03:04:33.9063553Z",
+    "analysisEndTime": "2026-02-05T03:07:46.009845Z",
+    "status": "completed",
+    "privacyMode": "Protected",
+    "privacyModeHelpUrl": "https://aka.ms/appcat-privacy-mode",
+    "targetIds": [
+      "azure-aks",
+      "azure-appservice",
+      "azure-container-apps"
+    ],
+    "targetDisplayNames": [
+      "Azure Kubernetes Service",
+      "Azure App Service",
+      "Azure Container Apps"
+    ],
+    "capabilities": [],
+    "os": [],
+    "id": "20260205083433",
+    "name": "Report_20260205083433",
+    "domains": [
+      "cloud-readiness",
+      "java-upgrade"
+    ],
+    "mode": "issue-only"
+  },
+  "summary": {
+    "totalProjects": 1,
+    "totalIssues": 2,
+    "totalIncidents": 4,
+    "totalEffort": 12,
+    "charts": {
+      "severity": {
+        "mandatory": 2,
+        "optional": 0,
+        "potential": 2,
+        "information": 0
+      },
+      "category": {
+        "java-version-upgrade": 2,
+        "local-credential": 2
+      }
+    },
+    "security": {}
+  },
+  "projects": [
+    {
+      "path": ".",
+      "issues": 2,
+      "storyPoints": 12,
+      "properties": {
+        "appName": "ZonovaMist",
+        "jdkVersion": "Unknown",
+        "frameworks": null,
+        "languages": [
+          "Java"
+        ],
+        "tools": null
+      },
+      "incidents": [
+        {
+          "ruleId": "azure-java-version-02000",
+          "incidentId": "d3af8310-5902-48d4-ac47-a8dac7eaf8ff",
+          "location": "android/app/build.gradle.kts",
+          "locationKind": "File",
+          "line": 25,
+          "column": 0,
+          "targets": {
+            "azure-aks": {
+              "effort": 3,
+              "severity": "mandatory"
+            },
+            "azure-appservice": {
+              "effort": 3,
+              "severity": "mandatory"
+            },
+            "azure-container-apps": {
+              "effort": 3,
+              "severity": "mandatory"
+            }
+          },
+          "labels": [
+            "type=violation",
+            "ruleset=azure/springboot"
+          ]
+        },
+        {
+          "ruleId": "azure-java-version-02000",
+          "incidentId": "6e0d40e7-dd30-4c00-b999-fd802f80d604",
+          "location": "android/app/build.gradle.kts",
+          "locationKind": "File",
+          "line": 26,
+          "column": 0,
+          "targets": {
+            "azure-aks": {
+              "effort": 3,
+              "severity": "mandatory"
+            },
+            "azure-appservice": {
+              "effort": 3,
+              "severity": "mandatory"
+            },
+            "azure-container-apps": {
+              "effort": 3,
+              "severity": "mandatory"
+            }
+          },
+          "labels": [
+            "type=violation",
+            "ruleset=azure/springboot"
+          ]
+        },
+        {
+          "ruleId": "azure-keystore-certificates-01000",
+          "incidentId": "1733c0bd-7932-4450-916f-087bcb0a88fc",
+          "location": "android/app/upload-keystore.jks",
+          "locationKind": "File",
+          "targets": {
+            "azure-aks": {
+              "effort": 3,
+              "severity": "potential"
+            },
+            "azure-appservice": {
+              "effort": 3,
+              "severity": "potential"
+            },
+            "azure-container-apps": {
+              "effort": 3,
+              "severity": "potential"
+            }
+          },
+          "labels": [
+            "type=violation",
+            "ruleset=azure/springboot"
+          ]
+        },
+        {
+          "ruleId": "azure-keystore-certificates-01000",
+          "incidentId": "56527c2b-692d-4a75-b054-2a414d19a19d",
+          "location": "android/key.jks",
+          "locationKind": "File",
+          "targets": {
+            "azure-aks": {
+              "effort": 3,
+              "severity": "potential"
+            },
+            "azure-appservice": {
+              "effort": 3,
+              "severity": "potential"
+            },
+            "azure-container-apps": {
+              "effort": 3,
+              "severity": "potential"
+            }
+          },
+          "labels": [
+            "type=violation",
+            "ruleset=azure/springboot"
+          ]
+        }
+      ]
+    }
+  ],
+  "rules": {
+    "azure-java-version-02000": {
+      "id": "azure-java-version-02000",
+      "description": "The application is using an old Java version. It is strongly recommended to plan and execute a migration strategy to upgrade your application to the latest stable Java version.\nOlder Java versions may have known security vulnerabilities that can expose your application and infrastructure to potential attacks. Migrating to a supported version ensures that you benefit from the latest security patches and updates.",
+      "title": "Legacy Java version",
+      "severity": "mandatory",
+      "effort": 3,
+      "labels": [
+        "target=azure-appservice",
+        "target=azure-aks",
+        "target=azure-container-apps",
+        "source",
+        "domain=java-upgrade",
+        "category=java-version-upgrade",
+        "version",
+        "os=windows",
+        "os=linux"
+      ]
+    },
+    "azure-keystore-certificates-01000": {
+      "id": "azure-keystore-certificates-01000",
+      "description": "The application has a Java KeyStore file. You can migrate it to Azure Key Vault.\n\n * **Migrate the Java KeyStore to Azure Key Vault**: With Azure Key Vault you can centralize and securely manage your cryptographic keys and certificates in a highly available and scalable service. Azure Key Vault provides robust access control and auditing capabilities, ensuring that your keys and certificates are protected and accessible only to authorized entities.\n \n * **Update your Java application**: Modify your Java application's code to retrieve the keys and certificates from Azure Key Vault. Update the code that references the Java KeyStore to use Azure Key Vault APIs for accessing the cryptographic materials.\n \n * **Secure access to Azure Key Vault**: Configure appropriate access policies and permissions for your Azure Key Vault to ensure that only authorized users and applications can access the keys and certificates stored in it.",
+      "title": "Java KeyStore file found",
+      "severity": "potential",
+      "effort": 3,
+      "links": [
+        {
+          "url": "https://learn.microsoft.com/azure/key-vault",
+          "title": "Azure Key Vault documentation"
+        }
+      ],
+      "labels": [
+        "target=azure-appservice",
+        "target=azure-aks",
+        "target=azure-container-apps",
+        "source",
+        "domain=cloud-readiness",
+        "category=local-credential",
+        "JKS",
+        "os=windows",
+        "os=linux"
+      ]
+    }
+  },
+  "security": []
+}

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import '../../../core/auth/auth_provider.dart';
+import '../../../core/auth/auth_state.dart';
 import '../../../core/auth/rbac.dart';
 import '../../../core/api/api_service.dart';
 import '../../../shared/widgets/common_image_manager.dart';
@@ -233,6 +235,8 @@ class BookingsScreen extends ConsumerWidget {
     final currentFilter = ref.watch(bookingFilterProvider);
     final statusFilter = ref.watch(bookingStatusFilterProvider);
     final searchQuery = ref.watch(bookingSearchProvider);
+    final authState = ref.watch(authProvider);
+    final canMutate = authState is Authenticated ? Rbac.canMutate(authState.role) : false;
 
     return RbacGate(
       permission: AppPermission.bookings,
@@ -347,36 +351,38 @@ class BookingsScreen extends ConsumerWidget {
 
                     return Slidable(
                       key: ValueKey('slidable_$bookingId'),
-                      endActionPane: ActionPane(
-                        motion: const DrawerMotion(),
-                        extentRatio: 0.5,
-                        children: [
-                          SlidableAction(
-                            onPressed: (_) => _updateStatus(context, ref, booking, 'advance_paid'),
-                            backgroundColor: Colors.blue.shade600,
-                            foregroundColor: Colors.white,
-                            icon: Icons.payments,
-                          ),
-                          SlidableAction(
-                            onPressed: (_) => _updateStatus(context, ref, booking, 'paid'),
-                            backgroundColor: Colors.green.shade600,
-                            foregroundColor: Colors.white,
-                            icon: Icons.check_circle,
-                          ),
-                          SlidableAction(
-                            onPressed: (_) => _onEdit(context, ref, booking),
-                            backgroundColor: Colors.orange.shade600,
-                            foregroundColor: Colors.white,
-                            icon: Icons.edit,
-                          ),
-                          SlidableAction(
-                            onPressed: (_) => _onDelete(context, ref, booking),
-                            backgroundColor: Colors.red.shade600,
-                            foregroundColor: Colors.white,
-                            icon: Icons.delete,
-                          ),
-                        ],
-                      ),
+                      endActionPane: canMutate
+                          ? ActionPane(
+                              motion: const DrawerMotion(),
+                              extentRatio: 0.5,
+                              children: [
+                                SlidableAction(
+                                  onPressed: (_) => _updateStatus(context, ref, booking, 'advance_paid'),
+                                  backgroundColor: Colors.blue.shade600,
+                                  foregroundColor: Colors.white,
+                                  icon: Icons.payments,
+                                ),
+                                SlidableAction(
+                                  onPressed: (_) => _updateStatus(context, ref, booking, 'paid'),
+                                  backgroundColor: Colors.green.shade600,
+                                  foregroundColor: Colors.white,
+                                  icon: Icons.check_circle,
+                                ),
+                                SlidableAction(
+                                  onPressed: (_) => _onEdit(context, ref, booking),
+                                  backgroundColor: Colors.orange.shade600,
+                                  foregroundColor: Colors.white,
+                                  icon: Icons.edit,
+                                ),
+                                SlidableAction(
+                                  onPressed: (_) => _onDelete(context, ref, booking),
+                                  backgroundColor: Colors.red.shade600,
+                                  foregroundColor: Colors.white,
+                                  icon: Icons.delete,
+                                ),
+                              ],
+                            )
+                          : null,
                       child: Card(
                         key: ValueKey('card_$bookingId'),
                         shape: RoundedRectangleBorder(
@@ -428,7 +434,7 @@ class BookingsScreen extends ConsumerWidget {
                                   Padding(
                                     padding: const EdgeInsets.only(left: 8.0), // Safety gap
                                     child: GestureDetector(
-                                      onTap: () => _showStatusMenu(context, ref, booking),
+                                      onTap: canMutate ? () => _showStatusMenu(context, ref, booking) : null,
                                       child: _buildStatusChip(booking['status']),
                                     ),
                                   ),
@@ -548,19 +554,21 @@ class BookingsScreen extends ConsumerWidget {
           ),
           ],
         ),
-        floatingActionButton: FloatingActionButton(
-          heroTag: 'add_booking_fab',
-          onPressed: () async {
-            final result = await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const AddBookingScreen()),
-            );
-            if (result == true) {
-              ref.refresh(bookingsProvider);
-            }
-          },
-          child: const Icon(Icons.add),
-        ),
+        floatingActionButton: canMutate
+            ? FloatingActionButton(
+                heroTag: 'add_booking_fab',
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AddBookingScreen()),
+                  );
+                  if (result == true) {
+                    ref.refresh(bookingsProvider);
+                  }
+                },
+                child: const Icon(Icons.add),
+              )
+            : null,
       ),
     );
   }

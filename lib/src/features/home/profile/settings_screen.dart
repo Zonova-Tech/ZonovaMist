@@ -67,9 +67,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       setState(() => _loading = true);
       final dio = ref.read(dioProvider);
       final response = await dio.get('/settings');
-      final data = response.data;
-
-      print('📥 Settings JSON: $data');
+      final data = (response.data as Map<String, dynamic>?) ?? {};
 
       _guestHouseNameController.text = (data['guestHouseName'] ?? '').toString();
       _guestHouseAddressController.text = (data['guestHouseAddress'] ?? '').toString();

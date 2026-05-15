@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import '../../../core/api/api_service.dart';
+import '../../../core/auth/auth_provider.dart';
 
 final staffProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   try {
+    ref.watch(tokenProvider);
     final dio = ref.watch(dioProvider);
     print('🔍 Fetching staff from: ${dio.options.baseUrl}/staff');
 
@@ -27,6 +29,7 @@ final staffProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
 
 final staffRolesProvider = FutureProvider<List<String>>((ref) async {
   try {
+    ref.watch(tokenProvider);
     final dio = ref.watch(dioProvider);
     print('🔍 Fetching roles from: ${dio.options.baseUrl}/staff/roles');
 

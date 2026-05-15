@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import '../../../core/auth/auth_provider.dart';
+import '../../../core/auth/auth_state.dart';
 import '../../../core/auth/rbac.dart';
 import '../../../core/auth/rooms_provider.dart';
 import '../../../core/api/api_service.dart';
@@ -76,6 +78,8 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
   @override
   Widget build(BuildContext context) {
     final roomsAsync = ref.watch(roomsProvider);
+    final authState = ref.watch(authProvider);
+    final canMutate = authState is Authenticated ? Rbac.canMutate(authState.role) : false;
 
     return RbacGate(
       permission: AppPermission.rooms,
@@ -138,26 +142,28 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
               }
               return Slidable(
                 key: ValueKey(roomId),
-                endActionPane: ActionPane(
-                  motion: const DrawerMotion(),
-                  extentRatio: 0.4,
-                  children: [
-                    SlidableAction(
-                      onPressed: (_) => _onEdit(room),
-                      backgroundColor: Colors.blue.shade500,
-                      foregroundColor: Colors.white,
-                      icon: Icons.edit,
-                      label: 'Edit',
-                    ),
-                    SlidableAction(
-                      onPressed: (_) => _onDelete(room),
-                      backgroundColor: Colors.red.shade500,
-                      foregroundColor: Colors.white,
-                      icon: Icons.delete,
-                      label: 'Delete',
-                    ),
-                  ],
-                ),
+                endActionPane: canMutate
+                    ? ActionPane(
+                        motion: const DrawerMotion(),
+                        extentRatio: 0.4,
+                        children: [
+                          SlidableAction(
+                            onPressed: (_) => _onEdit(room),
+                            backgroundColor: Colors.blue.shade500,
+                            foregroundColor: Colors.white,
+                            icon: Icons.edit,
+                            label: 'Edit',
+                          ),
+                          SlidableAction(
+                            onPressed: (_) => _onDelete(room),
+                            backgroundColor: Colors.red.shade500,
+                            foregroundColor: Colors.white,
+                            icon: Icons.delete,
+                            label: 'Delete',
+                          ),
+                        ],
+                      )
+                    : null,
                 child: Card(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 4,
@@ -231,19 +237,21 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.blueAccent,
-        child: const Icon(Icons.add),
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AddRoomScreen()),
-          );
-          if (result == true) {
-            ref.refresh(roomsProvider);
-          }
-        },
-        ),
+      floatingActionButton: canMutate
+          ? FloatingActionButton(
+              backgroundColor: Colors.blueAccent,
+              child: const Icon(Icons.add),
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AddRoomScreen()),
+                );
+                if (result == true) {
+                  ref.refresh(roomsProvider);
+                }
+              },
+            )
+          : null,
       ),
     );
   }

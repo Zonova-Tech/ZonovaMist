@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import '../../../core/auth/auth_provider.dart';
+import '../../../core/auth/auth_state.dart';
 import '../../../core/auth/rbac.dart';
 import '../../../../services/expense_service.dart';
 import '../../../shared/widgets/rbac_gate.dart';
@@ -212,6 +214,9 @@ class _ExpensesListPageState extends ConsumerState<ExpensesListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
+    final canMutate = authState is Authenticated ? Rbac.canMutate(authState.role) : false;
+
     return RbacGate(
       permission: AppPermission.expenses,
       child: Scaffold(
@@ -242,11 +247,12 @@ class _ExpensesListPageState extends ConsumerState<ExpensesListPage> {
               style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: _openAdd,
-              icon: const Icon(Icons.add),
-              label: const Text('Add Expense'),
-            ),
+            if (canMutate)
+              ElevatedButton.icon(
+                onPressed: _openAdd,
+                icon: const Icon(Icons.add),
+                label: const Text('Add Expense'),
+              ),
           ],
         ),
       )
@@ -259,31 +265,30 @@ class _ExpensesListPageState extends ConsumerState<ExpensesListPage> {
           itemBuilder: (context, index) {
             final e = _items[index];
 
-            // Slidable widget for swipe actions (edit/delete)
             return Slidable(
               key: ValueKey(e['id']),
-              endActionPane: ActionPane(
-                motion: const DrawerMotion(),
-                extentRatio: 0.4,
-                children: [
-                  // Edit action (swipe left)
-                  SlidableAction(
-                    onPressed: (_) => _onEdit(e),
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    icon: Icons.edit,
-                    label: 'Edit',
-                  ),
-                  // Delete action (swipe left)
-                  SlidableAction(
-                    onPressed: (_) => _onDelete(e),
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
-                    icon: Icons.delete,
-                    label: 'Delete',
-                  ),
-                ],
-              ),
+              endActionPane: canMutate
+                  ? ActionPane(
+                      motion: const DrawerMotion(),
+                      extentRatio: 0.4,
+                      children: [
+                        SlidableAction(
+                          onPressed: (_) => _onEdit(e),
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          icon: Icons.edit,
+                          label: 'Edit',
+                        ),
+                        SlidableAction(
+                          onPressed: (_) => _onDelete(e),
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          icon: Icons.delete,
+                          label: 'Delete',
+                        ),
+                      ],
+                    )
+                  : null,
 
               // Expense card - tap to view details
               child: Card(
@@ -343,11 +348,12 @@ class _ExpensesListPageState extends ConsumerState<ExpensesListPage> {
         ),
       ),
 
-      // Floating action button to add new expense
-      floatingActionButton: FloatingActionButton(
-        onPressed: _openAdd,
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: canMutate
+          ? FloatingActionButton(
+              onPressed: _openAdd,
+              child: const Icon(Icons.add),
+            )
+          : null,
       ),
     );
   }
