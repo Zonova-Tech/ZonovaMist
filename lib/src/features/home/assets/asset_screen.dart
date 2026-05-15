@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:collection/collection.dart'; // Import the collection package
 
+import 'package:Zonova_Mist/src/core/auth/auth_provider.dart';
+import 'package:Zonova_Mist/src/core/auth/auth_state.dart';
 import 'package:Zonova_Mist/src/core/auth/rbac.dart';
 import 'package:Zonova_Mist/src/features/home/assets/providers/asset_provider.dart';
 import 'package:Zonova_Mist/src/features/home/assets/models/asset_model.dart';
@@ -17,6 +19,8 @@ class AssetsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final assetsAsyncValue = ref.watch(assetsProvider);
+    final authState = ref.watch(authProvider);
+    final canMutate = authState is Authenticated ? Rbac.canMutate(authState.role) : false;
 
     return RbacGate(
       permission: AppPermission.assets,
@@ -24,15 +28,17 @@ class AssetsScreen extends ConsumerWidget {
         appBar: AppBar(
           title: const Text('Assets'),
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const AddAssetScreen()),
-            );
-          },
-          child: const Icon(Icons.add),
-        ),
+        floatingActionButton: canMutate
+            ? FloatingActionButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AddAssetScreen()),
+                  );
+                },
+                child: const Icon(Icons.add),
+              )
+            : null,
         body: assetsAsyncValue.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stackTrace) => Center(

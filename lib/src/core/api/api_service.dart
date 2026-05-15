@@ -29,6 +29,9 @@ final dioProvider = Provider<Dio>((ref) {
       onError: (DioException e, handler) {
         print('‼️ Dio error: ${e.message}');
         print('   Response: ${e.response?.statusCode} - ${e.response?.data}');
+        if (e.response?.statusCode == 401 && ref.read(tokenProvider) != null) {
+          ref.read(authProvider.notifier).logout();
+        }
         handler.next(e);
       },
     ),

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
+import 'package:Zonova_Mist/src/core/auth/auth_provider.dart';
+import 'package:Zonova_Mist/src/core/auth/auth_state.dart';
 import 'package:Zonova_Mist/src/core/auth/rbac.dart';
 import 'package:Zonova_Mist/src/features/home/assets/models/asset_model.dart';
 import 'package:Zonova_Mist/src/features/home/assets/asset_details_screen.dart';
@@ -21,6 +23,8 @@ class AssetGroupScreen extends ConsumerWidget { // Changed to ConsumerWidget
   @override
   Widget build(BuildContext context, WidgetRef ref) { // Added WidgetRef
     final assetsState = ref.watch(assetsProvider);
+    final authState = ref.watch(authProvider);
+    final canMutate = authState is Authenticated ? Rbac.canMutate(authState.role) : false;
 
     // Find the latest version of the assets for this group from the provider state
     final currentGroupAssets = assetsState.when(
@@ -50,12 +54,13 @@ class AssetGroupScreen extends ConsumerWidget { // Changed to ConsumerWidget
         itemBuilder: (context, index) {
           final asset = currentGroupAssets[index];
           return Slidable(
-            key: ValueKey(asset.id), // Unique key for each slidable
-            endActionPane: ActionPane(
-              motion: const DrawerMotion(),
-              children: [
-                SlidableAction(
-                  onPressed: (_) async {
+            key: ValueKey(asset.id),
+            endActionPane: canMutate
+                ? ActionPane(
+                    motion: const DrawerMotion(),
+                    children: [
+                      SlidableAction(
+                        onPressed: (_) async {
                     final confirm = await showDialog<bool>(
                       context: context,
                       builder: (context) => AlertDialog(
@@ -84,13 +89,14 @@ class AssetGroupScreen extends ConsumerWidget { // Changed to ConsumerWidget
                       }
                     }
                   },
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                  icon: Icons.delete,
-                  label: 'Delete',
-                ),
-              ],
-            ),
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        icon: Icons.delete,
+                        label: 'Delete',
+                      ),
+                    ],
+                  )
+                : null,
             child: Card(
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: ListTile(

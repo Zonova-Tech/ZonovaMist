@@ -13,7 +13,7 @@ class AppConfig {
 
   static String get apiBaseUrl {
     // Read from .env file, fallback to default if not set
-    return dotenv.env['API_BASE_URL'] ?? _fallbackUrl;
+    return dotenv.env['API_URL'] ?? _fallbackUrl;
   }
 
   static const String cloudinaryCloudName = 'dqi0bndrs';

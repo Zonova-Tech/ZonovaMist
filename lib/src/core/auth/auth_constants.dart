@@ -5,12 +5,10 @@ class AuthConstants {
   static const String userPermissionsKey = 'user_permissions';
 }
 
+/// Role constants — must match backend user.js enum exactly.
 class AppRoles {
-  static const String superAdmin = 'super_admin';
-  static const String guestHouseAdmin = 'guest_house_admin';
-  static const String receptionist = 'receptionist';
-  static const String housekeeping = 'housekeeping';
-  static const String maintenance = 'maintenance';
-  static const String finance = 'finance';
-  static const String guest = 'guest';
+  static const String admin = 'admin';
+  static const String manager = 'manager';
+  static const String staff = 'staff';
+  static const String user = 'user';
 }

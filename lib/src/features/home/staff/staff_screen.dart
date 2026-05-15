@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import '../../../core/auth/auth_provider.dart';
+import '../../../core/auth/auth_state.dart';
 import '../../../core/auth/rbac.dart';
 import '../../../core/api/api_service.dart';
 import '../../../shared/widgets/common_image_manager.dart';
@@ -57,6 +59,8 @@ class StaffScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final staffAsync = ref.watch(staffProvider);
+    final authState = ref.watch(authProvider);
+    final canMutate = authState is Authenticated ? Rbac.canMutate(authState.role) : false;
 
     return RbacGate(
       permission: AppPermission.staff,
@@ -100,36 +104,38 @@ class StaffScreen extends ConsumerWidget {
 
               return Slidable(
                 key: ValueKey('slidable_staff_$staffId'),
-                endActionPane: ActionPane(
-                  motion: const DrawerMotion(),
-                  extentRatio: 0.4,
-                  children: [
-                    SlidableAction(
-                      onPressed: (_) async {
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => EditStaffScreen(staff: member),
+                endActionPane: canMutate
+                    ? ActionPane(
+                        motion: const DrawerMotion(),
+                        extentRatio: 0.4,
+                        children: [
+                          SlidableAction(
+                            onPressed: (_) async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => EditStaffScreen(staff: member),
+                                ),
+                              );
+                              if (result == true) {
+                                ref.refresh(staffProvider);
+                              }
+                            },
+                            backgroundColor: Colors.orange.shade600,
+                            foregroundColor: Colors.white,
+                            icon: Icons.edit,
+                            label: 'Edit',
                           ),
-                        );
-                        if (result == true) {
-                          ref.refresh(staffProvider);
-                        }
-                      },
-                      backgroundColor: Colors.orange.shade600,
-                      foregroundColor: Colors.white,
-                      icon: Icons.edit,
-                      label: 'Edit',
-                    ),
-                    SlidableAction(
-                      onPressed: (_) => _onDelete(context, ref, member),
-                      backgroundColor: Colors.red.shade600,
-                      foregroundColor: Colors.white,
-                      icon: Icons.delete,
-                      label: 'Delete',
-                    ),
-                  ],
-                ),
+                          SlidableAction(
+                            onPressed: (_) => _onDelete(context, ref, member),
+                            backgroundColor: Colors.red.shade600,
+                            foregroundColor: Colors.white,
+                            icon: Icons.delete,
+                            label: 'Delete',
+                          ),
+                        ],
+                      )
+                    : null,
                 child: Card(
                   key: ValueKey('card_staff_$staffId'),
                   shape: RoundedRectangleBorder(
@@ -272,19 +278,21 @@ class StaffScreen extends ConsumerWidget {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AddStaffScreen()),
-          );
-          if (result == true) {
-            ref.refresh(staffProvider);
-          }
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Add Staff'),
-      ),
+      floatingActionButton: canMutate
+          ? FloatingActionButton.extended(
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AddStaffScreen()),
+                );
+                if (result == true) {
+                  ref.refresh(staffProvider);
+                }
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Add Staff'),
+            )
+          : null,
       ),
     );
   }

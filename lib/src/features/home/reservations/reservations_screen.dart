@@ -4,6 +4,8 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 import 'reservations_provider.dart';
 import 'package:Zonova_Mist/src/core/api/api_service.dart';
+import '../../../core/auth/auth_provider.dart';
+import '../../../core/auth/auth_state.dart';
 import '../../../core/auth/rbac.dart';
 import '../../../shared/widgets/app_drawer.dart';
 import '../../../shared/widgets/audio_recordings_widget.dart';
@@ -167,6 +169,8 @@ class ReservationsScreen extends ConsumerWidget {
     final currentFilter = ref.watch(reservationFilterProvider);
     final statusFilter = ref.watch(reservationStatusFilterProvider);
     final searchQuery = ref.watch(reservationSearchProvider);
+    final authState = ref.watch(authProvider);
+    final canMutate = authState is Authenticated ? Rbac.canMutate(authState.role) : false;
 
     return RbacGate(
       permission: AppPermission.reservations,
@@ -280,30 +284,32 @@ class ReservationsScreen extends ConsumerWidget {
 
                     return Slidable(
                       key: ValueKey(booking['_id']),
-                      endActionPane: ActionPane(
-                        motion: const DrawerMotion(),
-                        extentRatio: 0.4,
-                        children: [
-                          SlidableAction(
-                            onPressed: (_) => _updateStatus(context, ref, booking, "advance_paid"),
-                            backgroundColor: Colors.blue.shade600,
-                            foregroundColor: Colors.white,
-                            icon: Icons.payments,
-                          ),
-                          SlidableAction(
-                            onPressed: (_) => _updateStatus(context, ref, booking, "paid"),
-                            backgroundColor: Colors.green.shade600,
-                            foregroundColor: Colors.white,
-                            icon: Icons.check_circle,
-                          ),
-                          SlidableAction(
-                            onPressed: (_) => _updateStatus(context, ref, booking, "cancelled"),
-                            backgroundColor: Colors.red.shade600,
-                            foregroundColor: Colors.white,
-                            icon: Icons.cancel,
-                          ),
-                        ],
-                      ),
+                      endActionPane: canMutate
+                          ? ActionPane(
+                              motion: const DrawerMotion(),
+                              extentRatio: 0.4,
+                              children: [
+                                SlidableAction(
+                                  onPressed: (_) => _updateStatus(context, ref, booking, "advance_paid"),
+                                  backgroundColor: Colors.blue.shade600,
+                                  foregroundColor: Colors.white,
+                                  icon: Icons.payments,
+                                ),
+                                SlidableAction(
+                                  onPressed: (_) => _updateStatus(context, ref, booking, "paid"),
+                                  backgroundColor: Colors.green.shade600,
+                                  foregroundColor: Colors.white,
+                                  icon: Icons.check_circle,
+                                ),
+                                SlidableAction(
+                                  onPressed: (_) => _updateStatus(context, ref, booking, "cancelled"),
+                                  backgroundColor: Colors.red.shade600,
+                                  foregroundColor: Colors.white,
+                                  icon: Icons.cancel,
+                                ),
+                              ],
+                            )
+                          : null,
                       child: Card(
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -330,7 +336,7 @@ class ReservationsScreen extends ConsumerWidget {
                                     ),
                                   ),
                                   GestureDetector(
-                                    onTap: () => _showStatusMenu(context, ref, booking),
+                                    onTap: canMutate ? () => _showStatusMenu(context, ref, booking) : null,
                                     child: _buildStatusChip(booking['status']),
                                   ),
                                 ],

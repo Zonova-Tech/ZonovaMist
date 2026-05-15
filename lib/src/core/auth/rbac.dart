@@ -42,22 +42,18 @@ const Map<AppPermission, String> permissionLabels = {
   AppPermission.assets: 'Assets',
 };
 
-/// Admin roles that bypass all permission checks.
-/// Backend guarantees these roles ALWAYS have access.
-/// Roles from backend are lowercase: 'admin', 'super_admin', 'guest_house_admin', etc.
+/// Only 'admin' is a backend admin role (matches user.js enum).
 const Set<String> _adminRoles = {
   'admin',
-  'super_admin',
-  'guest_house_admin',
 };
 
+/// Permissions per role — must stay in sync with backend user.js role enum:
+/// admin | manager | staff | user
 final Map<String, Set<AppPermission>> rolePermissions = {
-  // Admin roles - have all permissions (backend admin bypass)
+  // Admin — full access, all mutations allowed
   'admin': AppPermission.values.toSet(),
-  'super_admin': AppPermission.values.toSet(),
-  'guest_house_admin': AppPermission.values.toSet(),
 
-  // Manager role
+  // Manager — full access, all mutations allowed
   'manager': {
     AppPermission.dashboard,
     AppPermission.bookings,
@@ -72,34 +68,8 @@ final Map<String, Set<AppPermission>> rolePermissions = {
     AppPermission.assets,
   },
 
-  // Specialist roles
-  'maintenance': {
-    AppPermission.dashboard,
-    AppPermission.rooms,
-    AppPermission.roomRates,
-    AppPermission.assets,
-  },
-  'receptionist': {
-    AppPermission.dashboard,
-    AppPermission.bookings,
-    AppPermission.reservations,
-    AppPermission.todos,
-    AppPermission.settings,
-  },
-  'housekeeping': {
-    AppPermission.dashboard,
-    AppPermission.rooms,
-    AppPermission.todos,
-  },
-  'finance': {
-    AppPermission.dashboard,
-    AppPermission.expenses,
-  },
-
-  /// STAFF ROLE - VIEW-ONLY ACCESS
-  /// IMPORTANT: Staff can see all pages and data, but CANNOT modify anything.
-  /// All create/update/delete operations must be blocked at UI and API level.
-  /// See staff_enforcement.dart for UI guard utilities.
+  // Staff — view-only: can see everything, cannot create/update/delete
+  // Backend staffReadOnly middleware enforces this at the API level too.
   'staff': {
     AppPermission.dashboard,
     AppPermission.bookings,
@@ -114,10 +84,9 @@ final Map<String, Set<AppPermission>> rolePermissions = {
     AppPermission.assets,
   },
 
+  // User — dashboard only, read-only
+  // Backend staffReadOnly middleware blocks mutations for this role too.
   'user': {
-    AppPermission.dashboard,
-  },
-  'guest': {
     AppPermission.dashboard,
   },
 };
@@ -160,8 +129,6 @@ class Rbac {
   }
 
   /// Check if a role string is an admin role (case-insensitive).
-  ///
-  /// Returns true for admin, super_admin, guest_house_admin.
   static bool isAdmin(String role) {
     if (role.isEmpty) return false;
     return _isAdminRole(role.toLowerCase());
@@ -173,15 +140,13 @@ class Rbac {
   }
 
   /// Check if a role can perform mutations (create, update, delete).
-  /// Returns false for STAFF (view-only), true for all others.
+  /// Returns false for staff and user roles — matches backend staffReadOnly middleware.
   ///
   /// Usage: Hide/disable mutation UI if !Rbac.canMutate(role)
   static bool canMutate(String role) {
     if (role.isEmpty) return false;
     final normalized = role.toLowerCase();
-    // Staff cannot mutate - view-only access
-    if (normalized == 'staff') return false;
-    // All other roles can mutate
+    if (normalized == 'staff' || normalized == 'user') return false;
     return true;
   }
 

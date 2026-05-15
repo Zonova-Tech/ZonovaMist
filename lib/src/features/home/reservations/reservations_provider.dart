@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:Zonova_Mist/src/core/api/api_service.dart';
+import 'package:Zonova_Mist/src/core/auth/auth_provider.dart';
 
 // Filter state provider for reservations - default to 'upcoming' and 'pending' status
 final reservationFilterProvider = StateProvider<String>((ref) => 'upcoming');
@@ -8,6 +9,7 @@ final reservationSearchProvider = StateProvider<String>((ref) => '');
 
 // Reservations provider with filtering
 final reservationsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  ref.watch(tokenProvider);
   final dio = ref.watch(dioProvider);
   final filter = ref.watch(reservationFilterProvider);
   final statusFilter = ref.watch(reservationStatusFilterProvider);

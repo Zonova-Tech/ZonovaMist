@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import '../../../core/auth/auth_provider.dart';
+import '../../../core/auth/auth_state.dart';
 import '../../../core/auth/rbac.dart';
 import '../../../core/auth/hotels_provider.dart';
 import '../../../core/api/api_service.dart';
@@ -69,6 +71,8 @@ class _PartnerHotelsScreenState extends ConsumerState<PartnerHotelsScreen> {
   @override
   Widget build(BuildContext context) {
     final hotelsAsync = ref.watch(hotelsProvider);
+    final authState = ref.watch(authProvider);
+    final canMutate = authState is Authenticated ? Rbac.canMutate(authState.role) : false;
 
     return RbacGate(
       permission: AppPermission.partnerHotels,
@@ -90,26 +94,28 @@ class _PartnerHotelsScreenState extends ConsumerState<PartnerHotelsScreen> {
 
               return Slidable(
                 key: ValueKey(hotelId),
-                endActionPane: ActionPane(
-                  motion: const DrawerMotion(),
-                  extentRatio: 0.4,
-                  children: [
-                    SlidableAction(
-                      onPressed: (_) => _onEdit(hotel),
-                      backgroundColor: Colors.blue.shade500,
-                      foregroundColor: Colors.white,
-                      icon: Icons.edit,
-                      label: 'Edit',
-                    ),
-                    SlidableAction(
-                      onPressed: (_) => _onDelete(hotel),
-                      backgroundColor: Colors.red.shade500,
-                      foregroundColor: Colors.white,
-                      icon: Icons.delete,
-                      label: 'Delete',
-                    ),
-                  ],
-                ),
+                endActionPane: canMutate
+                    ? ActionPane(
+                        motion: const DrawerMotion(),
+                        extentRatio: 0.4,
+                        children: [
+                          SlidableAction(
+                            onPressed: (_) => _onEdit(hotel),
+                            backgroundColor: Colors.blue.shade500,
+                            foregroundColor: Colors.white,
+                            icon: Icons.edit,
+                            label: 'Edit',
+                          ),
+                          SlidableAction(
+                            onPressed: (_) => _onDelete(hotel),
+                            backgroundColor: Colors.red.shade500,
+                            foregroundColor: Colors.white,
+                            icon: Icons.delete,
+                            label: 'Delete',
+                          ),
+                        ],
+                      )
+                    : null,
                 child: Card(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 4,
@@ -189,19 +195,21 @@ class _PartnerHotelsScreenState extends ConsumerState<PartnerHotelsScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(child: Text('Error: $err')),
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.blueAccent,
-        child: const Icon(Icons.add),
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AddHotelScreen()),
-          );
-          if (result == true) {
-            ref.refresh(hotelsProvider);
-          }
-        },
-      ),
+      floatingActionButton: canMutate
+          ? FloatingActionButton(
+              backgroundColor: Colors.blueAccent,
+              child: const Icon(Icons.add),
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AddHotelScreen()),
+                );
+                if (result == true) {
+                  ref.refresh(hotelsProvider);
+                }
+              },
+            )
+          : null,
       ),
     );
   }
