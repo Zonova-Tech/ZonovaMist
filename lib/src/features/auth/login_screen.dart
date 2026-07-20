@@ -8,6 +8,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:Zonova_Mist/src/core/auth/auth_provider.dart';
 import 'package:Zonova_Mist/src/core/auth/auth_state.dart';
 import 'package:Zonova_Mist/src/features/auth/register_screen.dart';
+import 'package:Zonova_Mist/src/features/contact/contact_screen.dart';
 import 'package:Zonova_Mist/src/core/routing/app_router.dart';
 
 import '../../core/i18n/arb/app_localizations.dart';
@@ -198,6 +199,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   onPressed: () => AppRouter.to(const RegisterScreen()),
                   child: Text(
                     l10n.register,
+                    style: TextStyle(color: Theme.of(context).colorScheme.secondary),
+                  ),
+                ),
+
+                // Contact us (public inquiry form → WhatsApp)
+                TextButton(
+                  onPressed: () => AppRouter.to(const ContactScreen()),
+                  child: Text(
+                    'Contact us',
                     style: TextStyle(color: Theme.of(context).colorScheme.secondary),
                   ),
                 ),
